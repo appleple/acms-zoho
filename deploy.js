@@ -63,6 +63,7 @@ co(function* () {
     fs.copySync(`./Hook.php`, `Zoho/Hook.php`);
     fs.copySync('./theme', 'Zoho/theme');
     fs.copySync(`./ServiceProvider.php`, `Zoho/ServiceProvider.php`);
+    yield systemCmd(`cd ./Zoho; composer install`);
     yield zipPromise(`Zoho`, `./build/Zoho.zip`);
     fs.removeSync(`Zoho`);
     yield systemCmd('git add -A');
