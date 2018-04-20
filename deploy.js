@@ -55,12 +55,14 @@ co(function* () {
   try {
     fs.mkdirsSync(`Zoho`);
     fs.mkdirsSync(`build`);
+    fs.copySync(`./composer.json`, 'Zoho/composer.json');
+    fs.copySync(`./composer.lock`, `Zoho/composer.lock`);
     fs.copySync(`./LICENSE`, `Zoho/LICENSE`);
     fs.copySync(`./README.md`, `Zoho/README.md`);
+    fs.copySync(`./Engine.php`, `Zoho/Engine.php`);
     fs.copySync(`./Hook.php`, `Zoho/Hook.php`);
     fs.copySync('./theme', 'Zoho/theme');
     fs.copySync(`./ServiceProvider.php`, `Zoho/ServiceProvider.php`);
-    fs.copySync(`./GET/Zoho.php`, `Zoho/GET/Zoho.php`);
     yield zipPromise(`Zoho`, `./build/Zoho.zip`);
     fs.removeSync(`Zoho`);
     yield systemCmd('git add -A');
