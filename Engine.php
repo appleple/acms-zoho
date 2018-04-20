@@ -50,6 +50,6 @@ class Engine
      */
     public function send()
     {
-        $accessToken = $this->config->get('zoho_access_token');
+        $accessToken = config('zoho_access_token');
     }
 }
