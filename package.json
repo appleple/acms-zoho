@@ -1,0 +1,30 @@
+{
+    "name": "acms-zoho",
+    "version": "1.0.0",
+    "description": "Zoho API と連携し、お問い合わせフォームなどで送信された内容をZoho CRMに登録します。",
+    "main": "deploy.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 0",
+      "deploy": "node deploy.js",
+      "patch": "npm version patch && npm run deploy",
+      "minor": "npm version minor && npm run deploy",
+      "major": "npm version major && npm run deploy"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+ssh://git@github.com/appleple/acms-google-sheets.git"
+    },
+    "author": "appleple",
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/appleple/acms-google-sheets/issues"
+    },
+    "homepage": "https://github.com/appleple/acms-google-sheets#readme",
+    "devDependencies": {
+      "archiver": "^2.1.1",
+      "co": "^4.6.0",
+      "fs-extra": "^2.1.2",
+      "node-cmd": "^3.0.0"
+    },
+    "dependencies": {}
+  }

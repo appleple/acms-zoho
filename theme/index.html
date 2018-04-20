@@ -1,0 +1,40 @@
+<header class="acms-admin-grid-r">
+	<div>
+		@include("/admin/topicpath.html")
+	</div>
+	<div>
+		<h1 class="acms-admin-admin-title js-dialog-title">
+			Zoho API 連携
+		</h1>
+	</div>
+	<div class="acms-admin-col-md-6">
+
+	</div>
+</header>
+
+<!-- BEGIN_MODULE Admin_Config -->
+<form action="" method="post" class="js-adminSave acms-admin-form">
+    <div class="js-acms_fix_marker acms_fix_bg">
+        <div class="acms-admin-form-group acms_fix_bg_index">
+            <input type="submit" name="ACMS_POST_Config" value="保存" class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save"
+            />
+        </div>
+    </div>
+    <h3 class="acms-admin-admin-title2">
+        <!--T-->Zoho 認証トークン設定<!--/T-->
+    </h3>
+    <table class="adminTable acms-admin-table-admin-edit" style="margin-bottom:20px">
+        <tr>
+            <th>
+                <!--T-->認証トークンの設定<!--/T-->
+                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoで取得した認証トークンを指定します。<!--/T-->"></i>
+            </th>
+            <td>
+                <input type="text" name="zoho_access_token" value="{zoho_access_token}" class="acms-admin-form-width-full" />
+                <input type="hidden" name="config[]" value="zoho_access_token" />
+            </td>
+        </tr>
+    </table>
+</form>
+
+<!-- END_MODULE Admin_Config -->
