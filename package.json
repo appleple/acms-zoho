@@ -12,14 +12,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/appleple/acms-google-sheets.git"
+    "url": "git+ssh://git@github.com/appleple/acms-zoho.git"
   },
   "author": "appleple",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/appleple/acms-google-sheets/issues"
+    "url": "https://github.com/appleple/acms-zoho/issues"
   },
-  "homepage": "https://github.com/appleple/acms-google-sheets#readme",
+  "homepage": "https://github.com/appleple/acms-zoho#readme",
   "devDependencies": {
     "archiver": "^2.1.1",
     "co": "^4.6.0",
