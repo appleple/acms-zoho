@@ -53,7 +53,7 @@ class Engine
         $id = $this->module->Post->get('id');
         $zohoInsertScopes = array();
         $zohoUpdateScopes = array();
-        $field = $thisModule->Post->getChild('field');
+        $field = $this->module->Post->getChild('field');
         $uniqueKey = $this->config->get('zoho_form_unique_key');
         $accessToken = config('zoho_access_token');
         $zohoInsertScopes = $this->config->get('zoho_form_insert_scope');
@@ -99,7 +99,8 @@ class Engine
                     $finds = $getClient->searchRecords()
                     ->where($uniqueKey, $zohoInsertConfig[$uniqueKey])
                     ->request();
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
+                    throw $e;
                 }
                 if ($finds) {
                     continue;
@@ -121,7 +122,8 @@ class Engine
                         $this->addNote($zohoInsertConfig['Note Title'], $zohoInsertConfig['Note Content'], $updated[1]->id);
                     }
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
+                throw $e;
             }
         }
 
@@ -150,8 +152,8 @@ class Engine
                 $targets = $getClient->searchRecords()
                 ->where($uniqueKey, $zohoUpdateConfig[$uniqueKey])
                 ->request();
-            } catch (Exception $e) {
-                continue;
+            } catch (\Exception $e) {
+                throw $e;
             }
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $temp = array_values($targets);
@@ -167,7 +169,8 @@ class Engine
                 ->addRecord($zohoUpdateConfig)
                 ->triggerWorkflow()
                 ->request();
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
+                throw $e;
             }
         }
 
@@ -231,7 +234,8 @@ class Engine
                     ))
                     ->request();
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
+                throw $e;
             }
         }
     }
