@@ -86,25 +86,29 @@ class Engine
         foreach ($zohoInsertScopes as $zohoScope) {
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $zohoInsertConfig = array();
+            $uniqueValue = false;
             foreach ($fieldKeys as $i => $type) {
+                $key = $this->config->get('zoho_field_cms_key', '', $i);
+                $scopes = $this->config->get('zoho_field_scope', '', $i);
+                $scopes = explode(',', $scopes);
+                if ($type === $uniqueKey) {
+                    $uniqueValue = $field->get($key);
+                }
                 $canInsert = $this->config->get('zoho_field_insert', '', $i);
                 if ($canInsert !== 'true') {
                     continue;
                 }
-                $key = $this->config->get('zoho_field_cms_key', '', $i);
-                $scopes = $this->config->get('zoho_field_scope', '', $i);
-                $scopes = explode(',', $scopes);
                 foreach ($scopes as $scope) {
                     $zohoInsertConfig[$type] = implode(";", $field->getArray($key));
                 }
             }
             //すでに顧客に存在するときは追加しない
-            if ($zohoScope === 'Leads' && isset($zohoInsertConfig[$uniqueKey])) {
+            if ($zohoScope === 'Leads' && $uniqueValue) {
                 $finds = null;
                 try {
                     $getClient = new ZohoCRMClient('Contacts', $accessToken);
                     $finds = $getClient->searchRecords()
-                    ->where($uniqueKey, $zohoInsertConfig[$uniqueKey])
+                    ->where($uniqueKey, $uniqueValue)
                     ->request();
                 } catch (\Exception $e) {
                     throw $e;
@@ -138,14 +142,18 @@ class Engine
         foreach ($zohoUpdateScopes as $zohoScope) {
             $zohoUpdateConfig = array();
             $getClient = new ZohoCRMClient($zohoScope, $accessToken);
+            $uniqueValue = false;
             foreach ($fieldKeys as $i => $type) {
+                $key = $this->config->get('zoho_field_cms_key', '', $i);
+                $scopes = $this->config->get('zoho_field_scope', '', $i);
+                $scopes = explode(',', $scopes);
+                if ($type === $uniqueKey) {
+                    $uniqueValue = $field->get($key);
+                }
                 $canUpdate = $this->config->get('zoho_field_update', '', $i);
                 if ($canUpdate !== 'true') {
                     continue;
                 }
-                $key = $this->config->get('zoho_field_cms_key', '', $i);
-                $scopes = $this->config->get('zoho_field_scope', '', $i);
-                $scopes = explode(',', $scopes);
                 foreach ($scopes as $scope) {
                     if ($scope === $zohoScope) {
                         $updateValue = implode(";", $field->getArray($key));
@@ -155,12 +163,14 @@ class Engine
                     }
                 }
             }
-            try {
-                $targets = $getClient->searchRecords()
-                ->where($uniqueKey, $zohoUpdateConfig[$uniqueKey])
-                ->request();
-            } catch (\Exception $e) {
-                throw $e;
+            if ($uniqueValue) {
+                try {
+                    $targets = $getClient->searchRecords()
+                    ->where($uniqueKey, $uniqueValue)
+                    ->request();
+                } catch (\Exception $e) {
+                    throw $e;
+                }
             }
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $temp = array_values($targets);
