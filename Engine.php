@@ -87,6 +87,10 @@ class Engine
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $zohoInsertConfig = array();
             foreach ($fieldKeys as $i => $type) {
+                $canInsert = $this->config->get('zoho_field_insert', '', $i);
+                if ($canInsert !== 'true') {
+                    continue;
+                }
                 $key = $this->config->get('zoho_field_cms_key', '', $i);
                 $scopes = $this->config->get('zoho_field_scope', '', $i);
                 $scopes = explode(',', $scopes);
@@ -135,6 +139,10 @@ class Engine
             $zohoUpdateConfig = array();
             $getClient = new ZohoCRMClient($zohoScope, $accessToken);
             foreach ($fieldKeys as $i => $type) {
+                $canUpdate = $this->config->get('zoho_field_update', '', $i);
+                if ($canUpdate !== 'true') {
+                    continue;
+                }
                 $key = $this->config->get('zoho_field_cms_key', '', $i);
                 $scopes = $this->config->get('zoho_field_scope', '', $i);
                 $scopes = explode(',', $scopes);

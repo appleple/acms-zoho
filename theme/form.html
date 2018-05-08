@@ -67,6 +67,12 @@
             <th class="acms-admin-table-left">
                 <!--T-->キー<!--/T-->
                 <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zoho側のフィールド名を指定します。<!--/T-->"></i>
+			</th>
+            <th class="acms-admin-table-left" style="width:50px; text-align: center;">
+                <!--T-->Insert<!--/T-->
+            </th>
+            <th class="acms-admin-table-left" style="width:50px; text-align: center;">
+                <!--T-->Update<!--/T-->
             </th>
             <th class="acms-admin-table-left acms-admin-admin-config-table-action">
                 <!--T-->削除<!--/T-->
@@ -90,6 +96,18 @@
             <td>
                 <input type="text" name="zoho_field_key[{i}]" value="{zoho_field_key}" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Email"
                 />
+			</td>
+            <td style="width:50px; text-align: center;">
+                <label class="acms-admin-form-checkbox" style="margin-right: 0">
+                    <input type="checkbox" name="zoho_field_insert[{i}]" value="true" class="acms-admin-form-width-full" {zoho_field_insert:checked#true}>
+                    <i class="acms-admin-ico-checkbox"></i>
+                </label>
+            </td>
+            <td style="width:50px; text-align: center;">
+                <label class="acms-admin-form-checkbox" style="margin-right: 0">
+                    <input type="checkbox" name="zoho_field_update[{i}]" value="true" class="acms-admin-form-width-full" {zoho_field_update:checked#true}>
+                    <i class="acms-admin-ico-checkbox"></i>
+                </label>
             </td>
             <td>
                 <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
@@ -111,6 +129,18 @@
             <td>
                 <input type="text" name="zoho_field_key[]" value="" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Email"
                 />
+			</td>
+            <td style="width:50px; text-align: center;">
+                <label class="acms-admin-form-checkbox" style="margin-right: 0">
+                    <input type="checkbox" name="zoho_field_insert[]" value="true" class="acms-admin-form-width-full">
+                    <i class="acms-admin-ico-checkbox"></i>
+                </label>
+            </td>
+            <td style="width:50px; text-align: center;">
+                <label class="acms-admin-form-checkbox" style="margin-right: 0">
+                    <input type="checkbox" name="zoho_field_update[]" value="true" class="acms-admin-form-width-full">
+                    <i class="acms-admin-ico-checkbox"></i>
+                </label>
             </td>
             <td>
                 <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
@@ -119,7 +149,7 @@
     </tbody>
     <tfoot>
         <tr>
-            <td colspan="5">
+            <td colspan="7">
                 <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
             </td>
         </tr>
