@@ -111,6 +111,7 @@ class Engine
                     ->where($uniqueKey, $uniqueValue)
                     ->request();
                 } catch (\Exception $e) {
+                    throw $e;
                 }
                 if ($finds) {
                     continue;
@@ -133,6 +134,7 @@ class Engine
                     }
                 }
             } catch (\Exception $e) {
+                throw $e;
             }
         }
     }
@@ -169,6 +171,7 @@ class Engine
                     ->where($uniqueKey, $uniqueValue)
                     ->request();
                 } catch (\Exception $e) {
+                    throw $e;
                 }
             }
             $client = new ZohoCRMClient($zohoScope, $accessToken);
@@ -186,6 +189,7 @@ class Engine
                 ->triggerWorkflow()
                 ->request();
             } catch (\Exception $e) {
+                throw $e;
             }
         }
     }
