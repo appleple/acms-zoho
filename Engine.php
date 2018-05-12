@@ -83,6 +83,7 @@ class Engine
     private function insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey)
     {
         $accessToken = $this->accessToken;
+        $field = $this->field;
         foreach ($zohoInsertScopes as $zohoScope) {
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $zohoInsertConfig = array();
@@ -141,6 +142,8 @@ class Engine
 
     private function updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey)
     {
+        $accessToken = $this->accessToken;
+        $field = $this->field;
         foreach ($zohoUpdateScopes as $zohoScope) {
             $zohoUpdateConfig = array();
             $getClient = new ZohoCRMClient($zohoScope, $accessToken);
@@ -173,6 +176,9 @@ class Engine
                 } catch (\Exception $e) {
                     throw $e;
                 }
+            }
+            if (!isset($targets)) {
+                continue;
             }
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $temp = array_values($targets);
