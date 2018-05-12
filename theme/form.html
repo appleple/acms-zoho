@@ -1,240 +1,278 @@
 <h2 class="acms-admin-admin-title2">Zoho Form 設定</h2>
 <div class="acms-admin-table-admin-edit" style="padding:15px;">
-<h3 class="acms-admin-admin-title2">
-    <!--T-->Zoho フォームの権限設定<!--/T-->
-</h3>
-<table>
+  <h2 class="acms-admin-admin-title2">フォームの権限設定</h2>
+  <table class="js-fieldgroup-sortable">
     <thead class="acms-admin-hide-sp">
-        <tr>
-            <th class="acms-admin-table-left">
-                <!--T-->スコープ（Insert）<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->追加対象のスコープを指定します。<!--/T-->"></i>
-            </th>
-            <th class="acms-admin-table-left">
-                <!--T-->スコープ（Update）<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->書き換え対象のスコープを指定します。<!--/T-->"></i>
-            </th>
-            <th class="acms-admin-table-left">
-                <!--T-->ユニークキー<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Insert時やUpdate時に使用する一意のキー。何も指定がない場合はEmailがユニークキーとなります。<!--/T-->"></i>
-            </th>
-            <th class="acms-admin-table-left acms-admin-admin-config-table-action">
-                <!--T-->削除<!--/T-->
-            </th>
-        </tr>
+      <tr>
+        <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
+        <th class="acms-admin-table-left">スコープ（Insert）</th>
+        <th class="acms-admin-table-left">スコープ（Update）</th>
+        <th class="acms-admin-table-left">ユニークキー</th>
+        <th class="acms-admin-table-left acms-admin-admin-config-table-action">削除</th>
+      </tr>
     </thead>
     <tbody>
-        <tr class="sortable-item">
-            <td>
-                <input type="text" name="zoho_form_insert_scope[{i}]" value="{zoho_form_insert_scope}" class="acms-admin-form-width-full"
-                    placeholder="<!--T-->例）<!--/T-->Leads,Contacts" />
-            </td>
-            <td>
-                <input type="text" name="zoho_form_update_scope[{i}]" value="{zoho_form_update_scope}" class="acms-admin-form-width-full"
-                    placeholder="<!--T-->例）<!--/T-->Leads,Contacts" />
-            </td>
-            <td>
-                <input type="text" name="zoho_form_unique_key[{i}]" value="{zoho_form_unique_key}" class="acms-admin-form-width-full"
-                    placeholder="<!--T-->例）<!--/T-->Email" />
-            </td>
-            <td>
-                <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
-            </td>
-        </tr>
-    </tbody>
-</table>
-
-<input type="hidden" name="mail[]" value="zoho_form_insert_scope" />
-<input type="hidden" name="mail[]" value="zoho_form_update_scope" />
-<input type="hidden" name="mail[]" value="zoho_form_unique_key" />
-
-
-<h3 class="acms-admin-admin-title2">
-    <!--T-->Zoho カスタムフィールド<!--/T-->
-</h3>
-<table class="js-fieldgroup-sortable">
-    <thead class="acms-admin-hide-sp">
-        <tr>
-            <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
-            <th class="acms-admin-table-left">
-                <!--T-->a-blog cms側のキー<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。<!--/T-->"></i>
-            </th>
-            <th class="acms-admin-table-left">
-                <!--T-->スコープ<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zoho側のスコープを指定します。<!--/T-->"></i>
-            </th>
-            <th class="acms-admin-table-left">
-                <!--T-->キー<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zoho側のフィールド名を指定します。<!--/T-->"></i>
-			</th>
-            <th class="acms-admin-table-left" style="width:50px; text-align: center;">
-                <!--T-->Insert<!--/T-->
-            </th>
-            <th class="acms-admin-table-left" style="width:50px; text-align: center;">
-                <!--T-->Update<!--/T-->
-            </th>
-            <th class="acms-admin-table-left acms-admin-admin-config-table-action">
-                <!--T-->削除<!--/T-->
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        <!-- BEGIN zoho_field_group:loop -->
-        <tr class="sortable-item">
-            <td class="item-handle">
-                <i class="acms-admin-icon-sort"></i>
-            </td>
-            <td>
-                <input type="text" name="zoho_field_cms_key[{i}]" value="{zoho_field_cms_key}" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->email"
-                />
-            </td>
-            <td>
-                <input type="text" name="zoho_field_scope[{i}]" value="{zoho_field_scope}" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Leads,Contacts"
-                />
-            </td>
-            <td>
-                <input type="text" name="zoho_field_key[{i}]" value="{zoho_field_key}" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Email"
-                />
-			</td>
-            <td style="width:50px; text-align: center;">
-                <label class="acms-admin-form-checkbox" style="margin-right: 0">
-                    <input type="checkbox" name="zoho_field_insert[{i}]" value="true" class="acms-admin-form-width-full" {zoho_field_insert:checked#true}>
-                    <i class="acms-admin-ico-checkbox"></i>
-                </label>
-            </td>
-            <td style="width:50px; text-align: center;">
-                <label class="acms-admin-form-checkbox" style="margin-right: 0">
-                    <input type="checkbox" name="zoho_field_update[{i}]" value="true" class="acms-admin-form-width-full" {zoho_field_update:checked#true}>
-                    <i class="acms-admin-ico-checkbox"></i>
-                </label>
-            </td>
-            <td>
-                <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
-            </td>
-        </tr>
-        <!-- END zoho_field_group:loop -->
-        <tr class="sortable-item item-template">
-            <td class="item-handle">
-                <i class="acms-admin-icon-sort"></i>
-            </td>
-            <td>
-                <input type="text" name="zoho_field_cms_key[]" value="" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->email"
-                />
-            </td>
-            <td>
-                <input type="text" name="zoho_field_scope[]" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Leads,Contacts"
-                />
-            </td>
-            <td>
-                <input type="text" name="zoho_field_key[]" value="" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Email"
-                />
-			</td>
-            <td style="width:50px; text-align: center;">
-                <label class="acms-admin-form-checkbox" style="margin-right: 0">
-                    <input type="checkbox" name="zoho_field_insert[]" value="true" class="acms-admin-form-width-full">
-                    <i class="acms-admin-ico-checkbox"></i>
-                </label>
-            </td>
-            <td style="width:50px; text-align: center;">
-                <label class="acms-admin-form-checkbox" style="margin-right: 0">
-                    <input type="checkbox" name="zoho_field_update[]" value="true" class="acms-admin-form-width-full">
-                    <i class="acms-admin-ico-checkbox"></i>
-                </label>
-            </td>
-            <td>
-                <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
-            </td>
-        </tr>
+      <!-- BEGIN zoho_form_group:loop -->
+      <tr class="sortable-item">
+        <td class="item-handle">
+          <i class="acms-admin-icon-sort"></i>
+        </td>
+        <td>
+          <input type="text" name="zoho_form_insert_scope[]" value="{zoho_form_insert_scope}" class="acms-admin-form-width-full">
+        </td>
+        <td>
+          <input type="text" name="zoho_form_update_scope[]" value="{zoho_form_update_scope}" class="acms-admin-form-width-full">
+        </td>
+        <td>
+          <input type="text" name="zoho_form_unique_key[]" value="{zoho_form_unique_key}" class="acms-admin-form-width-full">
+        </td>
+        <td>
+          <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="削除">
+        </td>
+      </tr>
+      <!-- END zoho_form_group:loop -->
+      <tr class="sortable-item item-template">
+        <td class="item-handle">
+          <i class="acms-admin-icon-sort"></i>
+        </td>
+        <td>
+          <input type="text" name="zoho_form_insert_scope[]" value="" class="acms-admin-form-width-full">
+        </td>
+        <td>
+          <input type="text" name="zoho_form_update_scope[]" value="" class="acms-admin-form-width-full">
+        </td>
+        <td>
+          <input type="text" name="zoho_form_unique_key[]" value="" class="acms-admin-form-width-full">
+        </td>
+        <td>
+          <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="削除">
+        </td>
+      </tr>
     </tbody>
     <tfoot>
-        <tr>
-            <td colspan="7">
-                <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
-            </td>
-        </tr>
+      <tr>
+        <td colspan="5">
+          <input type="button" class="item-insert acms-admin-btn-admin" value="追加">
+        </td>
+      </tr>
     </tfoot>
-</table>
-<input type="hidden" name="@zoho_field_group[]" value="zoho_field_label" />
-<input type="hidden" name="mail[]" value="zoho_field_label" />
-<input type="hidden" name="@zoho_field_group[]" value="zoho_field_key" />
-<input type="hidden" name="mail[]" value="zoho_field_key" />
-<input type="hidden" name="@zoho_field_group[]" value="zoho_field_cms_key" />
-<input type="hidden" name="mail[]" value="zoho_field_cms_key" />
-<input type="hidden" name="@zoho_field_group[]" value="zoho_field_scope" />
-<input type="hidden" name="mail[]" value="zoho_field_scope" />
-<input type="hidden" name="@zoho_field_group[]" value="zoho_field_insert" />
-<input type="hidden" name="mail[]" value="zoho_field_insert" />
-<input type="hidden" name="@zoho_field_group[]" value="zoho_field_update" />
-<input type="hidden" name="mail[]" value="zoho_field_update" />
-<input type="hidden" name="mail[]" value="@zoho_field_group" />
+  </table>
+  <input type="hidden" name="@zoho_form_group[]" value="zoho_form_insert_scope">
+  <input type="hidden" name="mail[]" value="zoho_form_insert_scope">
+  <input type="hidden" name="@zoho_form_group[]" value="zoho_form_update_scope">
+  <input type="hidden" name="mail[]" value="zoho_form_update_scope">
+  <input type="hidden" name="@zoho_form_group[]" value="zoho_form_unique_key">
+  <input type="hidden" name="mail[]" value="zoho_form_unique_key">
+  <input type="hidden" name="mail[]" value="@zoho_form_group">
 
-<h3 class="acms-admin-admin-title2"><!--T-->Zoho リレーショナル設定<!--/T--></h3>
-<table class="js-fieldgroup-sortable adminTable">
+
+  <h3 class="acms-admin-admin-title2">
+    <!--T-->Zoho カスタムフィールド
+    <!--/T-->
+  </h3>
+  <table class="js-fieldgroup-sortable">
     <thead class="acms-admin-hide-sp">
-        <tr>
-            <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
-            <th class="acms-admin-table-left"><!--T-->スコープ<!--/T--></th>
-            <th class="acms-admin-table-left"><!--T-->ターゲットスコープ<!--/T--></th>
-            <th class="acms-admin-table-left"><!--T-->ルックアップID<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->カスタム項目の場合はIDを指定してください。（カスタム項目名_ID）になります。<!--/T-->"></i>
-            </th>
-            <th class="acms-admin-table-left acms-admin-admin-config-table-action"><!--T-->削除<!--/T--></th>
-        </tr>
+      <tr>
+        <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
+        <th class="acms-admin-table-left">
+          <!--T-->a-blog cms側のキー
+          <!--/T-->
+          <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。<!--/T-->"></i>
+        </th>
+        <th class="acms-admin-table-left">
+          <!--T-->スコープ
+          <!--/T-->
+          <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zoho側のスコープを指定します。<!--/T-->"></i>
+        </th>
+        <th class="acms-admin-table-left">
+          <!--T-->キー
+          <!--/T-->
+          <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zoho側のフィールド名を指定します。<!--/T-->"></i>
+        </th>
+        <th class="acms-admin-table-left" style="width:50px; text-align: center;">
+          <!--T-->Insert
+          <!--/T-->
+        </th>
+        <th class="acms-admin-table-left" style="width:50px; text-align: center;">
+          <!--T-->Update
+          <!--/T-->
+        </th>
+        <th class="acms-admin-table-left acms-admin-admin-config-table-action">
+          <!--T-->削除
+          <!--/T-->
+        </th>
+      </tr>
     </thead>
     <tbody>
-        <!-- BEGIN zoho_related_group:loop -->
-        <tr class="sortable-item">
-            <td class="item-handle">
-                <i class="acms-admin-icon-sort"></i>
-            </td>
-            <td>
-                <input type="text" name="zoho_related_scope[{i}]" value="{zoho_related_scope}" class="acms-admin-form-width-full" />
-            </td>
-            <td>
-                <input type="text" name="zoho_related_target_scope[{i}]" value="{zoho_related_target_scope}" class="acms-admin-form-width-full"
-                />
-            </td>
-            <td>
-                <input type="text" name="zoho_related_lookup_id[{i}]" value="{zoho_related_lookup_id}" class="acms-admin-form-width-full"
-                />
-            </td>
-            <td>
-                <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
-            </td>
-        </tr>
-        <!-- END zoho_related_group:loop -->
-        <tr class="sortable-item item-template">
-            <td class="item-handle">
-                <i class="acms-admin-icon-sort"></i>
-            </td>
-            <td>
-                <input type="text" name="zoho_related_scope[]" value="" class="acms-admin-form-width-full" />
-            </td>
-            <td>
-                <input type="text" name="zoho_related_target_scope[]" value="" class="acms-admin-form-width-full" />
-            </td>
-            <td>
-                <input type="text" name="zoho_related_lookup_id[]" value="" class="acms-admin-form-width-full" />
-            </td>
-            <td>
-                <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
-            </td>
-        </tr>
+      <!-- BEGIN zoho_field_group:loop -->
+      <tr class="sortable-item">
+        <td class="item-handle">
+          <i class="acms-admin-icon-sort"></i>
+        </td>
+        <td>
+          <input type="text" name="zoho_field_cms_key[{i}]" value="{zoho_field_cms_key}" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->email"
+          />
+        </td>
+        <td>
+          <input type="text" name="zoho_field_scope[{i}]" value="{zoho_field_scope}" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Leads,Contacts"
+          />
+        </td>
+        <td>
+          <input type="text" name="zoho_field_key[{i}]" value="{zoho_field_key}" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Email"
+          />
+        </td>
+        <td style="width:50px; text-align: center;">
+          <label class="acms-admin-form-checkbox" style="margin-right: 0">
+            <input type="checkbox" name="zoho_field_insert[{i}]" value="true" class="acms-admin-form-width-full" {zoho_field_insert:checked#true}>
+            <i class="acms-admin-ico-checkbox"></i>
+          </label>
+        </td>
+        <td style="width:50px; text-align: center;">
+          <label class="acms-admin-form-checkbox" style="margin-right: 0">
+            <input type="checkbox" name="zoho_field_update[{i}]" value="true" class="acms-admin-form-width-full" {zoho_field_update:checked#true}>
+            <i class="acms-admin-ico-checkbox"></i>
+          </label>
+        </td>
+        <td>
+          <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
+        </td>
+      </tr>
+      <!-- END zoho_field_group:loop -->
+      <tr class="sortable-item item-template">
+        <td class="item-handle">
+          <i class="acms-admin-icon-sort"></i>
+        </td>
+        <td>
+          <input type="text" name="zoho_field_cms_key[]" value="" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->email"
+          />
+        </td>
+        <td>
+          <input type="text" name="zoho_field_scope[]" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Leads,Contacts"
+          />
+        </td>
+        <td>
+          <input type="text" name="zoho_field_key[]" value="" class="acms-admin-form-width-full" placeholder="<!--T-->例）<!--/T-->Email"
+          />
+        </td>
+        <td style="width:50px; text-align: center;">
+          <label class="acms-admin-form-checkbox" style="margin-right: 0">
+            <input type="checkbox" name="zoho_field_insert[]" value="true" class="acms-admin-form-width-full">
+            <i class="acms-admin-ico-checkbox"></i>
+          </label>
+        </td>
+        <td style="width:50px; text-align: center;">
+          <label class="acms-admin-form-checkbox" style="margin-right: 0">
+            <input type="checkbox" name="zoho_field_update[]" value="true" class="acms-admin-form-width-full">
+            <i class="acms-admin-ico-checkbox"></i>
+          </label>
+        </td>
+        <td>
+          <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
+        </td>
+      </tr>
     </tbody>
     <tfoot>
-        <tr>
-            <td colspan="5">
-                <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
-            </td>
-        </tr>
+      <tr>
+        <td colspan="7">
+          <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
+        </td>
+      </tr>
     </tfoot>
-</table>
-<input type="hidden" name="@zoho_related_group[]" value="zoho_related_scope" />
-<input type="hidden" name="mail[]" value="zoho_related_scope" />
-<input type="hidden" name="@zoho_related_group[]" value="zoho_related_target_scope" />
-<input type="hidden" name="mail[]" value="zoho_related_target_scope" />
-<input type="hidden" name="@zoho_related_group[]" value="zoho_related_lookup_id" />
-<input type="hidden" name="mail[]" value="zoho_related_lookup_id" />
-<input type="hidden" name="mail[]" value="@zoho_related_group" />
+  </table>
+  <input type="hidden" name="@zoho_field_group[]" value="zoho_field_label" />
+  <input type="hidden" name="mail[]" value="zoho_field_label" />
+  <input type="hidden" name="@zoho_field_group[]" value="zoho_field_key" />
+  <input type="hidden" name="mail[]" value="zoho_field_key" />
+  <input type="hidden" name="@zoho_field_group[]" value="zoho_field_cms_key" />
+  <input type="hidden" name="mail[]" value="zoho_field_cms_key" />
+  <input type="hidden" name="@zoho_field_group[]" value="zoho_field_scope" />
+  <input type="hidden" name="mail[]" value="zoho_field_scope" />
+  <input type="hidden" name="@zoho_field_group[]" value="zoho_field_insert" />
+  <input type="hidden" name="mail[]" value="zoho_field_insert" />
+  <input type="hidden" name="@zoho_field_group[]" value="zoho_field_update" />
+  <input type="hidden" name="mail[]" value="zoho_field_update" />
+  <input type="hidden" name="mail[]" value="@zoho_field_group" />
+
+  <h3 class="acms-admin-admin-title2">
+    <!--T-->Zoho リレーショナル設定
+    <!--/T-->
+  </h3>
+  <table class="js-fieldgroup-sortable adminTable">
+    <thead class="acms-admin-hide-sp">
+      <tr>
+        <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
+        <th class="acms-admin-table-left">
+          <!--T-->スコープ
+          <!--/T-->
+        </th>
+        <th class="acms-admin-table-left">
+          <!--T-->ターゲットスコープ
+          <!--/T-->
+        </th>
+        <th class="acms-admin-table-left">
+          <!--T-->ルックアップID
+          <!--/T-->
+          <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->カスタム項目の場合はIDを指定してください。（カスタム項目名_ID）になります。<!--/T-->"></i>
+        </th>
+        <th class="acms-admin-table-left acms-admin-admin-config-table-action">
+          <!--T-->削除
+          <!--/T-->
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- BEGIN zoho_related_group:loop -->
+      <tr class="sortable-item">
+        <td class="item-handle">
+          <i class="acms-admin-icon-sort"></i>
+        </td>
+        <td>
+          <input type="text" name="zoho_related_scope[{i}]" value="{zoho_related_scope}" class="acms-admin-form-width-full" />
+        </td>
+        <td>
+          <input type="text" name="zoho_related_target_scope[{i}]" value="{zoho_related_target_scope}" class="acms-admin-form-width-full"
+          />
+        </td>
+        <td>
+          <input type="text" name="zoho_related_lookup_id[{i}]" value="{zoho_related_lookup_id}" class="acms-admin-form-width-full"
+          />
+        </td>
+        <td>
+          <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
+        </td>
+      </tr>
+      <!-- END zoho_related_group:loop -->
+      <tr class="sortable-item item-template">
+        <td class="item-handle">
+          <i class="acms-admin-icon-sort"></i>
+        </td>
+        <td>
+          <input type="text" name="zoho_related_scope[]" value="" class="acms-admin-form-width-full" />
+        </td>
+        <td>
+          <input type="text" name="zoho_related_target_scope[]" value="" class="acms-admin-form-width-full" />
+        </td>
+        <td>
+          <input type="text" name="zoho_related_lookup_id[]" value="" class="acms-admin-form-width-full" />
+        </td>
+        <td>
+          <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5">
+          <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+  <input type="hidden" name="@zoho_related_group[]" value="zoho_related_scope" />
+  <input type="hidden" name="mail[]" value="zoho_related_scope" />
+  <input type="hidden" name="@zoho_related_group[]" value="zoho_related_target_scope" />
+  <input type="hidden" name="mail[]" value="zoho_related_target_scope" />
+  <input type="hidden" name="@zoho_related_group[]" value="zoho_related_lookup_id" />
+  <input type="hidden" name="mail[]" value="zoho_related_lookup_id" />
+  <input type="hidden" name="mail[]" value="@zoho_related_group" />
 </div>

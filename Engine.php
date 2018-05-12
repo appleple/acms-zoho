@@ -23,6 +23,10 @@ class Engine
         $this->module = $module;
         $this->code = $code;
         $this->config = $field->getChild('mail');
+        $this->id = $this->module->Post->get('id');
+        $this->field = $this->module->Post->getChild('field');
+        $this->accessToken = config('zoho_access_token');
+        $this->scopePool = array();
     }
     /**
      * @param string $code
@@ -50,39 +54,35 @@ class Engine
      */
     public function send()
     {
-        $id = $this->module->Post->get('id');
-        $zohoInsertScopes = array();
-        $zohoUpdateScopes = array();
-        $field = $this->module->Post->getChild('field');
-        $uniqueKey = $this->config->get('zoho_form_unique_key');
-        $accessToken = config('zoho_access_token');
-        $zohoInsertScopes = $this->config->get('zoho_form_insert_scope');
-        $zohoUpdateScopes = $this->config->get('zoho_form_update_scope');
-        $fieldKeys = $this->config->getArray('zoho_field_key');
-        $this->field = $field;
-        $this->accessToken = $accessToken;
-        $this->scopePool = array();
-        if (!$uniqueKey) {
-            $uniqueKey = 'Email';
-        }
-        if ($zohoInsertScopes) {
-            $zohoInsertScopes = explode(',', $zohoInsertScopes);
-        }
-        if ($zohoUpdateScopes) {
-            $zohoUpdateScopes = explode(',', $zohoUpdateScopes);
-        }
-
-        if (!$zohoInsertScopes && !$zohoUpdateScopes) {
-            return;
-        }
-
-        if (!$zohoInsertScopes) {
+        $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
+        foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
             $zohoInsertScopes = array();
-        }
-        if (!$zohoUpdateScopes) {
             $zohoUpdateScopes = array();
+            $uniqueKey = $this->config->get('zoho_form_unique_key', '', $i);
+            $zohoInsertScopes = $this->config->get('zoho_form_insert_scope', '', $i);
+            $zohoUpdateScopes = $this->config->get('zoho_form_update_scope', '', $i);
+            $fieldKeys = $this->config->getArray('zoho_field_key');
+            if (!$zohoInsertScopes && !$zohoUpdateScopes) {
+                continue;
+            }
+            if (!$uniqueKey) {
+                $uniqueKey = 'Email';
+            }
+            if ($zohoInsertScopes) {
+                $zohoInsertScopes = explode(',', $zohoInsertScopes);
+            }
+            if ($zohoUpdateScopes) {
+                $zohoUpdateScopes = explode(',', $zohoUpdateScopes);
+            }
+            $this->insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey);
+            $this->updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey);
         }
+        $this->updateRelatedRecords();
+    }
 
+    private function insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey)
+    {
+        $accessToken = $this->accessToken;
         foreach ($zohoInsertScopes as $zohoScope) {
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $zohoInsertConfig = array();
@@ -111,7 +111,6 @@ class Engine
                     ->where($uniqueKey, $uniqueValue)
                     ->request();
                 } catch (\Exception $e) {
-                    throw $e;
                 }
                 if ($finds) {
                     continue;
@@ -134,11 +133,12 @@ class Engine
                     }
                 }
             } catch (\Exception $e) {
-                throw $e;
             }
         }
+    }
 
-
+    private function updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey)
+    {
         foreach ($zohoUpdateScopes as $zohoScope) {
             $zohoUpdateConfig = array();
             $getClient = new ZohoCRMClient($zohoScope, $accessToken);
@@ -169,7 +169,6 @@ class Engine
                     ->where($uniqueKey, $uniqueValue)
                     ->request();
                 } catch (\Exception $e) {
-                    throw $e;
                 }
             }
             $client = new ZohoCRMClient($zohoScope, $accessToken);
@@ -187,11 +186,8 @@ class Engine
                 ->triggerWorkflow()
                 ->request();
             } catch (\Exception $e) {
-                throw $e;
             }
         }
-
-        $this->updateRelatedRecords();
     }
 
     private function addNote($noteTitle, $noteContent, $id)
@@ -213,7 +209,6 @@ class Engine
     private function updateRelatedRecords()
     {
         $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
-
         foreach ($zohoRelatedScopes as $i => $zohoRelatedScope) {
             $zohoRelatedTargetScope = $this->config->get('zoho_related_target_scope', '', $i);
             $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
