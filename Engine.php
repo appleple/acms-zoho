@@ -112,7 +112,6 @@ class Engine
                     ->where($uniqueKey, $uniqueValue)
                     ->request();
                 } catch (\Exception $e) {
-                    throw $e;
                 }
                 if ($finds) {
                     continue;
@@ -135,7 +134,6 @@ class Engine
                     }
                 }
             } catch (\Exception $e) {
-                throw $e;
             }
         }
     }
@@ -174,7 +172,6 @@ class Engine
                     ->where($uniqueKey, $uniqueValue)
                     ->request();
                 } catch (\Exception $e) {
-                    throw $e;
                 }
             }
             if (!isset($targets)) {
@@ -195,7 +192,6 @@ class Engine
                 ->triggerWorkflow()
                 ->request();
             } catch (\Exception $e) {
-                throw $e;
             }
         }
     }
@@ -257,7 +253,6 @@ class Engine
                     ->request();
                 }
             } catch (\Exception $e) {
-                throw $e;
             }
         }
     }
