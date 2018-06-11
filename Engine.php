@@ -74,6 +74,7 @@ class Engine
             if ($zohoUpdateScopes) {
                 $zohoUpdateScopes = explode(',', $zohoUpdateScopes);
             }
+
             $this->insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey);
             $this->updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey);
         }
@@ -100,7 +101,9 @@ class Engine
                     continue;
                 }
                 foreach ($scopes as $scope) {
-                    $zohoInsertConfig[$type] = implode(";", $field->getArray($key));
+                    if ($scope === $zohoScope) {
+                        $zohoInsertConfig[$type] = implode(";", $field->getArray($key));
+                    }
                 }
             }
             //すでに顧客に存在するときは追加しない
