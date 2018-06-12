@@ -27,6 +27,7 @@ class Engine
         $this->field = $this->module->Post->getChild('field');
         $this->accessToken = config('zoho_access_token');
         $this->scopePool = array();
+        $this->records = array();
     }
     /**
      * @param string $code
@@ -62,6 +63,7 @@ class Engine
             $zohoInsertScopes = $this->config->get('zoho_form_insert_scope', '', $i);
             $zohoUpdateScopes = $this->config->get('zoho_form_update_scope', '', $i);
             $fieldKeys = $this->config->getArray('zoho_field_key');
+            $multi = false;
             if (!$zohoInsertScopes && !$zohoUpdateScopes) {
                 continue;
             }
@@ -78,7 +80,39 @@ class Engine
             $this->insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey);
             $this->updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey);
         }
-        $this->updateRelatedRecords();
+        // $this->updateRelatedRecords();
+    }
+
+    private function getMaxKey($keys)
+    {
+        $max = 1;
+        $field = $this->field;
+        foreach($keys as $key) {
+            $arr = $field->getArray($key);
+            $cnt = count($arr);
+            if ($cnt > $max) {
+                $max = $cnt;
+            }
+        }
+        return $cnt;
+    }
+
+    private function getGroupArray($zohoScope)
+    {
+        $keys = $this->config->getArray('zoho_field_cms_key');
+        $field = $this->field;
+        foreach ($keys as $i => $key) {
+            $scopes = $this->config->get('zoho_field_scope', '', $i);
+            $scopes = explode(',', $scopes);
+            foreach ($scopes as $scope) {
+                if ($scope === $zohoScope) {
+                    if (isset($key) && isset($key[0]) && $key[0] === '@') {
+                        return $field->getArray($key);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private function insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey)
@@ -87,24 +121,37 @@ class Engine
         $field = $this->field;
         foreach ($zohoInsertScopes as $zohoScope) {
             $client = new ZohoCRMClient($zohoScope, $accessToken);
-            $zohoInsertConfig = array();
             $uniqueValue = false;
-            foreach ($fieldKeys as $i => $type) {
-                $key = $this->config->get('zoho_field_cms_key', '', $i);
-                $scopes = $this->config->get('zoho_field_scope', '', $i);
-                $scopes = explode(',', $scopes);
-                if ($type === $uniqueKey) {
-                    $uniqueValue = $field->get($key);
-                }
-                $canInsert = $this->config->get('zoho_field_insert', '', $i);
-                if ($canInsert !== 'true') {
-                    continue;
-                }
-                foreach ($scopes as $scope) {
-                    if ($scope === $zohoScope) {
-                        $zohoInsertConfig[$type] = implode(";", $field->getArray($key));
+            $length = 1;
+            $groupArr = $this->getGroupArray($zohoScope);
+            if ($groupArr) {
+                $length = $this->getMaxKey($groupArr);
+            }
+            $records = array();
+            for ($cnt = 0; $cnt < $length; $cnt++) {
+                $zohoInsertConfig = array();
+                foreach ($fieldKeys as $i => $type) {
+                    $key = $this->config->get('zoho_field_cms_key', '', $i);
+                    $scopes = $this->config->get('zoho_field_scope', '', $i);
+                    $scopes = explode(',', $scopes);
+                    if ($type === $uniqueKey) {
+                        $uniqueValue = $field->get($key);
+                    }
+                    $canInsert = $this->config->get('zoho_field_insert', '', $i);
+                    if ($canInsert !== 'true') {
+                        continue;
+                    }
+                    foreach ($scopes as $scope) {
+                        if ($scope === $zohoScope) {
+                            if ($groupArr && in_array($key, $groupArr)) {
+                                $zohoInsertConfig[$type] = $field->get($key, '', $cnt);
+                            } else {
+                                $zohoInsertConfig[$type] = implode(";", $field->getArray($key));
+                            }
+                        }
                     }
                 }
+                $records[] = $zohoInsertConfig;
             }
             //すでに顧客に存在するときは追加しない
             if ($zohoScope === 'Leads' && $uniqueValue) {
@@ -121,19 +168,22 @@ class Engine
                 }
             }
 
+
+
             try {
-                $updated = $client->insertRecords()
-                ->setRecords(array(
-                    $zohoInsertConfig
-                ))
+                $updates = $client->insertRecords()
+                ->setRecords($records)
                 ->onDuplicateError()
                 ->triggerWorkflow()
                 ->request();
-                if ($updated && isset($updated[1])) {
-                    $this->scopePool[$zohoScope] = $updated[1]->id;
+                foreach ($updates as $i => $update) {
                     if (isset($zohoInsertConfig['Note Title']) && isset($zohoInsertConfig['Note Content'])) {
                         $relatedFieldId = strtoupper(rtrim($zohoScope, 's')).'ID';
-                        $this->addNote($zohoInsertConfig['Note Title'], $zohoInsertConfig['Note Content'], $updated[1]->id);
+                        $this->addNote($zohoInsertConfig['Note Title'], $zohoInsertConfig['Note Content'], $updated[$i]->id);
+                        if (!$this->scopePool[$zohoScope]) {
+                            $this->zohoPool[$zohoScope] = array();
+                        }
+                        $this->zohoPool[$zohoScope][] = $updated[$i]->id;
                     }
                 }
             } catch (\Exception $e) {
@@ -187,7 +237,10 @@ class Engine
             $temp2 = $target->getData();
             $zohoUpdateConfig['Id'] = $temp2[$fieldId];
             if ($zohoUpdateConfig['Id']) {
-                $this->scopePool[$zohoScope] = $zohoUpdateConfig['Id'];
+                if (!$this->scopePool[$zohoScope]) {
+                    $this->scopePool[$zohoScope] = array();
+                }
+                $this->scopePool[$zohoScope][] = $zohoUpdateConfig['Id'];
             }
             try {
                 $client->updateRecords()
