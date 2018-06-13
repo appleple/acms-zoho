@@ -208,7 +208,10 @@
         <th class="acms-admin-table-left">
           <!--T-->ターゲットスコープ
           <!--/T-->
-        </th>
+		</th>
+		<th class="acms-admin-table-left">
+			比較フィールド
+		</th>
         <th class="acms-admin-table-left">
           <!--T-->ルックアップID
           <!--/T-->
@@ -232,7 +235,10 @@
         <td>
           <input type="text" name="zoho_related_target_scope[{i}]" value="{zoho_related_target_scope}" class="acms-admin-form-width-full"
           />
-        </td>
+		</td>
+		<td>
+			<input type="text" name="zoho_related_compare_field[{i}]" value="{zoho_related_compare_field}" class="acms-admin-form-width-full" />
+		</td>
         <td>
           <input type="text" name="zoho_related_lookup_id[{i}]" value="{zoho_related_lookup_id}" class="acms-admin-form-width-full"
           />
@@ -251,7 +257,10 @@
         </td>
         <td>
           <input type="text" name="zoho_related_target_scope[]" value="" class="acms-admin-form-width-full" />
-        </td>
+		</td>
+		<td>
+			<input type="text" name="zoho_related_compare_field[]" value="" class="acms-admin-form-width-full" />
+		</td>
         <td>
           <input type="text" name="zoho_related_lookup_id[]" value="" class="acms-admin-form-width-full" />
         </td>
@@ -272,6 +281,8 @@
   <input type="hidden" name="mail[]" value="zoho_related_scope" />
   <input type="hidden" name="@zoho_related_group[]" value="zoho_related_target_scope" />
   <input type="hidden" name="mail[]" value="zoho_related_target_scope" />
+  <input type="hidden" name="@zoho_related_group[]" value="zoho_related_compare_field" />
+  <input type="hidden" name="mail[]" value="zoho_related_compare_field" />
   <input type="hidden" name="@zoho_related_group[]" value="zoho_related_lookup_id" />
   <input type="hidden" name="mail[]" value="zoho_related_lookup_id" />
   <input type="hidden" name="mail[]" value="@zoho_related_group" />

@@ -26,7 +26,6 @@ class Engine
         $this->id = $this->module->Post->get('id');
         $this->field = $this->module->Post->getChild('field');
         $this->accessToken = config('zoho_access_token');
-        $this->scopePool = array();
         $this->records = array();
     }
     /**
@@ -80,7 +79,7 @@ class Engine
             $this->insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey);
             $this->updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey);
         }
-        // $this->updateRelatedRecords();
+        $this->updateRelatedRecords();
     }
 
     private function getMaxKey($keys)
@@ -115,6 +114,26 @@ class Engine
         return null;
     }
 
+    private function removeCompareField($fields, $scope)
+    {
+        $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
+        $arr = array();
+        foreach ($fields as $key => $field) {
+            $flag = true;
+            foreach ($zohoRelatedScopes as $i => $zohoRelatedScope) {
+                $zohoRelatedTargetScope = $this->config->get('zoho_related_target_scope', '', $i);
+                $compareField = $this->config->get('zoho_related_compare_field', '', $i);
+                if ($key === $compareField && $scope === $zohoRelatedScope) {
+                    $flag = false;
+                }
+            }
+            if ($flag) {
+                $arr[$key] = $field;
+            }
+        }
+        return $arr;
+    }
+
     private function insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey)
     {
         $accessToken = $this->accessToken;
@@ -128,6 +147,7 @@ class Engine
                 $length = $this->getMaxKey($groupArr);
             }
             $records = array();
+            $saves = array();
             for ($cnt = 0; $cnt < $length; $cnt++) {
                 $zohoInsertConfig = array();
                 foreach ($fieldKeys as $i => $type) {
@@ -151,7 +171,8 @@ class Engine
                         }
                     }
                 }
-                $records[] = $zohoInsertConfig;
+                $records[] = $this->removeCompareField($zohoInsertConfig,$zohoScope);
+                $saves[] = $zohoInsertConfig;
             }
             //すでに顧客に存在するときは追加しない
             if ($zohoScope === 'Leads' && $uniqueValue) {
@@ -169,8 +190,8 @@ class Engine
             }
 
 
-
             try {
+
                 $updates = $client->insertRecords()
                 ->setRecords($records)
                 ->onDuplicateError()
@@ -180,11 +201,13 @@ class Engine
                     if (isset($zohoInsertConfig['Note Title']) && isset($zohoInsertConfig['Note Content'])) {
                         $relatedFieldId = strtoupper(rtrim($zohoScope, 's')).'ID';
                         $this->addNote($zohoInsertConfig['Note Title'], $zohoInsertConfig['Note Content'], $updated[$i]->id);
-                        if (!$this->scopePool[$zohoScope]) {
-                            $this->zohoPool[$zohoScope] = array();
-                        }
-                        $this->zohoPool[$zohoScope][] = $updated[$i]->id;
                     }
+
+                    $this->records[] = array_merge(array(
+                        "scope" => $zohoScope,
+                        "id" => $update->id
+                    ), $saves[$i - 1]);
+
                 }
             } catch (\Exception $e) {
             }
@@ -195,6 +218,9 @@ class Engine
     {
         $accessToken = $this->accessToken;
         $field = $this->field;
+        if (!$zohoUpdateScopes) {
+            return;
+        }
         foreach ($zohoUpdateScopes as $zohoScope) {
             $zohoUpdateConfig = array();
             $getClient = new ZohoCRMClient($zohoScope, $accessToken);
@@ -237,10 +263,10 @@ class Engine
             $temp2 = $target->getData();
             $zohoUpdateConfig['Id'] = $temp2[$fieldId];
             if ($zohoUpdateConfig['Id']) {
-                if (!$this->scopePool[$zohoScope]) {
-                    $this->scopePool[$zohoScope] = array();
-                }
-                $this->scopePool[$zohoScope][] = $zohoUpdateConfig['Id'];
+                $this->records[] = array_merge(array(
+                    "scope" => $zohoScope,
+                    "id" => $update->id
+                ), $zohoUpdateConfig);
             }
             try {
                 $client->updateRecords()
@@ -271,44 +297,45 @@ class Engine
     private function updateRelatedRecords()
     {
         $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
+        $records = $this->records;
         foreach ($zohoRelatedScopes as $i => $zohoRelatedScope) {
             $zohoRelatedTargetScope = $this->config->get('zoho_related_target_scope', '', $i);
             $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
-            $targetId = null;
-            $id = null;
-            if (isset($this->scopePool[$zohoRelatedTargetScope])) {
-                $targetId = $this->scopePool[$zohoRelatedTargetScope];
-            }
-            if (isset($this->scopePool[$zohoRelatedScope])) {
-                $id = $this->scopePool[$zohoRelatedScope];
-            }
+            $compareField = $this->config->get('zoho_related_compare_field', '', $i);
 
-            if (!$id || !$targetId) {
+            $targets = array_filter($records, function($item) use ($zohoRelatedTargetScope) {
+                return $item['scope'] === $zohoRelatedTargetScope;
+            });
+
+            $items = array_filter($records, function($item) use ($zohoRelatedScope) {
+                return $item['scope'] === $zohoRelatedScope;
+            });
+
+            if (!count($targets) || !count($items)) {
                 continue;
             }
 
-            try {
-                $client = new ZohoCRMClient($zohoRelatedScope, $this->accessToken);
-                if ($lookupId) {
-                    $lookupId = $lookupId.'_ID';
-                    $client->updateRecords()
-                    ->addRecord(array(
-                        'Id' => $id,
-                        $lookupId => $targetId
-                    ))
-                    ->triggerWorkflow()
-                    ->request();
-                } else {
-                    $fieldId = strtoupper(rtrim($zohoRelatedTargetScope, 's')).'ID';
-                    $client->updateRelatedRecords()
-                    ->id($id)
-                    ->relatedModule($zohoRelatedTargetScope)
-                    ->addRecord(array(
-                        $fieldId => $targetId
-                    ))
-                    ->request();
+            foreach ($targets as $target) {
+                foreach ($items as $item) {
+                    $compareValues = $item[$compareField];
+                    $compareValues = explode(';',$compareValues);
+                    foreach ($compareValues as $compareValue) {
+                        if ($compareValue === $target[$compareField]) {
+                            $client = new ZohoCRMClient($zohoRelatedScope, $this->accessToken);
+                            $targetId = $target['id'];
+                            $id = $item['id'];
+                            $lookup = $lookupId.'_ID';
+                            var_dump($targetId, $id, $lookup);
+                            $result = $client->updateRecords()
+                            ->addRecord(array(
+                                'Id' => $id,
+                                $lookup => $targetId
+                            ))
+                            ->triggerWorkflow()
+                            ->request();
+                        }
+                    }
                 }
-            } catch (\Exception $e) {
             }
         }
     }
