@@ -92,7 +92,7 @@ class Engine
                 $max = $cnt;
             }
         }
-        return $cnt;
+        return $max;
     }
 
     private function getGroupArray($zohoScope)
