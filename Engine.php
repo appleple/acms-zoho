@@ -359,22 +359,19 @@ class Engine
 
             foreach ($targets as $target) {
                 foreach ($items as $item) {
-                    $compareValues = $item[$compareField];
-                    $compareValues = explode(';',$compareValues);
-                    foreach ($compareValues as $compareValue) {
-                        if ($compareValue === $target[$compareField]) {
-                            $client = new ZohoCRMClient($zohoRelatedScope, $this->accessToken);
-                            $targetId = $target['id'];
-                            $id = $item['id'];
-                            $lookup = $lookupId.'_ID';
-                            $result = $client->updateRecords()
-                            ->addRecord(array(
-                                'Id' => $id,
-                                $lookup => $targetId
-                            ))
-                            ->triggerWorkflow()
-                            ->request();
-                        }
+                    $compareValue = $item[$compareField];
+                    if ($compareValue === $target[$compareField]) {
+                        $client = new ZohoCRMClient($zohoRelatedScope, $this->accessToken);
+                        $targetId = $target['id'];
+                        $id = $item['id'];
+                        $lookup = $lookupId.'_ID';
+                        $result = $client->updateRecords()
+                        ->addRecord(array(
+                            'Id' => $id,
+                            $lookup => $targetId
+                        ))
+                        ->triggerWorkflow()
+                        ->request();
                     }
                 }
             }
