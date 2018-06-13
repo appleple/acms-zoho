@@ -137,6 +137,9 @@ class Engine
     {
         $accessToken = $this->accessToken;
         $field = $this->field;
+        if (!$zohoInsertScopes) {
+            return;
+        }
         foreach ($zohoInsertScopes as $zohoScope) {
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $uniqueValue = false;
