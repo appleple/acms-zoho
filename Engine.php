@@ -265,7 +265,7 @@ class Engine
             if ($zohoUpdateConfig['Id']) {
                 $this->records[] = array_merge(array(
                     "scope" => $zohoScope,
-                    "id" => $update->id
+                    "id" => $zohoUpdateConfig['Id']
                 ), $zohoUpdateConfig);
             }
             try {
@@ -298,6 +298,7 @@ class Engine
     {
         $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
         $records = $this->records;
+        var_dump($records);
         foreach ($zohoRelatedScopes as $i => $zohoRelatedScope) {
             $zohoRelatedTargetScope = $this->config->get('zoho_related_target_scope', '', $i);
             $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
