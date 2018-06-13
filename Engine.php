@@ -221,6 +221,23 @@ class Engine
         }
     }
 
+    private function uploadPhoto($id, $place)
+    {
+        $accessToken = $this->accessToken;
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_HEADER, 0);
+        curl_setopt($ch,CURLOPT_VERBOSE, 0);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch,CURLOPT_URL,"https://crm.zoho.com/crm/private/xml/Leads/uploadPhoto?authtoken=".$accessToken."&scope=crmapi");
+        curl_setopt($ch,CURLOPT_POST, true);
+        curl_setopt($ch,CURLOPT_POSTFIELDS, array(
+            "id" => $id,
+            "content" => '@'.ARCHIVES_DIR.$place
+        ));
+        $response = curl_exec($ch);
+        return $response;
+    }
+
     private function updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey)
     {
         $accessToken = $this->accessToken;
@@ -255,6 +272,8 @@ class Engine
                         if ($scope === $zohoScope) {
                             if ($groupArr && in_array($key, $groupArr)) {
                                 $zohoUpdateConfig[$type] = $field->get($key, '', $cnt);
+                            } else if (strpos($key, '@path')) {
+                                $zohoUpdateConfig[$type] = $field->get($key, '', $cnt);
                             } else {
                                 $zohoUpdateConfig[$type] = implode(";", $field->getArray($key));
                             }
@@ -284,6 +303,9 @@ class Engine
                         "scope" => $zohoScope,
                         "id" => $zohoUpdateConfig['Id']
                     ), $zohoUpdateConfig);
+                    if ($zohoUpdateConfig['Zoho Image']) {
+                        $res = $this->uploadPhoto($zohoUpdateConfig['Id'], $zohoUpdateConfig['Zoho Image']);
+                    }
                 }
             }
             try {
@@ -294,6 +316,7 @@ class Engine
                 ->request();
             } catch (\Exception $e) {
             }
+
         }
     }
 
