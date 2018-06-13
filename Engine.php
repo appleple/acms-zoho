@@ -55,13 +55,13 @@ class Engine
     public function send()
     {
         $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
+        $fieldKeys = $this->config->getArray('zoho_field_key');
         foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
             $zohoInsertScopes = array();
             $zohoUpdateScopes = array();
             $uniqueKey = $this->config->get('zoho_form_unique_key', '', $i);
             $zohoInsertScopes = $this->config->get('zoho_form_insert_scope', '', $i);
             $zohoUpdateScopes = $this->config->get('zoho_form_update_scope', '', $i);
-            $fieldKeys = $this->config->getArray('zoho_field_key');
             if (!$zohoInsertScopes && !$zohoUpdateScopes) {
                 continue;
             }
@@ -74,7 +74,6 @@ class Engine
             if ($zohoUpdateScopes) {
                 $zohoUpdateScopes = explode(',', $zohoUpdateScopes);
             }
-
             $this->insertRecord($zohoInsertScopes, $fieldKeys, $uniqueKey);
             $this->updateRecord($zohoUpdateScopes, $fieldKeys, $uniqueKey);
         }
@@ -95,12 +94,20 @@ class Engine
         return $max;
     }
 
-    private function getGroupArray($zohoScope)
+    private function getGroupArray($zohoScope, $mode)
     {
         $keys = $this->config->getArray('zoho_field_cms_key');
         $field = $this->field;
         foreach ($keys as $i => $key) {
             $scopes = $this->config->get('zoho_field_scope', '', $i);
+            $insert = $this->config->get('zoho_field_insert', '', $i);
+            $update = $this->config->get('zoho_field_update', '', $i);
+            if ($mode === 'insert' && !$insert) {
+                continue;
+            }
+            if ($mode === 'update' && !$update) {
+                continue;
+            }
             $scopes = explode(',', $scopes);
             foreach ($scopes as $scope) {
                 if ($scope === $zohoScope) {
@@ -144,7 +151,7 @@ class Engine
             $client = new ZohoCRMClient($zohoScope, $accessToken);
             $uniqueValue = false;
             $length = 1;
-            $groupArr = $this->getGroupArray($zohoScope);
+            $groupArr = $this->getGroupArray($zohoScope, 'insert');
             if ($groupArr) {
                 $length = $this->getMaxKey($groupArr);
             }
@@ -225,7 +232,7 @@ class Engine
             $getClient = new ZohoCRMClient($zohoScope, $accessToken);
             $uniqueValue = false;
             $length = 1;
-            $groupArr = $this->getGroupArray($zohoScope);
+            $groupArr = $this->getGroupArray($zohoScope, 'update');
             if ($groupArr) {
                 $length = $this->getMaxKey($groupArr);
             }
@@ -280,6 +287,7 @@ class Engine
                 }
             }
             try {
+                $client = new ZohoCRMClient($zohoScope, $accessToken);
                 $client->updateRecords()
                 ->setRecords($records)
                 ->triggerWorkflow()
