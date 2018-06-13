@@ -188,9 +188,7 @@ class Engine
                 }
             }
 
-
             try {
-
                 $updates = $client->insertRecords()
                 ->setRecords($records)
                 ->onDuplicateError()
