@@ -325,7 +325,6 @@ class Engine
                             $targetId = $target['id'];
                             $id = $item['id'];
                             $lookup = $lookupId.'_ID';
-                            var_dump($targetId, $id, $lookup);
                             $result = $client->updateRecords()
                             ->addRecord(array(
                                 'Id' => $id,
