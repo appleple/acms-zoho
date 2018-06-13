@@ -62,7 +62,6 @@ class Engine
             $zohoInsertScopes = $this->config->get('zoho_form_insert_scope', '', $i);
             $zohoUpdateScopes = $this->config->get('zoho_form_update_scope', '', $i);
             $fieldKeys = $this->config->getArray('zoho_field_key');
-            $multi = false;
             if (!$zohoInsertScopes && !$zohoUpdateScopes) {
                 continue;
             }
