@@ -221,55 +221,66 @@ class Engine
             return;
         }
         foreach ($zohoUpdateScopes as $zohoScope) {
-            $zohoUpdateConfig = array();
             $getClient = new ZohoCRMClient($zohoScope, $accessToken);
             $uniqueValue = false;
-            foreach ($fieldKeys as $i => $type) {
-                $key = $this->config->get('zoho_field_cms_key', '', $i);
-                $scopes = $this->config->get('zoho_field_scope', '', $i);
-                $scopes = explode(',', $scopes);
-                if ($type === $uniqueKey) {
-                    $uniqueValue = $field->get($key);
-                }
-                $canUpdate = $this->config->get('zoho_field_update', '', $i);
-                if ($canUpdate !== 'true') {
-                    continue;
-                }
-                foreach ($scopes as $scope) {
-                    if ($scope === $zohoScope) {
-                        $updateValue = implode(";", $field->getArray($key));
-                        if ($updateValue) {
-                            $zohoUpdateConfig[$type] = $updateValue;
+            $length = 1;
+            $groupArr = $this->getGroupArray($zohoScope);
+            if ($groupArr) {
+                $length = $this->getMaxKey($groupArr);
+            }
+            $records = array();
+            $saves = array();
+            for ($cnt = 0; $cnt < $length; $cnt++) {
+                $zohoUpdateConfig = array();
+                foreach ($fieldKeys as $i => $type) {
+                    $key = $this->config->get('zoho_field_cms_key', '', $i);
+                    $scopes = $this->config->get('zoho_field_scope', '', $i);
+                    $scopes = explode(',', $scopes);
+                    if ($type === $uniqueKey) {
+                        $uniqueValue = $field->get($key);
+                    }
+                    $canUpdate = $this->config->get('zoho_field_update', '', $i);
+                    if ($canUpdate !== 'true') {
+                        continue;
+                    }
+                    foreach ($scopes as $scope) {
+                        if ($scope === $zohoScope) {
+                            if ($groupArr && in_array($key, $groupArr)) {
+                                $zohoUpdateConfig[$type] = $field->get($key, '', $cnt);
+                            } else {
+                                $zohoUpdateConfig[$type] = implode(";", $field->getArray($key));
+                            }
                         }
                     }
                 }
-            }
-            if ($uniqueValue) {
-                try {
-                    $targets = $getClient->searchRecords()
-                    ->where($uniqueKey, $uniqueValue)
-                    ->request();
-                } catch (\Exception $e) {
+                if ($uniqueValue) {
+                    try {
+                        $targets = $getClient->searchRecords()
+                        ->where($uniqueKey, $uniqueValue)
+                        ->request();
+                    } catch (\Exception $e) {
+                    }
                 }
-            }
-            if (!isset($targets)) {
-                continue;
-            }
-            $client = new ZohoCRMClient($zohoScope, $accessToken);
-            $temp = array_values($targets);
-            $target = $temp[0];
-            $fieldId = strtoupper(rtrim($zohoScope, 's')).'ID';
-            $temp2 = $target->getData();
-            $zohoUpdateConfig['Id'] = $temp2[$fieldId];
-            if ($zohoUpdateConfig['Id']) {
-                $this->records[] = array_merge(array(
-                    "scope" => $zohoScope,
-                    "id" => $zohoUpdateConfig['Id']
-                ), $zohoUpdateConfig);
+                if (!isset($targets)) {
+                    continue;
+                }
+                $client = new ZohoCRMClient($zohoScope, $accessToken);
+                $temp = array_values($targets);
+                $target = $temp[0];
+                $fieldId = strtoupper(rtrim($zohoScope, 's')).'ID';
+                $temp2 = $target->getData();
+                $zohoUpdateConfig['Id'] = $temp2[$fieldId];
+                $records[] = $this->removeCompareField($zohoUpdateConfig, $zohoScope);
+                if ($zohoUpdateConfig['Id']) {
+                    $this->records[] = array_merge(array(
+                        "scope" => $zohoScope,
+                        "id" => $zohoUpdateConfig['Id']
+                    ), $zohoUpdateConfig);
+                }
             }
             try {
                 $client->updateRecords()
-                ->addRecord($zohoUpdateConfig)
+                ->setRecords($records)
                 ->triggerWorkflow()
                 ->request();
             } catch (\Exception $e) {
