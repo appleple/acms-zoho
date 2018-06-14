@@ -346,6 +346,23 @@ class Engine
         }
     }
 
+    private function uploadPhoto($id, $place)
+    {
+        $accessToken = $this->accessToken;
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_HEADER, 0);
+        curl_setopt($ch,CURLOPT_VERBOSE, 0);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch,CURLOPT_URL,"https://crm.zoho.com/crm/private/xml/Leads/uploadPhoto?authtoken=".$accessToken."&scope=crmapi");
+        curl_setopt($ch,CURLOPT_POST, true);
+        curl_setopt($ch,CURLOPT_POSTFIELDS, array(
+            "id" => $id,
+            "content" => '@'.ARCHIVES_DIR.$place
+        ));
+        $response = curl_exec($ch);
+        return $response;
+    }
+
     private function updateRelatedRecords()
     {
         $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
