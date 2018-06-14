@@ -5,8 +5,8 @@
     <thead class="acms-admin-hide-sp">
       <tr>
         <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
-        <th class="acms-admin-table-left">スコープ（Insert）</th>
-        <th class="acms-admin-table-left">スコープ（Update）</th>
+        <th class="acms-admin-table-left">タブ（Insert）</th>
+        <th class="acms-admin-table-left">タブ（Update）</th>
         <th class="acms-admin-table-left">ユニークキー</th>
         <th class="acms-admin-table-left acms-admin-admin-config-table-action">削除</th>
       </tr>
@@ -80,9 +80,9 @@
           <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。<!--/T-->"></i>
         </th>
         <th class="acms-admin-table-left">
-          <!--T-->スコープ
+          <!--T-->タブ
           <!--/T-->
-          <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zoho側のスコープを指定します。<!--/T-->"></i>
+          <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zoho側のタブを指定します。<!--/T-->"></i>
         </th>
         <th class="acms-admin-table-left">
           <!--T-->キー
@@ -202,18 +202,21 @@
       <tr>
         <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
         <th class="acms-admin-table-left">
-          <!--T-->スコープ
+          <!--T-->関連元タブ
           <!--/T-->
-        </th>
+		</th>
         <th class="acms-admin-table-left">
-          <!--T-->ターゲットスコープ
-          <!--/T-->
-        </th>
+			<!--T-->ルックアップID
+			<!--/T-->
+			<i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->カスタム項目の場合はIDを指定してください。（カスタム項目名_ID）になります。<!--/T-->"></i>
+		</th>
         <th class="acms-admin-table-left">
-          <!--T-->ルックアップID
+          <!--T-->関連先タブ
           <!--/T-->
-          <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->カスタム項目の場合はIDを指定してください。（カスタム項目名_ID）になります。<!--/T-->"></i>
-        </th>
+		</th>
+		<th class="acms-admin-table-left">
+			比較フィールド
+		</th>
         <th class="acms-admin-table-left acms-admin-admin-config-table-action">
           <!--T-->削除
           <!--/T-->
@@ -228,15 +231,18 @@
         </td>
         <td>
           <input type="text" name="zoho_related_scope[{i}]" value="{zoho_related_scope}" class="acms-admin-form-width-full" />
-        </td>
+		</td>
+        <td>
+		  <input type="text" name="zoho_related_lookup_id[{i}]" value="{zoho_related_lookup_id}" class="acms-admin-form-width-full"
+			/>
+		</td>
         <td>
           <input type="text" name="zoho_related_target_scope[{i}]" value="{zoho_related_target_scope}" class="acms-admin-form-width-full"
           />
-        </td>
-        <td>
-          <input type="text" name="zoho_related_lookup_id[{i}]" value="{zoho_related_lookup_id}" class="acms-admin-form-width-full"
-          />
-        </td>
+		</td>
+		<td>
+			<input type="text" name="zoho_related_compare_field[{i}]" value="{zoho_related_compare_field}" class="acms-admin-form-width-full" />
+		</td>
         <td>
           <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
         </td>
@@ -248,13 +254,16 @@
         </td>
         <td>
           <input type="text" name="zoho_related_scope[]" value="" class="acms-admin-form-width-full" />
-        </td>
+		</td>
+        <td>
+		  <input type="text" name="zoho_related_lookup_id[]" value="" class="acms-admin-form-width-full" />
+		</td>
         <td>
           <input type="text" name="zoho_related_target_scope[]" value="" class="acms-admin-form-width-full" />
-        </td>
-        <td>
-          <input type="text" name="zoho_related_lookup_id[]" value="" class="acms-admin-form-width-full" />
-        </td>
+		</td>
+		<td>
+			<input type="text" name="zoho_related_compare_field[]" value="" class="acms-admin-form-width-full" />
+		</td>
         <td>
           <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="<!--T-->削除<!--/T-->" />
         </td>
@@ -272,6 +281,8 @@
   <input type="hidden" name="mail[]" value="zoho_related_scope" />
   <input type="hidden" name="@zoho_related_group[]" value="zoho_related_target_scope" />
   <input type="hidden" name="mail[]" value="zoho_related_target_scope" />
+  <input type="hidden" name="@zoho_related_group[]" value="zoho_related_compare_field" />
+  <input type="hidden" name="mail[]" value="zoho_related_compare_field" />
   <input type="hidden" name="@zoho_related_group[]" value="zoho_related_lookup_id" />
   <input type="hidden" name="mail[]" value="zoho_related_lookup_id" />
   <input type="hidden" name="mail[]" value="@zoho_related_group" />
