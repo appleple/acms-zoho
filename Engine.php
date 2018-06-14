@@ -375,13 +375,16 @@ class Engine
                         $targetId = $target['id'];
                         $id = $item['id'];
                         $lookup = $lookupId.'_ID';
-                        $result = $client->updateRecords()
-                        ->addRecord(array(
-                            'Id' => $id,
-                            $lookup => $targetId
-                        ))
-                        ->triggerWorkflow()
-                        ->request();
+                        try {
+                            $client->updateRecords()
+                            ->addRecord(array(
+                                'Id' => $id,
+                                $lookup => $targetId
+                            ))
+                            ->triggerWorkflow()
+                            ->request();
+                        } catch (\Exception $e) {
+                        }
                     }
                 }
             }
