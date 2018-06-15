@@ -24,5 +24,6 @@ class Hook
         } catch (\Exception $e) {
             userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
         }
+
     }
 }

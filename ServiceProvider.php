@@ -28,8 +28,11 @@ class ServiceProvider extends ACMS_App
         if (ADMIN === 'app_zoho_index') {
             $inject->add('admin-topicpath', PLUGIN_DIR . 'Zoho/theme/topicpath.html');
             $inject->add('admin-main', PLUGIN_DIR . 'Zoho/theme/index.html');
+        } else if (ADMIN === 'module_edit') {
+            $inject->add('admin-module-config-Zoho_Records', PLUGIN_DIR . 'Zoho/theme/records_body.html');
         }
         $inject->add('admin-form', PLUGIN_DIR . 'Zoho/theme/form.html');
+        $inject->add('admin-module-select', PLUGIN_DIR . 'Zoho/theme/select.user.html');
     }
     /**
      * インストールする前の環境チェック処理
