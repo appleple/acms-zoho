@@ -18,6 +18,10 @@
 <p class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info"><span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span><button class="js-acms-alert-close acms-admin-alert-icon-after">×</button><!--T-->設定を保存しました<!--/T--></p>
 <!-- END_IF -->
 
+<form action="" method="post">
+	<input type="submit" name="ACMS_POST_Zoho_Oauth" value="認証" class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save" />
+</form>
+
 <form action="" method="post" class="js-adminSave acms-admin-form">
     <div class="js-acms_fix_marker acms_fix_bg">
         <div class="acms-admin-form-group acms_fix_bg_index">
@@ -37,6 +41,16 @@
             <td>
                 <input type="text" name="zoho_access_token" value="{zoho_access_token}" class="acms-admin-form-width-full" />
                 <input type="hidden" name="config[]" value="zoho_access_token" />
+            </td>
+		</tr>
+		<tr>
+            <th>
+                <!--T-->grantトークンの設定（v2）<!--/T-->
+                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoで取得した認証トークンを指定します。<!--/T-->"></i>
+            </th>
+            <td>
+                <input type="text" name="zoho_grant_token" value="{zoho_grant_token}" class="acms-admin-form-width-full" />
+                <input type="hidden" name="config[]" value="zoho_grant_token" />
             </td>
         </tr>
     </table>

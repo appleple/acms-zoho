@@ -5,7 +5,7 @@ use DB;
 use SQL;
 use Field;
 use Field_Validation;
-use CristianPontes\ZohoCRMClient\ZohoCRMClient;
+use ZCRMModule;
 
 class Engine
 {
@@ -293,12 +293,13 @@ class Engine
             $saves = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
             $fields = $this->removeCompareField($saves, $scope);
             try {
-                $client = new ZohoCRMClient($scope, $accessToken);
-                $updates = $client->insertRecords()
-                ->setRecords($fields)
-                ->onDuplicateError()
-                ->triggerWorkflow()
-                ->request();
+                $client = ZCRMModule::getInstance($scope);
+                $bulkAPIResponse = $client->upsertRecords($fields);
+                $updates = $bulkAPIResponse->getEntityResponses();
+                // ->setRecords($fields)
+                // ->onDuplicateError()
+                // ->triggerWorkflow()
+                // ->request();
                 foreach ($updates as $i => $update) {
                     $field = $saves[$i - 1];
                     if (isset($field['Note Title']) && isset($field['Note Content'])) {
