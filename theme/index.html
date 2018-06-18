@@ -18,15 +18,21 @@
 <p class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info"><span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span><button class="js-acms-alert-close acms-admin-alert-icon-after">×</button><!--T-->設定を保存しました<!--/T--></p>
 <!-- END_IF -->
 
-<form action="" method="post">
-	<input type="submit" name="ACMS_POST_Zoho_Oauth" value="認証" class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save" />
-</form>
-
 <form action="" method="post" class="js-adminSave acms-admin-form">
     <div class="js-acms_fix_marker acms_fix_bg">
         <div class="acms-admin-form-group acms_fix_bg_index">
             <input type="submit" name="ACMS_POST_Config" value="保存" class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save"
-            />
+			/>
+
+			<!-- BEGIN_MODULE Zoho_Admin -->
+				<!-- BEGIN_IF [{authorized}/eq/true] -->
+				<input type="submit" class="acms-admin-btn-admin acms-admin-btn-admin-danger" value="認証解除" name="ACMS_POST_Zoho_Deauthorize" />
+				<!-- T -->認証済み<!-- /T -->
+				<!-- ELSE -->
+				<input type="submit" class="acms-admin-btn-admin" value="認証" name="ACMS_POST_Zoho_Oauth" <!-- BEGIN_IF [\{zoho_grant_token\}/em] --> disabled<!-- END_IF -->/>
+				<!-- T -->認証してください<!-- /T -->
+				<!-- END_IF -->
+			<!-- END_MODULE Zoho_Admin -->
         </div>
     </div>
     <h3 class="acms-admin-admin-title2">
