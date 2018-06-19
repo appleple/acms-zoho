@@ -25,11 +25,6 @@ class ServiceProvider extends ACMS_App
         $hook = HookFactory::singleton();
         $hook->attach('Zoho', new Hook);
         $inject = InjectTemplate::singleton();
-        try {
-            new Api();
-        } catch (\Exception $e) {
-
-        }
 
         if (ADMIN === 'app_zoho_index') {
             $inject->add('admin-topicpath', PLUGIN_DIR . 'Zoho/theme/topicpath.html');

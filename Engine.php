@@ -6,6 +6,9 @@ use SQL;
 use Field;
 use Field_Validation;
 use ZCRMModule;
+use ZCRMRecord;
+use ZCRMRestClient;
+use Acms\Plugins\Zoho\Api;
 
 class Engine
 {
@@ -15,6 +18,7 @@ class Engine
      */
     public function __construct($code, $module)
     {
+
         $field = $this->loadFrom($code);
         if (empty($field)) {
             throw new \RuntimeException('Not Found Form.');
@@ -54,11 +58,42 @@ class Engine
      */
     public function send()
     {
+        new Api();
+        $this->makeLabelConversionTable();
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
         $this->insertRecords($this->getRecordsByType($records, 'insert'));
         $this->updateRecords($this->getRecordsByType($records, 'update'));
         $this->updateRelatedRecords();
+    }
+
+    private function makeLabelConversionTable()
+    {
+        $ins = ZCRMRestClient::getInstance();
+        $modules = $ins->getAllModules()->getData();
+        $conversions = array();
+        foreach ($modules as $module) {
+            $moduleName = $module->getModuleName();
+            $labels = array();
+            try {
+                $data = $module->getAllFields();
+                $fields = $data->getData();
+                foreach($fields as $field) {
+                    $label = $field->getFieldLabel();
+                    $apiName = $field->getApiName();
+                    $labels[$label] = $apiName;
+                }
+                $conversions[$moduleName] = $labels;
+            } catch (\Exception $e) {
+
+            }
+        }
+        $this->conversions = $conversions;
+    }
+
+    private function makeFieldNameByLabel($moduleName, $label)
+    {
+        return $this->conversions[$moduleName][$label];
     }
 
     /**
@@ -283,6 +318,22 @@ class Engine
         return $newFields;
     }
 
+    private function createRecords($scope, $fields)
+    {
+        $records = array();
+        foreach ($fields as $field) {
+            $record = ZCRMRecord::getInstance($scope, null);
+            foreach ($field as $label => $value) {
+                if ($label) {
+                    $key = $this->makeFieldNameByLabel($scope, $label);
+                    $record->setFieldValue($key, $value);
+                }
+            }
+            $records[] = $record;
+        }
+        return $records;
+    }
+
     private function insertRecords($records)
     {
         $accessToken = $this->accessToken;
@@ -294,21 +345,20 @@ class Engine
             $fields = $this->removeCompareField($saves, $scope);
             try {
                 $client = ZCRMModule::getInstance($scope);
-                $bulkAPIResponse = $client->upsertRecords($fields);
-                $updates = $bulkAPIResponse->getEntityResponses();
-                // ->setRecords($fields)
-                // ->onDuplicateError()
-                // ->triggerWorkflow()
-                // ->request();
-                foreach ($updates as $i => $update) {
+                $data = $this->createRecords($scope, $fields);
+                $bulkAPIResponse = $client->createRecords($data);
+                $responses = $bulkAPIResponse->getEntityResponses();
+                foreach ($responses as $i => $response) {
+                    $data = $response->getData();
+                    var_dump($data);
                     $field = $saves[$i - 1];
                     if (isset($field['Note Title']) && isset($field['Note Content'])) {
                         $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $updated[$i]->id);
+                        $this->addNote($field['Note Title'], $field['Note Content'], $data['id']);
                     }
                     $this->records[] = array_merge(array(
                         "scope" => $scope,
-                        "id" => $update->id
+                        "id" => $data['id']
                     ), $field);
                 }
             } catch (\Exception $e) {
