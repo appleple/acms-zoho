@@ -197,10 +197,12 @@ class Engine
 
     private function getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey)
     {
+        $accessToken = $this->accessToken;
         $newFields = array();
         foreach ($fields as $field) {
             $uniqueValue = $field[$uniqueKey];
             if ($scope === 'Leads' && $uniqueValue) {
+                $finds = null;
                 try {
                     $getClient = new ZohoCRMClient('Contacts', $accessToken);
                     $finds = $getClient->searchRecords()
@@ -209,8 +211,18 @@ class Engine
                 } catch (\Exception $e) {
                 }
                 if ($finds) {
-                    continue;
+                  continue;
                 } else {
+                    try {
+                      $getClient = new ZohoCRMClient('Leads', $accessToken);
+                      $finds = $getClient->searchRecords()
+                      ->where($uniqueKey, $uniqueValue)
+                      ->request();
+                    } catch (\Exception $e) {
+                    }
+                    if ($finds) {
+                        continue;
+                    }
                     $newFields[] = $field;
                 }
             }
@@ -266,19 +278,22 @@ class Engine
         foreach ($fields as $field) {
             $uniqueValue = $field[$uniqueKey];
             $client = new ZohoCRMClient($scope, $accessToken);
+            $targets = null;
             try {
-                $targets = $client->searchRecords()
-                ->where($uniqueKey, $uniqueValue)
-                ->request();
+              $targets = $client->searchRecords()
+              ->where($uniqueKey, $uniqueValue)
+              ->request();
             } catch (\Exception $e) {
             }
-            $temp = array_values($targets);
-            $target = $temp[0];
-            $fieldId = strtoupper(rtrim($scope, 's')).'ID';
-            $temp2 = $target->getData();
-            $newFields[] = array_merge($field, array(
+            if ($targets) {
+              $temp = array_values($targets);
+              $target = $temp[0];
+              $fieldId = strtoupper(rtrim($scope, 's')).'ID';
+              $temp2 = $target->getData();
+              $newFields[] = array_merge($field, array(
                 'Id' => $temp2[$fieldId]
-            ));
+              ));
+            }
         }
         return $newFields;
     }
@@ -303,7 +318,7 @@ class Engine
                     $field = $saves[$i - 1];
                     if (isset($field['Note Title']) && isset($field['Note Content'])) {
                         $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $updated[$i]->id);
+                        $this->addNote($field['Note Title'], $field['Note Content'], $update->id);
                     }
                     $this->records[] = array_merge(array(
                         "scope" => $scope,
@@ -334,7 +349,7 @@ class Engine
                     $field = $saves[$i - 1];
                     if (isset($field['Note Title']) && isset($field['Note Content'])) {
                         $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $updated[$i]->id);
+                        $this->addNote($field['Note Title'], $field['Note Content'], $update->id);
                     }
                     $this->records[] = array_merge(array(
                         "scope" => $scope,
@@ -375,16 +390,13 @@ class Engine
                         $targetId = $target['id'];
                         $id = $item['id'];
                         $lookup = $lookupId.'_ID';
-                        try {
-                            $client->updateRecords()
-                            ->addRecord(array(
-                                'Id' => $id,
-                                $lookup => $targetId
-                            ))
-                            ->triggerWorkflow()
-                            ->request();
-                        } catch (\Exception $e) {
-                        }
+                        $result = $client->updateRecords()
+                        ->addRecord(array(
+                            'Id' => $id,
+                            $lookup => $targetId
+                        ))
+                        ->triggerWorkflow()
+                        ->request();
                     }
                 }
             }
