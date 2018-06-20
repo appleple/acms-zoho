@@ -223,7 +223,6 @@ class Engine
                     if ($finds) {
                         continue;
                     }
-                    $newFields[] = $field;
                 }
             }
             $newFields[] = $field;
