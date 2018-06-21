@@ -345,15 +345,13 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $data = $response->getData();
-                    $field = $saves[$i - 1];
-                    if (isset($field['Note Title']) && isset($field['Note Content'])) {
-                        $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $data);
+                    if (isset($data['Note Title']) && isset($data['Note Content'])) {
+                        $this->addNote($data['Note Title'], $data['Note Content'], $data);
                     }
                     $this->records[] = array_merge(array(
                         "scope" => $scope,
                         "id" => $data['id']
-                    ), $field);
+                    ), $data);
                 }
             } catch (\Exception $e) {
             }
@@ -370,21 +368,19 @@ class Engine
             $saves = $this->addRecordIdToFields($fields, $scope, $uniqueKey);
             $fields = $this->removeCompareField($saves, $scope);
             try {
-                $client = new ZohoCRMClient($scope, $accessToken);
-                $updates = $client->updateRecords()
-                ->setRecords($fields)
-                ->triggerWorkflow()
-                ->request();
-                foreach ($updates as $i => $update) {
-                    $field = $saves[$i - 1];
-                    if (isset($field['Note Title']) && isset($field['Note Content'])) {
-                        $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $updated[$i]->id);
+                $client = ZCRMModule::getInstance($scope);
+                $data = $this->createRecords($scope, $fields);
+                $bulkAPIResponse = $client->updateRecords($data);
+                $responses = $bulkAPIResponse->getEntityResponses();
+                foreach ($responses as $i => $response) {
+                    $data = $response->getData();
+                    if (isset($data['Note Title']) && isset($data['Note Content'])) {
+                        $this->addNote($data['Note Title'], $data['Note Content'], $data);
                     }
                     $this->records[] = array_merge(array(
                         "scope" => $scope,
-                        "id" => $update->id
-                    ), $field);
+                        "id" => $data['id']
+                    ), $data);
                 }
             } catch (\Exception $e) {
             }
