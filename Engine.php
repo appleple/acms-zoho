@@ -291,15 +291,19 @@ class Engine
 
     private function addIdsToRecords($records, $scope, $uniqueKey)
     {
+        $newRecords = array();
         foreach ($records as $record) {
             $client = ZCRMRecord::getInstance($scope, null);
             $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
             $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
             $responses = $bulkAPIResponse->getEntityResponses();
-            $entityId = $responses[0]->getEntityId();
-            $record->setEntityId($entityId);
+            if (count($responses)){
+                $entityId = $responses[0]->getEntityId();
+                $record->setEntityId($entityId);
+                $newRecords[] = $record;
+            }
         }
-        return $records;
+        return $newRecords;
     }
 
     private function createRecords($scope, $fields)
@@ -330,7 +334,6 @@ class Engine
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
-                $data = $this->addIdsToRecords($data, $scope, $uniqueKey);
                 $bulkAPIResponse = $client->createRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
@@ -338,10 +341,7 @@ class Engine
                     if (isset($data['Note Title']) && isset($data['Note Content'])) {
                         $this->addNote($data['Note Title'], $data['Note Content'], $data);
                     }
-                    $this->records[] = array_merge(array(
-                        "scope" => $scope,
-                        "id" => $data['id']
-                    ), $data);
+                    $this->records[] = $data;
                 }
             } catch (\Exception $e) {
             }
@@ -360,6 +360,7 @@ class Engine
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
+                $data = $this->addIdsToRecords($data, $scope, $uniqueKey);
                 $bulkAPIResponse = $client->updateRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
@@ -367,10 +368,7 @@ class Engine
                     if (isset($data['Note Title']) && isset($data['Note Content'])) {
                         $this->addNote($data['Note Title'], $data['Note Content'], $data);
                     }
-                    $this->records[] = array_merge(array(
-                        "scope" => $scope,
-                        "id" => $data['id']
-                    ), $data);
+                    $this->records[] = $data;
                 }
             } catch (\Exception $e) {
             }
