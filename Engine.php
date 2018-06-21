@@ -244,8 +244,8 @@ class Engine
                 if (count($responses)) {
                     continue;
                 }
+
                 $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
-                $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
                 $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
                 $responses = $bulkAPIResponse->getEntityResponses();
                 if (count($responses)) {
@@ -289,28 +289,17 @@ class Engine
         $record->addNote($note);
     }
 
-    private function addRecordIdToFields ($fields, $scope, $uniqueKey)
+    private function addIdsToRecords($records, $scope, $uniqueKey)
     {
-        $accessToken = $this->accessToken;
-        $newFields = array();
-        foreach ($fields as $field) {
-            $uniqueValue = $field[$uniqueKey];
-            $client = new ZohoCRMClient($scope, $accessToken);
-            try {
-                $targets = $client->searchRecords()
-                ->where($uniqueKey, $uniqueValue)
-                ->request();
-            } catch (\Exception $e) {
-            }
-            $temp = array_values($targets);
-            $target = $temp[0];
-            $fieldId = strtoupper(rtrim($scope, 's')).'ID';
-            $temp2 = $target->getData();
-            $newFields[] = array_merge($field, array(
-                'Id' => $temp2[$fieldId]
-            ));
+        foreach ($records as $record) {
+            $client = ZCRMRecord::getInstance($scope, null);
+            $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+            $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+            $responses = $bulkAPIResponse->getEntityResponses();
+            $entityId = $responses[0]->getEntityId();
+            $record->setEntityId($entityId);
         }
-        return $newFields;
+        return $records;
     }
 
     private function createRecords($scope, $fields)
@@ -341,6 +330,7 @@ class Engine
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
+                $data = $this->addIdsToRecords($data, $scope, $uniqueKey);
                 $bulkAPIResponse = $client->createRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
