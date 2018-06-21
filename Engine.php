@@ -8,6 +8,7 @@ use Field_Validation;
 use ZCRMModule;
 use ZCRMRecord;
 use ZCRMRestClient;
+use ZCRMNote;
 use Acms\Plugins\Zoho\Api;
 
 class Engine
@@ -236,17 +237,19 @@ class Engine
         foreach ($fields as $field) {
             $uniqueValue = $field[$uniqueKey];
             if ($scope === 'Leads' && $uniqueValue) {
-                try {
-                    $getClient = new ZohoCRMClient('Contacts', $accessToken);
-                    $finds = $getClient->searchRecords()
-                    ->where($uniqueKey, $uniqueValue)
-                    ->request();
-                } catch (\Exception $e) {
-                }
-                if ($finds) {
+                $zcrmModuleIns = ZCRMModule::getInstance("Leads");
+                $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                $responses = $bulkAPIResponse->getEntityResponses();
+                if (count($responses)) {
                     continue;
-                } else {
-                    $newFields[] = $field;
+                }
+                $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
+                $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                $responses = $bulkAPIResponse->getEntityResponses();
+                if (count($responses)) {
+                    continue;
                 }
             }
             $newFields[] = $field;
@@ -278,20 +281,12 @@ class Engine
         return $newFields;
     }
 
-    private function addNote($noteTitle, $noteContent, $id)
+    private function addNote($title, $content, $record)
     {
-        $client = new ZohoCRMClient('Notes', $this->accessToken);
-        $updated = $client->insertRecords()
-        ->setRecords(array(
-            array(
-            'Note Title' => $noteTitle,
-            'Note Content' => $noteContent,
-            'entityId' => $id
-            )
-        ))
-        ->onDuplicateError()
-        ->triggerWorkflow()
-        ->request();
+        $note = ZCRMNote::getInstance($record);
+        $note->setTitle($title);
+        $note->setContent($content);
+        $record->addNote($note);
     }
 
     private function addRecordIdToFields ($fields, $scope, $uniqueKey)
@@ -350,11 +345,10 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $data = $response->getData();
-                    var_dump($data);
                     $field = $saves[$i - 1];
                     if (isset($field['Note Title']) && isset($field['Note Content'])) {
                         $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $data['id']);
+                        $this->addNote($field['Note Title'], $field['Note Content'], $data);
                     }
                     $this->records[] = array_merge(array(
                         "scope" => $scope,
