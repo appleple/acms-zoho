@@ -337,11 +337,11 @@ class Engine
                 $bulkAPIResponse = $client->createRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
-                    $data = $response->getData();
-                    if (isset($data['Note Title']) && isset($data['Note Content'])) {
-                        $this->addNote($data['Note Title'], $data['Note Content'], $data);
+                    $updated = $response->getData();
+                    if (isset($updated['Note Title']) && isset($updated['Note Content'])) {
+                        $this->addNote($updated['Note Title'], $updated['Note Content'], $updated);
                     }
-                    $this->records[] = $data;
+                    $this->records[] = $updated;
                 }
             } catch (\Exception $e) {
             }
@@ -364,11 +364,11 @@ class Engine
                 $bulkAPIResponse = $client->updateRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
-                    $data = $response->getData();
-                    if (isset($data['Note Title']) && isset($data['Note Content'])) {
-                        $this->addNote($data['Note Title'], $data['Note Content'], $data);
+                    $updated = $response->getData();
+                    if (isset($updated['Note Title']) && isset($updated['Note Content'])) {
+                        $this->addNote($updated['Note Title'], $updated['Note Content'], $updated);
                     }
-                    $this->records[] = $data;
+                    $this->records[] = $updated;
                 }
             } catch (\Exception $e) {
             }
