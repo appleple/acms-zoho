@@ -451,6 +451,9 @@ class Engine
                             $parentRecord->update();
                         } catch (ZCRMException $e) {
                         }
+                    } else {
+                        $junctionRecord = ZCRMJunctionRecord::getInstance($zohoRelatedTargetScope, $lookupRecord->getEntityId());
+                        $parentRecord->addRelation($junctionRecord);
                     }
                 }
             }
