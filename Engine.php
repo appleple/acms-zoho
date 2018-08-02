@@ -5,7 +5,12 @@ use DB;
 use SQL;
 use Field;
 use Field_Validation;
-use CristianPontes\ZohoCRMClient\ZohoCRMClient;
+use ZCRMModule;
+use ZCRMRecord;
+use ZCRMRestClient;
+use ZCRMNote;
+use App;
+use Acms\Plugins\Zoho\Api;
 
 class Engine
 {
@@ -15,6 +20,7 @@ class Engine
      */
     public function __construct($code, $module)
     {
+
         $field = $this->loadFrom($code);
         if (empty($field)) {
             throw new \RuntimeException('Not Found Form.');
@@ -54,11 +60,57 @@ class Engine
      */
     public function send()
     {
+        new Api();
+        $this->makeLabelConversionTable();
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
         $this->insertRecords($this->getRecordsByType($records, 'insert'));
         $this->updateRecords($this->getRecordsByType($records, 'update'));
         $this->updateRelatedRecords();
+    }
+
+    private function makeLabelConversionTable()
+    {
+        $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
+        $scopes = array();
+        foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
+            $zohoInsertScope = $this->config->get('zoho_form_insert_scope', '', $i);
+            $zohoUpdateScope = $this->config->get('zoho_form_update_scope', '', $i);
+            $insertScopes = explode(',', $zohoInsertScope);
+            $updateScopes = explode(',', $zohoUpdateScope);
+            $scopes = array_merge($scopes, $insertScopes, $updateScopes);
+        }
+        $scopes = array_unique($scopes);
+        $scopes = array_filter($scopes);
+        $ins = ZCRMRestClient::getInstance();
+        try {
+            $conversions = array();
+            foreach ($scopes as $scope) {
+                $module = $ins->getModule($scope)->getData();
+                $moduleName = $module->getModuleName();
+                $data = $module->getAllFields();
+                $fields = $data->getData();
+                $labels = array();
+                foreach ($fields as $field) {
+                    $label = $field->getFieldLabel();
+                    $apiName = $field->getApiName();
+                    $labels[$label] = $apiName;
+                }
+                $conversions[$moduleName] = $labels;
+            }
+            $this->conversions = $conversions;
+            App::checkException();
+        } catch (\Exception $e) {
+
+        }
+    }
+
+    private function makeFieldNameByLabel($moduleName, $label)
+    {
+        if (isset($this->conversions[$moduleName][$label])) {
+            return $this->conversions[$moduleName][$label];
+        }
+        return '';
     }
 
     /**
@@ -81,7 +133,7 @@ class Engine
                 $updateScopes = explode(',', $zohoUpdateScope);
             }
             if (!$uniqueKey) {
-                $uniqueKey = 'Email';
+                $uniqueKey = 'メール';
             }
             foreach ($insertScopes as $insertScope) {
                 $records[] = array(
@@ -197,32 +249,26 @@ class Engine
 
     private function getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey)
     {
-        $accessToken = $this->accessToken;
         $newFields = array();
         foreach ($fields as $field) {
             $uniqueValue = $field[$uniqueKey];
             if ($scope === 'Leads' && $uniqueValue) {
-                $finds = null;
-                try {
-                    $getClient = new ZohoCRMClient('Contacts', $accessToken);
-                    $finds = $getClient->searchRecords()
-                    ->where($uniqueKey, $uniqueValue)
-                    ->request();
-                } catch (\Exception $e) {
+                $zcrmModuleIns = ZCRMModule::getInstance("Leads");
+                $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+                if (!$key) {
+                    continue;
                 }
-                if ($finds) {
-                  continue;
-                } else {
-                    try {
-                      $getClient = new ZohoCRMClient('Leads', $accessToken);
-                      $finds = $getClient->searchRecords()
-                      ->where($uniqueKey, $uniqueValue)
-                      ->request();
-                    } catch (\Exception $e) {
-                    }
-                    if ($finds) {
-                        continue;
-                    }
+                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                $responses = $bulkAPIResponse->getEntityResponses();
+                if (count($responses)) {
+                    continue;
+                }
+
+                $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
+                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                $responses = $bulkAPIResponse->getEntityResponses();
+                if (count($responses)) {
+                    continue;
                 }
             }
             $newFields[] = $field;
@@ -254,47 +300,54 @@ class Engine
         return $newFields;
     }
 
-    private function addNote($noteTitle, $noteContent, $id)
+    private function addNote($title, $content, $record)
     {
-        $client = new ZohoCRMClient('Notes', $this->accessToken);
-        $updated = $client->insertRecords()
-        ->setRecords(array(
-            array(
-            'Note Title' => $noteTitle,
-            'Note Content' => $noteContent,
-            'entityId' => $id
-            )
-        ))
-        ->onDuplicateError()
-        ->triggerWorkflow()
-        ->request();
+        $note = ZCRMNote::getInstance($record);
+        $note->setTitle($title);
+        $note->setContent($content);
+        $record->addNote($note);
     }
 
-    private function addRecordIdToFields ($fields, $scope, $uniqueKey)
+    private function addIdsToRecords($records, $scope, $uniqueKey, $fields)
     {
-        $accessToken = $this->accessToken;
-        $newFields = array();
-        foreach ($fields as $field) {
-            $uniqueValue = $field[$uniqueKey];
-            $client = new ZohoCRMClient($scope, $accessToken);
-            $targets = null;
-            try {
-              $targets = $client->searchRecords()
-              ->where($uniqueKey, $uniqueValue)
-              ->request();
-            } catch (\Exception $e) {
+        $newRecords = array();
+        foreach ($records as $i => $record) {
+            $client = ZCRMRecord::getInstance($scope, null);
+            $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+            if (!$key) {
+                continue;
             }
-            if ($targets) {
-              $temp = array_values($targets);
-              $target = $temp[0];
-              $fieldId = strtoupper(rtrim($scope, 's')).'ID';
-              $temp2 = $target->getData();
-              $newFields[] = array_merge($field, array(
-                'Id' => $temp2[$fieldId]
-              ));
+            $zcrmModuleIns = ZCRMModule::getInstance($scope);
+            $uniqueValue = $fields[$i][$uniqueKey];
+            $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+            // var_dump($bulkAPIResponse);
+            $responses = $bulkAPIResponse->getData();
+            if (count($responses)){
+                $entityId = $responses[0]->getEntityId();
+                $record->setEntityId($entityId);
+                $newRecords[] = $record;
             }
         }
-        return $newFields;
+        return $newRecords;
+    }
+
+    private function createRecords($scope, $fields)
+    {
+        $records = array();
+        foreach ($fields as $field) {
+            $record = ZCRMRecord::getInstance($scope, null);
+            foreach ($field as $label => $value) {
+                if ($label) {
+                    $key = $this->makeFieldNameByLabel($scope, $label);
+                    if (!$key) {
+                        continue;
+                    }
+                    $record->setFieldValue($key, $value);
+                }
+            }
+            $records[] = $record;
+        }
+        return $records;
     }
 
     private function insertRecords($records)
@@ -307,22 +360,20 @@ class Engine
             $saves = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
             $fields = $this->removeCompareField($saves, $scope);
             try {
-                $client = new ZohoCRMClient($scope, $accessToken);
-                $updates = $client->insertRecords()
-                ->setRecords($fields)
-                ->onDuplicateError()
-                ->triggerWorkflow()
-                ->request();
-                foreach ($updates as $i => $update) {
-                    $field = $saves[$i - 1];
-                    if (isset($field['Note Title']) && isset($field['Note Content'])) {
-                        $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $update->id);
+                $client = ZCRMModule::getInstance($scope);
+                $data = $this->createRecords($scope, $fields);
+                $bulkAPIResponse = $client->createRecords($data);
+                $responses = $bulkAPIResponse->getEntityResponses();
+                foreach ($responses as $i => $response) {
+                    $updated = $response->getData();
+                    if (isset($saves[$i]['Note Title']) && isset($saves[$i]['Note Content'])) {
+                        $this->addNote($saves[$i]['Note Title'], $saves[$i]['Note Content'], $updated);
                     }
-                    $this->records[] = array_merge(array(
-                        "scope" => $scope,
-                        "id" => $update->id
-                    ), $field);
+                    $this->records[] = array(
+                        'record' => $updated,
+                        'field' => $saves[$i],
+                        'scope' => $scope
+                    );
                 }
             } catch (\Exception $e) {
             }
@@ -335,25 +386,24 @@ class Engine
         foreach ($records as $record) {
             $scope = $record['scope'];
             $uniqueKey = $record['uniqueKey'];
-            $fields = $record['field'];
-            $saves = $this->addRecordIdToFields($fields, $scope, $uniqueKey);
+            $saves = $record['field'];
             $fields = $this->removeCompareField($saves, $scope);
             try {
-                $client = new ZohoCRMClient($scope, $accessToken);
-                $updates = $client->updateRecords()
-                ->setRecords($fields)
-                ->triggerWorkflow()
-                ->request();
-                foreach ($updates as $i => $update) {
-                    $field = $saves[$i - 1];
-                    if (isset($field['Note Title']) && isset($field['Note Content'])) {
-                        $relatedFieldId = strtoupper(rtrim($scope, 's')).'ID';
-                        $this->addNote($field['Note Title'], $field['Note Content'], $update->id);
+                $client = ZCRMModule::getInstance($scope);
+                $data = $this->createRecords($scope, $fields);
+                $data = $this->addIdsToRecords($data, $scope, $uniqueKey, $fields);
+                $bulkAPIResponse = $client->updateRecords($data);
+                $responses = $bulkAPIResponse->getEntityResponses();
+                foreach ($responses as $i => $response) {
+                    $updated = $response->getData();
+                    if (isset($saves[$i]['Note Title']) && isset($saves[$i]['Note Content'])) {
+                        $this->addNote($saves[$i]['Note Title'], $saves[$i]['Note Content'], $updated);
                     }
-                    $this->records[] = array_merge(array(
-                        "scope" => $scope,
-                        "id" => $update->id
-                    ), $field);
+                    $this->records[] = array(
+                      'record' => $updated,
+                      'field' => $saves[$i],
+                      'scope' => $scope
+                    );
                 }
             } catch (\Exception $e) {
             }
@@ -383,19 +433,27 @@ class Engine
 
             foreach ($targets as $target) {
                 foreach ($items as $item) {
-                    $compareValue = $item[$compareField];
-                    if ($compareValue === $target[$compareField]) {
-                        $client = new ZohoCRMClient($zohoRelatedScope, $this->accessToken);
-                        $targetId = $target['id'];
-                        $id = $item['id'];
-                        $lookup = $lookupId.'_ID';
-                        $result = $client->updateRecords()
-                        ->addRecord(array(
-                            'Id' => $id,
-                            $lookup => $targetId
-                        ))
-                        ->triggerWorkflow()
-                        ->request();
+                    if (!isset($item['field'][$compareField]) || !isset($target['field'][$compareField])) {
+                        continue;
+                    }
+                    if ($item['field'][$compareField] !== $target['field'][$compareField]) {
+                        continue;
+                    }
+                    $parentRecord = $item['record'];
+                    $lookupRecord = $target['record'];
+                    if ($lookupId) {
+                        $key = $this->makeFieldNameByLabel($zohoRelatedScope, $lookupId);
+                        if (!$key) {
+                            continue;
+                        }
+                        $parentRecord->setFieldValue($key, $lookupRecord);
+                        try {
+                            $parentRecord->update();
+                        } catch (ZCRMException $e) {
+                        }
+                    } else {
+                        $junctionRecord = ZCRMJunctionRecord::getInstance($zohoRelatedTargetScope, $lookupRecord->getEntityId());
+                        $parentRecord->addRelation($junctionRecord);
                     }
                 }
             }

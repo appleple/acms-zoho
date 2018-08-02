@@ -1,18 +1,5 @@
 {
-    "name": "appleple/acms-zoho",
-    "description": "Zoho API と連携し、お問い合わせフォームなどで送信された内容をZoho CRMに登録します。",
-    "keywords": [
-        "SMS", "a-blog cms"
-    ],
-    "homepage": "https://www.a-blogcms.jp",
     "require": {
-        "php": ">=5.3.3",
-        "cristianpontes/zoho-crm-client-php": "~1.6.1"
-    },
-    "config": {
-        "vendor-dir": "vendor",
-        "platform": {
-            "php": "5.3.3"
-        }
+        "zohocrm/php-sdk": "^1.0"
     }
 }

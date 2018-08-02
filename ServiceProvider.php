@@ -5,6 +5,7 @@ use ACMS_App;
 use Acms\Services\Common\HookFactory;
 use Acms\Services\Common\InjectTemplate;
 use Acms\Services\Facades\Storage;
+use ZCRMModule;
 
 class ServiceProvider extends ACMS_App
 {
