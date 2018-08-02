@@ -19,6 +19,7 @@
 <!-- END_IF -->
 
 <form action="" method="post" class="js-adminSave acms-admin-form">
+
     <div class="js-acms_fix_marker acms_fix_bg">
         <div class="acms-admin-form-group acms_fix_bg_index">
             <input type="submit" name="ACMS_POST_Config" value="保存" class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save"
@@ -37,28 +38,34 @@
     </div>
     <h3 class="acms-admin-admin-title2">
         <!--T-->Zoho 認証トークン設定<!--/T-->
-    </h3>
+	</h3>
     <table class="adminTable acms-admin-table-admin-edit" style="margin-bottom:20px">
-        <tr>
-            <th>
-                <!--T-->認証トークンの設定<!--/T-->
-                <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoで取得した認証トークンを指定します。<!--/T-->"></i>
-            </th>
-            <td>
-                <input type="text" name="zoho_access_token" value="{zoho_access_token}" class="acms-admin-form-width-full" />
-                <input type="hidden" name="config[]" value="zoho_access_token" />
-            </td>
+		<tr>
+			<th>
+				<!--T-->認証スコープ<!--/T-->
+			</th>
+			<td>ZohoCRM.modules.all, ZohoCRM.settings.all</td>
 		</tr>
 		<tr>
             <th>
-                <!--T-->grantトークンの設定（v2）<!--/T-->
+                <!--T-->grantトークンの設定<!--/T-->
                 <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoで取得した認証トークンを指定します。<!--/T-->"></i>
             </th>
             <td>
                 <input type="text" name="zoho_grant_token" value="{zoho_grant_token}" class="acms-admin-form-width-full" />
                 <input type="hidden" name="config[]" value="zoho_grant_token" />
             </td>
-        </tr>
+		</tr>
+		<tr>
+			<th>
+				<!--T-->メールアドレス<!--/T-->
+				<i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoで登録しているメールアドレスを指定します。<!--/T-->"></i>
+			</th>
+			<td>
+				<input type="text" name="zoho_user_identifier" value="{zoho_user_identifier}" class="acms-admin-form-width-full" />
+				<input type="hidden" name="config[]" value="zoho_user_identifier" />
+			</td>
+		</tr>
     </table>
 </form>
 

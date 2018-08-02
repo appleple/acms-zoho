@@ -15,21 +15,27 @@ class Api
     ZCRMRestClient::initialize();
     $oAuthClient = ZohoOAuth::getClientInstance();
     $this->client = $oAuthClient;
-    if ($refreshToken) {
-        $userIdentifier = "info@basecamp-nagoya.jp";
-        $oAuthTokens = $oAuthClient->generateAccessTokenFromRefreshToken($refreshToken, $userIdentifier);
-        if ($oAuthTokens) {
-            $this->updateRefreshToken($oAuthTokens->getRefreshToken());
-        }
-    } else {
-        $oAuthTokens = $oAuthClient->generateAccessToken($grantToken);
+    $userIdentifier = config('zoho_user_identifier');
+    if (!$refreshToken) {
+        return;
+    }
+    $oAuthTokens = $oAuthClient->generateAccessTokenFromRefreshToken($refreshToken, $userIdentifier);
+    if ($oAuthTokens) {
         $this->updateRefreshToken($oAuthTokens->getRefreshToken());
     }
   }
 
+  public function authorize()
+  {
+    $oAuthClient = ZohoOAuth::getClientInstance();
+    $grantToken = config('zoho_grant_token');
+    $oAuthTokens = $oAuthClient->generateAccessToken($grantToken);
+    $this->updateRefreshToken($oAuthTokens->getRefreshToken());
+  }
+
   public function getAccessToken()
   {
-    $userIdentifier = "info@basecamp-nagoya.jp";
+    $userIdentifier = config('zoho_user_identifier');
     return $this->client->getAccessToken($userIdentifier);
   }
 

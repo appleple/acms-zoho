@@ -11,11 +11,14 @@ class Admin extends ACMS_GET
     public function get()
     {
         $Tpl = new Template($this->tpl, new ACMS_Corrector());
+
         try {
             $accessToken = (new Api())->getAccessToken();
             $authorized = 'false';
             if ($accessToken) {
-                $authorized = 'true';
+                if (config('zoho_refresh_token')) {
+                    $authorized = 'true';
+                }
             }
             $Tpl->add(null, array(
                 'authorized' => $authorized
