@@ -9,6 +9,7 @@ use ZCRMModule;
 use ZCRMRecord;
 use ZCRMRestClient;
 use ZCRMNote;
+use App;
 use Acms\Plugins\Zoho\Api;
 
 class Engine
@@ -61,7 +62,6 @@ class Engine
     {
         new Api();
         $this->makeLabelConversionTable();
-        var_dump($this->conversions);
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
         $this->insertRecords($this->getRecordsByType($records, 'insert'));
@@ -99,6 +99,7 @@ class Engine
                 $conversions[$moduleName] = $labels;
             }
             $this->conversions = $conversions;
+            App::checkException();
         } catch (\Exception $e) {
 
         }
@@ -106,7 +107,10 @@ class Engine
 
     private function makeFieldNameByLabel($moduleName, $label)
     {
-        return $this->conversions[$moduleName][$label];
+        if (isset($this->conversions[$moduleName][$label])) {
+            return $this->conversions[$moduleName][$label];
+        }
+        return '';
     }
 
     /**
@@ -251,6 +255,9 @@ class Engine
             if ($scope === 'Leads' && $uniqueValue) {
                 $zcrmModuleIns = ZCRMModule::getInstance("Leads");
                 $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+                if (!$key) {
+                    continue;
+                }
                 $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
                 $responses = $bulkAPIResponse->getEntityResponses();
                 if (count($responses)) {
@@ -307,10 +314,14 @@ class Engine
         foreach ($records as $i => $record) {
             $client = ZCRMRecord::getInstance($scope, null);
             $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+            if (!$key) {
+                continue;
+            }
             $zcrmModuleIns = ZCRMModule::getInstance($scope);
             $uniqueValue = $fields[$i][$uniqueKey];
             $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-            $responses = $bulkAPIResponse->getEntityResponses();
+            // var_dump($bulkAPIResponse);
+            $responses = $bulkAPIResponse->getData();
             if (count($responses)){
                 $entityId = $responses[0]->getEntityId();
                 $record->setEntityId($entityId);
@@ -328,6 +339,9 @@ class Engine
             foreach ($field as $label => $value) {
                 if ($label) {
                     $key = $this->makeFieldNameByLabel($scope, $label);
+                    if (!$key) {
+                        continue;
+                    }
                     $record->setFieldValue($key, $value);
                 }
             }
@@ -351,10 +365,9 @@ class Engine
                 $bulkAPIResponse = $client->createRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
-                    var_dump($data);
                     $updated = $response->getData();
-                    if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
-                        $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
+                    if (isset($saves[$i]['Note Title']) && isset($saves[$i]['Note Content'])) {
+                        $this->addNote($saves[$i]['Note Title'], $saves[$i]['Note Content'], $updated);
                     }
                     $this->records[] = array(
                         'record' => $updated,
@@ -383,9 +396,8 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
-
-                    if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
-                        $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
+                    if (isset($saves[$i]['Note Title']) && isset($saves[$i]['Note Content'])) {
+                        $this->addNote($saves[$i]['Note Title'], $saves[$i]['Note Content'], $updated);
                     }
                     $this->records[] = array(
                       'record' => $updated,
@@ -431,6 +443,9 @@ class Engine
                     $lookupRecord = $target['record'];
                     if ($lookupId) {
                         $key = $this->makeFieldNameByLabel($zohoRelatedScope, $lookupId);
+                        if (!$key) {
+                            continue;
+                        }
                         $parentRecord->setFieldValue($key, $lookupRecord);
                         try {
                             $parentRecord->update();
