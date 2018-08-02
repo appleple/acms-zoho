@@ -15,13 +15,15 @@ class Api
     ZCRMRestClient::initialize();
     $oAuthClient = ZohoOAuth::getClientInstance();
     $this->client = $oAuthClient;
+    $this->authorized = 'false';
     $userIdentifier = config('zoho_user_identifier');
     if (!$refreshToken) {
         return;
     }
-    $oAuthTokens = $oAuthClient->generateAccessTokenFromRefreshToken($refreshToken, $userIdentifier);
+    $oAuthTokens = $oAuthClient->refreshAccessToken($refreshToken, $userIdentifier);
     if ($oAuthTokens) {
         $this->updateRefreshToken($oAuthTokens->getRefreshToken());
+        $this->authorized = 'true';
     }
   }
 
