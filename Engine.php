@@ -295,6 +295,7 @@ class Engine
         foreach ($records as $record) {
             $client = ZCRMRecord::getInstance($scope, null);
             $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+            $zcrmModuleIns = ZCRMModule::getInstance($scope);
             $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
             $responses = $bulkAPIResponse->getEntityResponses();
             if (count($responses)){
@@ -338,14 +339,20 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
-                    if (isset($updated['Note Title']) && isset($updated['Note Content'])) {
-                        $this->addNote($updated['Note Title'], $updated['Note Content'], $updated);
-                    }
-                    $this->records[] = $updated;
+                    // if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
+                    //     $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
+                    // }
+                    // var_dump($updated, $fields);
+                    $this->records[] = array(
+                        'record' => $updated,
+                        'field' => $saves[$i],
+                        'scope' => $scope
+                    );
                 }
             } catch (\Exception $e) {
             }
         }
+        // var_dump($this->records);
     }
 
     private function updateRecords($records)
@@ -354,8 +361,7 @@ class Engine
         foreach ($records as $record) {
             $scope = $record['scope'];
             $uniqueKey = $record['uniqueKey'];
-            $fields = $record['field'];
-            $saves = $this->addRecordIdToFields($fields, $scope, $uniqueKey);
+            $saves = $record['field'];
             $fields = $this->removeCompareField($saves, $scope);
             try {
                 $client = ZCRMModule::getInstance($scope);
@@ -365,10 +371,14 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
-                    if (isset($updated['Note Title']) && isset($updated['Note Content'])) {
-                        $this->addNote($updated['Note Title'], $updated['Note Content'], $updated);
-                    }
-                    $this->records[] = $updated;
+                    // if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
+                    //     $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
+                    // }
+                    $this->records[] = array(
+                      'record' => $updated,
+                      'field' => $saves[$i],
+                      'scope' => $scope
+                    );
                 }
             } catch (\Exception $e) {
             }
@@ -398,21 +408,20 @@ class Engine
 
             foreach ($targets as $target) {
                 foreach ($items as $item) {
-                    $compareValue = $item[$compareField];
-                    if ($compareValue === $target[$compareField]) {
-                        $client = new ZohoCRMClient($zohoRelatedScope, $this->accessToken);
-                        $targetId = $target['id'];
-                        $id = $item['id'];
-                        $lookup = $lookupId.'_ID';
+                    if (!isset($item['field'][$compareField]) || !isset($target['field'][$compareField])) {
+                        continue;
+                    }
+                    if ($item['field'][$compareField] !== $target['field'][$compareField]) {
+                        continue;
+                    }
+                    $parentRecord = $item['record'];
+                    $lookupRecord = $target['record'];
+                    if ($lookupId) {
+                        $key = $this->makeFieldNameByLabel($zohoRelatedScope, $lookupId);
+                        $parentRecord->setFieldValue($key, $lookupRecord);
                         try {
-                            $client->updateRecords()
-                            ->addRecord(array(
-                                'Id' => $id,
-                                $lookup => $targetId
-                            ))
-                            ->triggerWorkflow()
-                            ->request();
-                        } catch (\Exception $e) {
+                            $parentRecord->update();
+                        } catch (ZCRMException $e) {
                         }
                     }
                 }
