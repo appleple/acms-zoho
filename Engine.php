@@ -61,6 +61,7 @@ class Engine
     {
         new Api();
         $this->makeLabelConversionTable();
+        var_dump($this->conversions);
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
         $this->insertRecords($this->getRecordsByType($records, 'insert'));
@@ -70,26 +71,37 @@ class Engine
 
     private function makeLabelConversionTable()
     {
+        $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
+        $scopes = array();
+        foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
+            $zohoInsertScope = $this->config->get('zoho_form_insert_scope', '', $i);
+            $zohoUpdateScope = $this->config->get('zoho_form_update_scope', '', $i);
+            $insertScopes = explode(',', $zohoInsertScope);
+            $updateScopes = explode(',', $zohoUpdateScope);
+            $scopes = array_merge($scopes, $insertScopes, $updateScopes);
+        }
+        $scopes = array_unique($scopes);
+        $scopes = array_filter($scopes);
         $ins = ZCRMRestClient::getInstance();
-        $modules = $ins->getAllModules()->getData();
-        $conversions = array();
-        foreach ($modules as $module) {
-            $moduleName = $module->getModuleName();
-            $labels = array();
-            try {
+        try {
+            $conversions = array();
+            foreach ($scopes as $scope) {
+                $module = $ins->getModule($scope)->getData();
+                $moduleName = $module->getModuleName();
                 $data = $module->getAllFields();
                 $fields = $data->getData();
-                foreach($fields as $field) {
+                $labels = array();
+                foreach ($fields as $field) {
                     $label = $field->getFieldLabel();
                     $apiName = $field->getApiName();
                     $labels[$label] = $apiName;
                 }
                 $conversions[$moduleName] = $labels;
-            } catch (\Exception $e) {
-
             }
+            $this->conversions = $conversions;
+        } catch (\Exception $e) {
+
         }
-        $this->conversions = $conversions;
     }
 
     private function makeFieldNameByLabel($moduleName, $label)
@@ -117,7 +129,7 @@ class Engine
                 $updateScopes = explode(',', $zohoUpdateScope);
             }
             if (!$uniqueKey) {
-                $uniqueKey = 'Email';
+                $uniqueKey = 'メール';
             }
             foreach ($insertScopes as $insertScope) {
                 $records[] = array(
@@ -289,13 +301,14 @@ class Engine
         $record->addNote($note);
     }
 
-    private function addIdsToRecords($records, $scope, $uniqueKey)
+    private function addIdsToRecords($records, $scope, $uniqueKey, $fields)
     {
         $newRecords = array();
-        foreach ($records as $record) {
+        foreach ($records as $i => $record) {
             $client = ZCRMRecord::getInstance($scope, null);
             $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
             $zcrmModuleIns = ZCRMModule::getInstance($scope);
+            $uniqueValue = $fields[$i][$uniqueKey];
             $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
             $responses = $bulkAPIResponse->getEntityResponses();
             if (count($responses)){
@@ -338,11 +351,11 @@ class Engine
                 $bulkAPIResponse = $client->createRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
+                    var_dump($data);
                     $updated = $response->getData();
-                    // if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
-                    //     $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
-                    // }
-                    // var_dump($updated, $fields);
+                    if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
+                        $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
+                    }
                     $this->records[] = array(
                         'record' => $updated,
                         'field' => $saves[$i],
@@ -352,7 +365,6 @@ class Engine
             } catch (\Exception $e) {
             }
         }
-        // var_dump($this->records);
     }
 
     private function updateRecords($records)
@@ -366,14 +378,15 @@ class Engine
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
-                $data = $this->addIdsToRecords($data, $scope, $uniqueKey);
+                $data = $this->addIdsToRecords($data, $scope, $uniqueKey, $fields);
                 $bulkAPIResponse = $client->updateRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
-                    // if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
-                    //     $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
-                    // }
+
+                    if (isset($fields['Note Title']) && isset($fields['Note Content'])) {
+                        $this->addNote($fields['Note Title'], $fields['Note Content'], $updated);
+                    }
                     $this->records[] = array(
                       'record' => $updated,
                       'field' => $saves[$i],
