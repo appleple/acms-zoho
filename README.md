@@ -53,13 +53,13 @@ a-blog cmsのForm内のキーに対してZoho側のキーを紐づけること�
 
 フォームIDごとに、Zohoのどのスコープに対してInsert（データの挿入）及びUpdate（データの更新）ができるかを設定できます。例えば、下の画像の場合、Leads及び、Potentialsのスコープに対してInsert権限があり、Contactsのスコープに対してはUpdate権限があります。
 
-<img src="./images/authorization.png">
+![](./images/authorization.png)
 
 ### 2. Zohoのカスタムフィールドの設定
 
 次は、カスタムフィールドの設定です。ここではa-blog cmsのフォーム側の変数とZoho側のカスタムフィールドの紐付けを行います。例えば、一番最初の列では、twitterの項目はzoho側のLeadsとContactsのスコープのTwitterに対応しています。
 
-<img src="./images/custom-field.png">
+![](./images/custom-field.png)
 
 ### 3. lookupIDの関連付け
 
@@ -67,5 +67,5 @@ a-blog cmsのForm内のキーに対してZoho側のキーを紐づけること�
 例えば、商品に対してその商品を誰が買ったのかをルックアップIDを使って以下のように紐づけます。
 ルックアップIDにはそのルックアップIDに使用されているzoho側のラベル名を登録します。
 
-![](lookupid.png)
+![](./images/lookupid.png)
 
