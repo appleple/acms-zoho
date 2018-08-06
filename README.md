@@ -6,7 +6,25 @@ Zoho CRM とはオンラインの顧客管理システムです。a-blog cmsの�
 [Zoho for a-blog cms](https://github.com/appleple/acms-zoho/raw/master/build/Zoho.zip)
 
 
+## 設定
 
+下記のURLより、クライアントIDを追加します。
+[https://accounts.zoho.com/developerconsole](https://accounts.zoho.com/developerconsole)
+
+![](./images/register.png)
+
+設定後は、先ほど追加したクライアントに対して、セルフクライアントの設定をします。
+
+![](./images/popup.png)
+
+スコープには`ZohoCRM.modules.all`と入力してください。期限は何分でも構いませんが、その期限内にoAuth認証を済ませる必要があります。入力をすませると、oAuth認証に必要なgrantトークンが表示されるはずです。このトークンを覚えておきましょう。
+
+![](./images/self-client.png)
+
+先ほどのgrantトークンをa-blog cmsの管理画面 > 拡張メニュー > Zoho より入力します。zohoの登録で使用しているメールアドレスもここで入力しておく必要があります。
+入力後は設定を保存し、「認証」ボタンをクリックします。無事に認証ができると、下の図のように「認証済み」というラベルが表示されるはずです。
+
+![](./images/oauth.png)
 
 ### 注意
 
