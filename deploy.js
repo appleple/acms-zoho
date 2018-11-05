@@ -65,8 +65,8 @@ co(function* () {
     fs.copySync('./theme', 'Zoho/theme');
     fs.copySync(`./ServiceProvider.php`, `Zoho/ServiceProvider.php`);
     fs.copySync(`./GET/Zoho/Admin.php`, `Zoho/GET/Zoho/Admin.php`);
-    fs.copySync(`./GET/Zoho/Deauthorize.php`, `Zoho/GET/Zoho/Deauthorize.php`);
-    fs.copySync(`./GET/Zoho/Oauth.php`, `Zoho/GET/Zoho/Oauth.php`);
+    fs.copySync(`./POST/Zoho/Deauthorize.php`, `Zoho/POST/Zoho/Deauthorize.php`);
+    fs.copySync(`./POST/Zoho/Oauth.php`, `Zoho/POST/Zoho/Oauth.php`);
     yield systemCmd(`cd ./Zoho; composer install`);
     yield zipPromise(`Zoho`, `./build/Zoho.zip`);
     fs.removeSync(`Zoho`);
