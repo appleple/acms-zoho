@@ -17,9 +17,34 @@ Zoho CRM とはオンラインの顧客管理システムです。a-blog cmsの�
 
 ![](./images/popup.png)
 
-スコープには`ZohoCRM.modules.all`と入力してください。期限は何分でも構いませんが、その期限内にoAuth認証を済ませる必要があります。入力をすませると、oAuth認証に必要なgrantトークンが表示されるはずです。このトークンを覚えておきましょう。
+スコープには`ZohoCRM.modules.all,ZohoCRM.settings.all`と入力してください。期限は何分でも構いませんが、その期限内にoAuth認証を済ませる必要があります。入力をすませると、oAuth認証に必要なgrantトークンが表示されるはずです。このトークンを覚えておきましょう。
 
 ![](./images/self-client.png)
+
+`configuration.properties`と`oauth_configuration.properties`に設定を追記します。
+場所は、`extension/plugins/Zoho/vendor/zohocrm/php-sdk/src/resources` にあります。
+
+`configuration.properties`
+
+```
+apiBaseUrl=www.zohoapis.com
+apiVersion=v2
+sandbox=false
+applicationLogFilePath=./
+currentUserEmail={Zohoに登録したメールアドレス}
+```
+
+`oauth_configuration.properties`
+
+```
+client_id=1000.9MPWTS5K2NTD69313RALBHHFX9FV6O
+client_secret=6aab3d3c02e3b49a79dba3dd35fc56b901a52f9472
+redirect_uri=http://acms.org/bid/1/admin/app_zoho_index/callback.html
+accounts_url=https://accounts.zoho.com
+token_persistence_path=./
+access_type=offline
+persistence_handler_class=ZohoOAuthPersistenceHandler
+```
 
 先ほどのgrantトークンをa-blog cmsの管理画面 > 拡張メニュー > Zoho より入力します。zohoの登録で使用しているメールアドレスもここで入力しておく必要があります。
 入力後は設定を保存し、「認証」ボタンをクリックします。無事に認証ができると、下の図のように「認証済み」というラベルが表示されるはずです。
