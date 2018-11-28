@@ -37,9 +37,9 @@ currentUserEmail={Zohoに登録したメールアドレス}
 `oauth_configuration.properties`
 
 ```
-client_id=1000.9MPWTS5K2NTD69313RALBHHFX9FV6O
-client_secret=6aab3d3c02e3b49a79dba3dd35fc56b901a52f9472
-redirect_uri=http://acms.org/bid/1/admin/app_zoho_index/callback.html
+client_id={取得したClientID}
+client_secret={取得したClient Secret}
+redirect_uri={リダイレクトURL}
 accounts_url=https://accounts.zoho.com
 token_persistence_path=./
 access_type=offline
