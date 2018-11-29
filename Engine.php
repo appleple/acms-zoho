@@ -9,6 +9,7 @@ use ZCRMModule;
 use ZCRMRecord;
 use ZCRMRestClient;
 use ZCRMNote;
+use ZCRMException;
 use App;
 use Acms\Plugins\Zoho\Api;
 
@@ -258,17 +259,22 @@ class Engine
                 if (!$key) {
                     continue;
                 }
-                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-                $responses = $bulkAPIResponse->getEntityResponses();
-                if (count($responses)) {
-                    continue;
-                }
+                try {
+                  $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                  $responses = $bulkAPIResponse->getEntityResponses();
+                  if (count($responses)) {
+                      continue;
+                  }
 
-                $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
-                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-                $responses = $bulkAPIResponse->getEntityResponses();
-                if (count($responses)) {
-                    continue;
+                  $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
+                  $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                  $responses = $bulkAPIResponse->getEntityResponses();
+                  if (count($responses)) {
+                      continue;
+                  }
+                } catch (ZCRMException $e) {
+                  $newFields[] = $field;
+                  continue;
                 }
             }
             $newFields[] = $field;
@@ -375,7 +381,8 @@ class Engine
                         'scope' => $scope
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (ZCRMException $e) {
+              var_dump($e->getMessage());
             }
         }
     }
