@@ -403,6 +403,7 @@ class Engine
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
                     if (isset($saves[$i]['Note Title']) && isset($saves[$i]['Note Content'])) {
+                        var_dump('test');
                         $this->addNote($saves[$i]['Note Title'], $saves[$i]['Note Content'], $updated);
                     }
                     $this->records[] = array(
