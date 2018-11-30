@@ -261,19 +261,18 @@ class Engine
                 }
                 try {
                   $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-                  $responses = $bulkAPIResponse->getEntityResponses();
+                  $responses = $bulkAPIResponse->getData();
                   if (count($responses)) {
-                      continue;
+                    continue;
                   }
 
                   $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
                   $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-                  $responses = $bulkAPIResponse->getEntityResponses();
+                  $responses = $bulkAPIResponse->getData();
                   if (count($responses)) {
-                      continue;
+                    continue;
                   }
                 } catch (ZCRMException $e) {
-                  $newFields[] = $field;
                   continue;
                 }
             }
