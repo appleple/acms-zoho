@@ -65,8 +65,8 @@ class Engine
         $this->makeLabelConversionTable();
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
-        $this->insertRecords($this->getRecordsByType($records, 'insert'));
         $this->updateRecords($this->getRecordsByType($records, 'update'));
+        $this->insertRecords($this->getRecordsByType($records, 'insert'));
         $this->updateRelatedRecords();
     }
 
