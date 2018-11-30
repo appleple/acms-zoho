@@ -256,26 +256,25 @@ class Engine
             if ($scope === 'Leads' && $uniqueValue) {
                 $zcrmModuleIns = ZCRMModule::getInstance("Leads");
                 $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-                if (!$key) {
+                if (!$key || !$uniqueValue) {
                     continue;
                 }
                 try {
+                  $zcrmModuleIns = ZCRMModule::getInstance("Leads");
                   $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
                   $responses = $bulkAPIResponse->getData();
                   if (count($responses)) {
                     continue;
                   }
-
+                } catch (ZCRMException $e) {}
+                try {
                   $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
                   $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
                   $responses = $bulkAPIResponse->getData();
                   if (count($responses)) {
                     continue;
                   }
-                } catch (ZCRMException $e) {
-                  $newFields[] = $field;
-                  continue;
-                }
+                } catch (ZCRMException $e) {}
             }
             $newFields[] = $field;
         }
@@ -320,13 +319,12 @@ class Engine
         foreach ($records as $i => $record) {
             $client = ZCRMRecord::getInstance($scope, null);
             $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-            if (!$key) {
+            $uniqueValue = $fields[$i][$uniqueKey];
+            if (!$key || !$uniqueValue) {
                 continue;
             }
             $zcrmModuleIns = ZCRMModule::getInstance($scope);
-            $uniqueValue = $fields[$i][$uniqueKey];
             $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-            // var_dump($bulkAPIResponse);
             $responses = $bulkAPIResponse->getData();
             if (count($responses)){
                 $entityId = $responses[0]->getEntityId();
@@ -411,7 +409,7 @@ class Engine
                       'scope' => $scope
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (ZCRMException $e) {
             }
         }
     }
