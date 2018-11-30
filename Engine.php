@@ -273,6 +273,7 @@ class Engine
                     continue;
                   }
                 } catch (ZCRMException $e) {
+                  $newFields[] = $field;
                   continue;
                 }
             }
@@ -381,7 +382,6 @@ class Engine
                     );
                 }
             } catch (ZCRMException $e) {
-              var_dump($e->getMessage());
             }
         }
     }
