@@ -1,6 +1,6 @@
 {
   "name": "acms-zoho",
-  "version": "2.0.10",
+  "version": "2.0.11",
   "description": "Zoho API と連携し、お問い合わせフォームなどで送信された内容をZoho CRMに登録します。",
   "main": "deploy.js",
   "scripts": {
