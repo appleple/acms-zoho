@@ -361,8 +361,8 @@ class Engine
             $scope = $record['scope'];
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
-            $saves = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
-            $fields = $this->removeCompareField($saves, $scope);
+            $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
+            // $fields = $this->removeCompareField($fields, $scope);
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
@@ -370,12 +370,12 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
-                    if (isset($saves[$i]['Note Title']) && isset($saves[$i]['Note Content'])) {
-                        $this->addNote($saves[$i]['Note Title'], $saves[$i]['Note Content'], $updated);
+                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content'])) {
+                        $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
                     }
                     $this->records[] = array(
                         'record' => $updated,
-                        'field' => $saves[$i],
+                        'field' => $fields[$i],
                         'scope' => $scope
                     );
                 }
@@ -390,8 +390,8 @@ class Engine
         foreach ($records as $record) {
             $scope = $record['scope'];
             $uniqueKey = $record['uniqueKey'];
-            $saves = $record['field'];
-            $fields = $this->removeCompareField($saves, $scope);
+            $fields = $record['field'];
+            // $fields = $this->removeCompareField($fields, $scope);
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
@@ -400,12 +400,12 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
-                    if (isset($saves[$i]['Note Title']) && isset($saves[$i]['Note Content'])) {
-                        $this->addNote($saves[$i]['Note Title'], $saves[$i]['Note Content'], $updated);
+                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content'])) {
+                        $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
                     }
                     $this->records[] = array(
                       'record' => $updated,
-                      'field' => $saves[$i],
+                      'field' => $fields[$i],
                       'scope' => $scope
                     );
                 }
