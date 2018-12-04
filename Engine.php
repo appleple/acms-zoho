@@ -224,11 +224,18 @@ class Engine
                         if ($record['scope'] === $scope) {
                             if (($record['type'] === 'insert' && $canInsert)
                             || ($record['type'] === 'update' && $canUpdate)) {
+                                $value;
                                 if ($groupArr && in_array($key, $groupArr)) {
-                                    $item[$fieldKey] = $field->get($key, '', $cnt);
+                                    $value = $field->get($key, '', $cnt);
                                 } else {
-                                    $item[$fieldKey] = implode(";", $field->getArray($key));
+                                    $value = implode(";", $field->getArray($key));
                                 }
+                                if ($value === 'true') {
+                                  $value = true;
+                                } else if ($value === 'false') {
+                                  $value = false;
+                                }
+                                $item[$fieldKey] = $value;
                             }
                         }
                     }
