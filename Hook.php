@@ -1,6 +1,7 @@
 <?php
 
 namespace Acms\Plugins\Zoho;
+use Process;
 
 class Hook
 {
@@ -19,8 +20,12 @@ class Hook
         }
         $formCode = $thisModule->Post->get('id');
         try {
+          $manager = Process::newProcessManager();
+          $manager->addTask(function () use ($formCode, $thisModule) {
             $engine = new Engine($formCode, $thisModule);
             $engine->send();
+          });
+          $manager->run();
         } catch (\Exception $e) {
             userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
         }
