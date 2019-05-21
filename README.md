@@ -5,6 +5,8 @@ Zoho CRM とはオンラインの顧客管理システムです。a-blog cmsの�
 ## ダウンロード
 [Zoho for a-blog cms](https://github.com/appleple/acms-zoho/raw/master/build/Zoho.zip)
 
+## 動作環境
+php: >=5.6
 
 ## 設定
 
