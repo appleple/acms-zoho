@@ -5,12 +5,12 @@ use ZCRMRestClient;
 use ZohoOAuth;
 use DB;
 use SQL;
+use Exception;
 
 class Api
 {
   public function __construct()
   {
-    $grantToken = config('zoho_grant_token');
     $refreshToken = config('zoho_refresh_token');
     ZCRMRestClient::initialize();
     $oAuthClient = ZohoOAuth::getClientInstance();
@@ -20,7 +20,16 @@ class Api
     if (!$refreshToken) {
         return;
     }
-    $oAuthTokens = $oAuthClient->refreshAccessToken($refreshToken, $userIdentifier);
+    try {
+      $oAuthTokens = $oAuthClient->refreshAccessToken($refreshToken, $userIdentifier);
+    } catch (Exception $e) {
+      $DB = DB::singleton(dsn());
+      $RemoveSQL = SQL::newDelete('config');
+      $RemoveSQL->addWhereOpr('config_blog_id', BID);
+      $RemoveSQL->addWhereOpr('config_key', 'zoho_refresh_token');
+      $DB->query($RemoveSQL->get(dsn()), 'exec');
+      $oAuthTokens = null;
+    }
     if ($oAuthTokens) {
         $this->updateRefreshToken($oAuthTokens->getRefreshToken());
         $this->authorized = 'true';

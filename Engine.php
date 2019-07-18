@@ -377,7 +377,7 @@ class Engine
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
                     $updated = $response->getData();
-                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content'])) {
+                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content']) && $updated) {
                         $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
                     }
                     $this->records[] = array(
