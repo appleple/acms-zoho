@@ -23,30 +23,6 @@ php: >=5.6
 
 ![](./images/self-client.png)
 
-`configuration.properties`と`oauth_configuration.properties`に設定を追記します。
-場所は、`extension/plugins/Zoho/vendor/zohocrm/php-sdk/src/resources` にあります。
-
-`configuration.properties`
-
-```
-apiBaseUrl=www.zohoapis.com
-apiVersion=v2
-sandbox=false
-applicationLogFilePath=./
-currentUserEmail={Zohoに登録したメールアドレス}
-```
-
-`oauth_configuration.properties`
-
-```
-client_id={取得したClientID}
-client_secret={取得したClient Secret}
-redirect_uri={リダイレクトURL}
-accounts_url=https://accounts.zoho.com
-token_persistence_path=./
-access_type=offline
-persistence_handler_class=ZohoOAuthPersistenceHandler
-```
 
 先ほどのgrantトークンをa-blog cmsの管理画面 > 拡張メニュー > Zoho より入力します。zohoの登録で使用しているメールアドレスもここで入力しておく必要があります。
 入力後は設定を保存し、「認証」ボタンをクリックします。無事に認証ができると、下の図のように「認証済み」というラベルが表示されるはずです。
