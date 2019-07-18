@@ -63,5 +63,4 @@ class Api
       $InsertSQL->addInsert('config_blog_id', BID);
       $DB->query($InsertSQL->get(dsn()), 'exec');
   }
-
 }

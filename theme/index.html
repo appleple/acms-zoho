@@ -52,11 +52,27 @@
 			<th>
 				<!--T-->認証スコープ<!--/T-->
 			</th>
-			<td>ZohoCRM.modules.all,ZohoCRM.settings.all</td>
+			<td>
+				<input type="text" value="ZohoCRM.modules.all,ZohoCRM.settings.all" class="acms-admin-form-width-full" readonly />
+			</td>
+		</tr>
+		<tr>
+			<th>クライアントID</th>
+			<td>
+			  <input type="text" name="zoho_client_id" value="{zoho_client_id}" class="acms-admin-form-width-full" />
+			  <input type="hidden" name="config[]" value="zoho_client_id" />
+			</td>
+		</tr>
+		<tr>
+			<th>クライアントシークレット</th>
+			<td>
+			  <input type="text" name="zoho_client_secret" value="{zoho_client_secret}" class="acms-admin-form-width-full" />
+			  <input type="hidden" name="config[]" value="zoho_client_secret" />
+			</td>
 		</tr>
 		<tr>
             <th>
-                <!--T-->grantトークンの設定<!--/T-->
+                grantトークンの設定
                 <i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoで取得した認証トークンを指定します。<!--/T-->"></i>
             </th>
             <td>
@@ -66,12 +82,19 @@
 		</tr>
 		<tr>
 			<th>
-				<!--T-->メールアドレス<!--/T-->
+				メールアドレス
 				<i class="acms-admin-icon-tooltip js-acms-tooltip" data-acms-tooltip="<!--T-->Zohoで登録しているメールアドレスを指定します。<!--/T-->"></i>
 			</th>
 			<td>
 				<input type="text" name="zoho_user_identifier" value="{zoho_user_identifier}" class="acms-admin-form-width-full" />
 				<input type="hidden" name="config[]" value="zoho_user_identifier" />
+			</td>
+		</tr>
+		<tr>
+			<th>リダイレクトURL</th>
+			<td>
+			  <input type="text" name="zoho_redirect_uri" value="%{ROOT_BLOG_URL}bid/%{BID}/admin/app_zoho_index/callback.html" class="acms-admin-form-width-full" readonly />
+			  <input type="hidden" name="config[]" value="zoho_redirect_uri" />
 			</td>
 		</tr>
     </table>
