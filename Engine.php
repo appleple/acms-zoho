@@ -44,6 +44,7 @@ class Engine
         $DB = DB::singleton(dsn());
         $SQL = SQL::newSelect('form');
         $SQL->addWhereOpr('form_code', $code);
+        $SQL->addWhereOpr('form_blog_id', BID);
         $row = $DB->query($SQL->get(dsn()), 'row');
         if (!$row) {
             return false;
