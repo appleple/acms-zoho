@@ -47,6 +47,23 @@
     <h3 class="acms-admin-admin-title2">
         <!--T-->Zoho 認証トークン設定<!--/T-->
 	</h3>
+	<!-- BEGIN_MODULE Zoho_CheckPropertyFile -->
+	<ul>
+	<!-- BEGIN_IF [{userNameError}/eq/true] -->
+	<li>ユーザー名が正しくセットされていません。</li>
+	<!-- END_IF -->
+	<!-- BEGIN_IF [{tokenPathError}/eq/true] -->
+	<li>
+		トークンパスが設定されていません（token_persistence_path）
+	</li>
+	<!-- END_IF -->
+	<!-- BEGIN_IF [{accessTypeError}/eq/true] -->
+	<li>
+		アクセスタイプが設定されていません（access_type: online, offline)
+	</li>
+	<!-- END_IF -->
+	</ul>
+	<!-- END_MODULE Zoho_CheckPropertyFile -->
     <table class="adminTable acms-admin-table-admin-edit" style="margin-bottom:20px">
 		<tr>
 			<th>
