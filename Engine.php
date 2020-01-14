@@ -73,7 +73,8 @@ class Engine
 
     private function makeLabelConversionTable()
     {
-        $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
+// 	    $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
+        $zohoScopeGroup = $this->config->getArray('zoho_form_index');
         $scopes = array();
         foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
             $zohoInsertScope = $this->config->get('zoho_form_insert_scope', '', $i);
@@ -103,7 +104,6 @@ class Engine
             $this->conversions = $conversions;
             App::checkException();
         } catch (\Exception $e) {
-
         }
     }
 
@@ -120,7 +120,7 @@ class Engine
      */
     private function makeRecords()
     {
-        $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
+        $zohoScopeGroup = $this->config->getArray('zoho_form_index');
         $records = array();
         foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
             $insertScopes = array();
@@ -342,6 +342,42 @@ class Engine
         }
         return $newRecords;
     }
+    
+    private function getRecordLength($field)
+    {
+	    $count = 0;
+	    foreach ($field as $label => $value) {
+		    $arr = explode(';', $value); 
+		    if ($count < count($arr)) {
+			    $count = count($arr);
+		    }
+		}
+		return $count;
+    }
+    
+    private function arrayCheck($fields)
+    {
+	    $records = array();
+        foreach ($fields as $j => $field) {
+	        $count = $this->getRecordLength($field);
+	        for ($i = 0; $i <= $count - 1; $i++) {
+		        $record = array_merge(array(), $fields[$j]);
+	            foreach ($field as $label => $value) {
+	                if ($label) {
+	                    $items = explode(';', $value);
+	                    if (count($items) > 1) {
+		                    $record[$label] = $items[$i];
+
+	                    } else {
+	                    	$record[$label] = $value;
+	                    }
+	                }  
+		        }
+		        $records[] = $record;
+	        }
+        }
+        return $records;
+    }
 
     private function createRecords($scope, $fields)
     {
@@ -369,8 +405,8 @@ class Engine
             $scope = $record['scope'];
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
+            $fields = $this->arrayCheck($fields);
             $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
-            // $fields = $this->removeCompareField($fields, $scope);
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
@@ -438,6 +474,7 @@ class Engine
             $items = array_filter($records, function($item) use ($zohoRelatedScope) {
                 return $item['scope'] === $zohoRelatedScope;
             });
+            
 
             if (!count($targets) || !count($items)) {
                 continue;
