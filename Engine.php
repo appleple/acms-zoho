@@ -74,7 +74,7 @@ class Engine
     private function makeLabelConversionTable()
     {
 // 	    $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
-        $zohoScopeGroup = $this->config->getArray('zoho_form_index');
+        $zohoScopeGroup = $this->config->getArray('zoho_form_group_index');
         $scopes = array();
         foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
             $zohoInsertScope = $this->config->get('zoho_form_insert_scope', '', $i);
@@ -120,7 +120,7 @@ class Engine
      */
     private function makeRecords()
     {
-        $zohoScopeGroup = $this->config->getArray('zoho_form_index');
+        $zohoScopeGroup = $this->config->getArray('zoho_form_group_index');
         $records = array();
         foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
             $insertScopes = array();
@@ -256,6 +256,28 @@ class Engine
         });
     }
 
+    private function checkUniqueKeyExists($fields, $scope, $uniqueKey)
+    {
+        $newFields = array();
+        foreach ($fields as $field) {
+            $uniqueValue = $field[$uniqueKey];
+            if ($uniqueValue) {
+                try {
+                    $zcrmModuleIns = ZCRMModule::getInstance($scope);
+                    $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                    $responses = $bulkAPIResponse->getData();
+                    if (count($responses)) {
+                        continue;
+                    }
+                } catch (ZCRMException $e) {
+
+                }
+            }
+            $newFields[] = $field;
+        }
+        return $newFields;
+    }
+
     private function getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey)
     {
         $newFields = array();
@@ -267,14 +289,6 @@ class Engine
                 if (!$key || !$uniqueValue) {
                     continue;
                 }
-                try {
-                  $zcrmModuleIns = ZCRMModule::getInstance("Leads");
-                  $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-                  $responses = $bulkAPIResponse->getData();
-                  if (count($responses)) {
-                    continue;
-                  }
-                } catch (ZCRMException $e) {}
                 try {
                   $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
                   $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
@@ -400,13 +414,13 @@ class Engine
 
     private function insertRecords($records)
     {
-        $accessToken = $this->accessToken;
         foreach ($records as $record) {
             $scope = $record['scope'];
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
             $fields = $this->arrayCheck($fields);
             $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
+            $fields = $this->checkUniqueKeyExists($fields, $scope, $uniqueKey);
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
@@ -430,7 +444,6 @@ class Engine
 
     private function updateRecords($records)
     {
-        $accessToken = $this->accessToken;
         foreach ($records as $record) {
             $scope = $record['scope'];
             $uniqueKey = $record['uniqueKey'];
