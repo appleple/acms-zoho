@@ -264,13 +264,14 @@ class Engine
             if ($uniqueValue) {
                 try {
                     $zcrmModuleIns = ZCRMModule::getInstance($scope);
+                    $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
                     $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
                     $responses = $bulkAPIResponse->getData();
                     if (count($responses)) {
                         continue;
                     }
                 } catch (ZCRMException $e) {
-
+                    
                 }
             }
             $newFields[] = $field;
