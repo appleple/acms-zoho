@@ -260,6 +260,10 @@ class Engine
     {
         $newFields = array();
         foreach ($fields as $field) {
+	        if (!isset($field[$uniqueKey])) {
+		        $newFields[] = $field;
+		        continue;
+		    }
             $uniqueValue = $field[$uniqueKey];
             if ($uniqueValue) {
                 try {
@@ -283,22 +287,24 @@ class Engine
     {
         $newFields = array();
         foreach ($fields as $field) {
-            $uniqueValue = $field[$uniqueKey];
-            if ($scope === 'Leads' && $uniqueValue) {
-                $zcrmModuleIns = ZCRMModule::getInstance("Leads");
-                $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-                if (!$key || !$uniqueValue) {
-                    continue;
-                }
-                try {
-                  $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
-                  $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-                  $responses = $bulkAPIResponse->getData();
-                  if (count($responses)) {
-                    continue;
-                  }
-                } catch (ZCRMException $e) {}
-            }
+	        if (isset($field[$uniqueKey])) {
+            	$uniqueValue = $field[$uniqueKey];
+	            if ($scope === 'Leads' && $uniqueValue) {
+	                $zcrmModuleIns = ZCRMModule::getInstance("Leads");
+	                $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+	                if (!$key || !$uniqueValue) {
+	                    continue;
+	                }
+	                try {
+	                  $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
+	                  $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+	                  $responses = $bulkAPIResponse->getData();
+	                  if (count($responses)) {
+	                    continue;
+	                  }
+	                } catch (ZCRMException $e) {}
+	            }
+	        }
             $newFields[] = $field;
         }
         return $newFields;
@@ -420,7 +426,7 @@ class Engine
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
             $fields = $this->arrayCheck($fields);
-            $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
+            $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);;
             $fields = $this->checkUniqueKeyExists($fields, $scope, $uniqueKey);
             try {
                 $client = ZCRMModule::getInstance($scope);
@@ -468,6 +474,8 @@ class Engine
                     );
                 }
             } catch (ZCRMException $e) {
+            } catch (\Exception $e) {
+	            
             }
         }
     }
