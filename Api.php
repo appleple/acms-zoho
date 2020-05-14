@@ -9,9 +9,8 @@ use Exception;
 
 class Api
 {
-  public function __construct()
+  public function __construct($refreshToken)
   {
-    $refreshToken = config('zoho_refresh_token');
     ZCRMRestClient::initialize();
     $oAuthClient = ZohoOAuth::getClientInstance();
     $this->client = $oAuthClient;

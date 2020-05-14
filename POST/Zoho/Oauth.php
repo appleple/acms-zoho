@@ -10,7 +10,7 @@ class oAuth extends ACMS_POST
 {
     public function post()
     {
-        $client = new Api();
+        $client = new Api(config("zoho_refresh_token"));
         try {
             $this->writeSettings();
             $client->authorize();
