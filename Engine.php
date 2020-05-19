@@ -19,20 +19,19 @@ class Engine
      * Engine constructor.
      * @param string $code
      */
-    public function __construct($code, $module)
+    public function __construct($code, $fd, $refreshToken)
     {
-
         $field = $this->loadFrom($code);
         if (empty($field)) {
             throw new \RuntimeException('Not Found Form.');
         }
         $this->formField = $field;
-        $this->module = $module;
         $this->code = $code;
         $this->config = $field->getChild('mail');
-        $this->id = $this->module->Post->get('id');
-        $this->field = $this->module->Post->getChild('field');
+        $this->id = $code;
+        $this->field = new Field($fd);
         $this->accessToken = config('zoho_access_token');
+        $this->refreshToken = $refreshToken;
         $this->records = array();
     }
     /**
@@ -62,7 +61,7 @@ class Engine
      */
     public function send()
     {
-        new Api();
+        new Api($this->refreshToken);
         $this->makeLabelConversionTable();
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
