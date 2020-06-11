@@ -1,10 +1,13 @@
 <?php
+
 namespace Acms\Plugins\Zoho;
 
 use DB;
 use SQL;
 use Field;
+use Config;
 use Field_Validation;
+use ACMS_Filter;
 use ZCRMModule;
 use ZCRMRecord;
 use ZCRMRestClient;
@@ -15,13 +18,19 @@ use Acms\Plugins\Zoho\Api;
 
 class Engine
 {
+
+    protected $blogConfig;
+
     /**
      * Engine constructor.
      * @param string $code
      */
     public function __construct($code, $fd, $refreshToken)
     {
-        $field = $this->loadFrom($code);
+        $field = $this->loadForm($code);
+        $this->blogConfig = Config::loadDefaultField();
+        $this->blogConfig->overload(Config::loadBlogConfig(BID));
+
         if (empty($field)) {
             throw new \RuntimeException('Not Found Form.');
         }
@@ -30,22 +39,31 @@ class Engine
         $this->config = $field->getChild('mail');
         $this->id = $code;
         $this->field = new Field($fd);
-        $this->accessToken = config('zoho_access_token');
+        $this->accessToken = $this->blogConfig->get('zoho_access_token');
         $this->refreshToken = $refreshToken;
         $this->records = array();
     }
+
     /**
-     * @param string $code
+     * @param string $id
      * @return bool|Field
      */
-    protected function loadFrom($code)
+    protected function loadForm($id)
     {
+        if (empty($id)) { return false; }
+
         $DB = DB::singleton(dsn());
         $SQL = SQL::newSelect('form');
-        $SQL->addWhereOpr('form_code', $code);
-        $SQL->addWhereOpr('form_blog_id', BID);
+        $SQL->addWhereOpr('form_code', $id);
+        $SQL->addLeftJoin('blog', 'blog_id', 'form_blog_id');
+        ACMS_Filter::blogTree($SQL, BID, 'ancestor-or-self');
+
+        $Where  = SQL::newWhere();
+        $Where->addWhereOpr('form_blog_id', BID, '=', 'OR');
+        $Where->addWhereOpr('form_scope', 'global', '=', 'OR');
+        $SQL->addWhere($Where);
         $row = $DB->query($SQL->get(dsn()), 'row');
-        if (!$row) {
+        if (empty($row)) {
             return false;
         }
         $Form = new Field();
@@ -56,6 +74,7 @@ class Engine
         $Form->overload(unserialize($row['form_data']), true);
         return $Form;
     }
+
     /**
      * Send
      */
@@ -66,6 +85,7 @@ class Engine
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
         $this->updateRecords($this->getRecordsByType($records, 'update'));
+//        var_dump($records); // ToDo デバッグ用
         $this->insertRecords($this->getRecordsByType($records, 'insert'));
         $this->updateRelatedRecords();
     }
@@ -103,6 +123,9 @@ class Engine
             $this->conversions = $conversions;
             App::checkException();
         } catch (\Exception $e) {
+            if (DEBUG_MODE) {
+                var_dump('makeLabelConversionTable: ' . $e->getMessage());
+            }
         }
     }
 
@@ -139,7 +162,7 @@ class Engine
             foreach ($insertScopes as $insertScope) {
                 $records[] = array(
                     'scope' => $insertScope,
-                    'uniqueKey' => $uniqueKey,
+                    'uniqueKey' => array_search($insertScope, $updateScopes) !== false ? $uniqueKey : '',
                     'field' => array(),
                     'type' => 'insert'
                 );
@@ -160,7 +183,7 @@ class Engine
     {
         $max = 1;
         $field = $this->field;
-        foreach($keys as $key) {
+        foreach ($keys as $key) {
             $arr = $field->getArray($key);
             $cnt = count($arr);
             if ($cnt > $max) {
@@ -223,17 +246,19 @@ class Engine
                     foreach ($scopes as $scope) {
                         if ($record['scope'] === $scope) {
                             if (($record['type'] === 'insert' && $canInsert)
-                            || ($record['type'] === 'update' && $canUpdate)) {
+                                || ($record['type'] === 'update' && $canUpdate)) {
                                 $value;
                                 if ($groupArr && in_array($key, $groupArr)) {
                                     $value = $field->get($key, '', $cnt);
                                 } else {
-                                    $value = implode(";", $field->getArray($key));
+                                    $value = implode("-", $field->getArray($key));
                                 }
                                 if ($value === 'true') {
-                                  $value = true;
-                                } else if ($value === 'false') {
-                                  $value = false;
+                                    $value = true;
+                                } else {
+                                    if ($value === 'false') {
+                                        $value = false;
+                                    }
                                 }
                                 $item[$fieldKey] = $value;
                             }
@@ -250,7 +275,7 @@ class Engine
 
     private function getRecordsByType($records, $type)
     {
-        return array_filter($records, function($record) use ($type) {
+        return array_filter($records, function ($record) use ($type) {
             return $record['type'] === $type;
         });
     }
@@ -259,22 +284,22 @@ class Engine
     {
         $newFields = array();
         foreach ($fields as $field) {
-	        if (!isset($field[$uniqueKey])) {
-		        $newFields[] = $field;
-		        continue;
-		    }
+            if (!isset($field[$uniqueKey])) {
+                $newFields[] = $field;
+                continue;
+            }
             $uniqueValue = $field[$uniqueKey];
             if ($uniqueValue) {
                 try {
                     $zcrmModuleIns = ZCRMModule::getInstance($scope);
                     $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-                    $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+                    $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
                     $responses = $bulkAPIResponse->getData();
-                    if (count($responses)) {
-                        continue;
+                    continue;
+                } catch (\Exception $e) {
+                    if (DEBUG_MODE) {
+                        var_dump('checkUniqueKeyExists: ' . $e->getMessage());
                     }
-                } catch (ZCRMException $e) {
-                    
                 }
             }
             $newFields[] = $field;
@@ -286,24 +311,28 @@ class Engine
     {
         $newFields = array();
         foreach ($fields as $field) {
-	        if (isset($field[$uniqueKey])) {
-            	$uniqueValue = $field[$uniqueKey];
-	            if ($scope === 'Leads' && $uniqueValue) {
-	                $zcrmModuleIns = ZCRMModule::getInstance("Leads");
-	                $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-	                if (!$key || !$uniqueValue) {
-	                    continue;
-	                }
-	                try {
-	                  $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
-	                  $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
-	                  $responses = $bulkAPIResponse->getData();
-	                  if (count($responses)) {
-	                    continue;
-	                  }
-	                } catch (ZCRMException $e) {}
-	            }
-	        }
+            if (isset($field[$uniqueKey])) {
+                $uniqueValue = $field[$uniqueKey];
+                if ($scope === 'Leads' && $uniqueValue) {
+                    $zcrmModuleIns = ZCRMModule::getInstance("Leads");
+                    $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+                    if (!$key || !$uniqueValue) {
+                        continue;
+                    }
+                    try {
+                        $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
+                        $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
+                        $responses = $bulkAPIResponse->getData();
+                        if (count($responses)) {
+                            continue;
+                        }
+                    } catch (\Exception $e) {
+                        if (DEBUG_MODE) {
+                            var_dump('getFieldsWhereNotExistInContact: ' . $e->getMessage());
+                        }
+                    }
+                }
+            }
             $newFields[] = $field;
         }
         return $newFields;
@@ -347,14 +376,14 @@ class Engine
         foreach ($records as $i => $record) {
             $client = ZCRMRecord::getInstance($scope, null);
             $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-            $uniqueValue = $fields[$i][$uniqueKey];
+            $uniqueValue = isset($fields[$i][$uniqueKey]) ? $fields[$i][$uniqueKey] : false;
             if (!$key || !$uniqueValue) {
                 continue;
             }
             $zcrmModuleIns = ZCRMModule::getInstance($scope);
-            $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(".$key.":equals:".$uniqueValue.")");
+            $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
             $responses = $bulkAPIResponse->getData();
-            if (count($responses)){
+            if (count($responses)) {
                 $entityId = $responses[0]->getEntityId();
                 $record->setEntityId($entityId);
                 $newRecords[] = $record;
@@ -362,39 +391,39 @@ class Engine
         }
         return $newRecords;
     }
-    
+
     private function getRecordLength($field)
     {
-	    $count = 0;
-	    foreach ($field as $label => $value) {
-		    $arr = explode(';', $value); 
-		    if ($count < count($arr)) {
-			    $count = count($arr);
-		    }
-		}
-		return $count;
+        $count = 0;
+        foreach ($field as $label => $value) {
+            $arr = explode(';', $value);
+            if ($count < count($arr)) {
+                $count = count($arr);
+            }
+        }
+        return $count;
     }
-    
+
     private function arrayCheck($fields)
     {
-	    $records = array();
+        $records = array();
         foreach ($fields as $j => $field) {
-	        $count = $this->getRecordLength($field);
-	        for ($i = 0; $i <= $count - 1; $i++) {
-		        $record = array_merge(array(), $fields[$j]);
-	            foreach ($field as $label => $value) {
-	                if ($label) {
-	                    $items = explode(';', $value);
-	                    if (count($items) > 1) {
-		                    $record[$label] = $items[$i];
+            $count = $this->getRecordLength($field);
+            for ($i = 0; $i <= $count - 1; $i++) {
+                $record = array_merge(array(), $fields[$j]);
+                foreach ($field as $label => $value) {
+                    if ($label) {
+                        $items = explode(';', $value);
+                        if (count($items) > 1) {
+                            $record[$label] = $items[$i];
 
-	                    } else {
-	                    	$record[$label] = $value;
-	                    }
-	                }  
-		        }
-		        $records[] = $record;
-	        }
+                        } else {
+                            $record[$label] = $value;
+                        }
+                    }
+                }
+                $records[] = $record;
+            }
         }
         return $records;
     }
@@ -425,8 +454,11 @@ class Engine
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
             $fields = $this->arrayCheck($fields);
-            $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);;
+            $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
             $fields = $this->checkUniqueKeyExists($fields, $scope, $uniqueKey);
+            if (empty($fields)) {
+                continue;
+            }
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
@@ -443,7 +475,10 @@ class Engine
                         'scope' => $scope
                     );
                 }
-            } catch (ZCRMException $e) {
+            } catch (\Exception $e) {
+                if (DEBUG_MODE) {
+                    var_dump('insertRecords: ' . $e->getMessage());
+                }
             }
         }
     }
@@ -455,6 +490,9 @@ class Engine
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
             // $fields = $this->removeCompareField($fields, $scope);
+            if (empty($fields)) {
+                continue;
+            }
             try {
                 $client = ZCRMModule::getInstance($scope);
                 $data = $this->createRecords($scope, $fields);
@@ -467,14 +505,15 @@ class Engine
                         $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
                     }
                     $this->records[] = array(
-                      'record' => $updated,
-                      'field' => $fields[$i],
-                      'scope' => $scope
+                        'record' => $updated,
+                        'field' => $fields[$i],
+                        'scope' => $scope
                     );
                 }
-            } catch (ZCRMException $e) {
             } catch (\Exception $e) {
-	            
+                if (DEBUG_MODE) {
+                    var_dump('updateRecords: ' . $e->getMessage());
+                }
             }
         }
     }
@@ -488,14 +527,14 @@ class Engine
             $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
             $compareField = $this->config->get('zoho_related_compare_field', '', $i);
 
-            $targets = array_filter($records, function($item) use ($zohoRelatedTargetScope) {
+            $targets = array_filter($records, function ($item) use ($zohoRelatedTargetScope) {
                 return $item['scope'] === $zohoRelatedTargetScope;
             });
 
-            $items = array_filter($records, function($item) use ($zohoRelatedScope) {
+            $items = array_filter($records, function ($item) use ($zohoRelatedScope) {
                 return $item['scope'] === $zohoRelatedScope;
             });
-            
+
 
             if (!count($targets) || !count($items)) {
                 continue;
@@ -516,13 +555,19 @@ class Engine
                         if (!$key) {
                             continue;
                         }
-                        $parentRecord->setFieldValue($key, $lookupRecord);
-                        try {
-                            $parentRecord->update();
-                        } catch (ZCRMException $e) {
+                        if ($parentRecord) {
+                            $parentRecord->setFieldValue($key, $lookupRecord);
+                            try {
+                                $parentRecord->update();
+                            } catch (\Exception $e) {
+                                if (DEBUG_MODE) {
+                                    var_dump('updateRelatedRecords: ' . $e->getMessage());
+                                }
+                            }
                         }
                     } else {
-                        $junctionRecord = ZCRMJunctionRecord::getInstance($zohoRelatedTargetScope, $lookupRecord->getEntityId());
+                        $junctionRecord = ZCRMJunctionRecord::getInstance($zohoRelatedTargetScope,
+                            $lookupRecord->getEntityId());
                         $parentRecord->addRelation($junctionRecord);
                     }
                 }

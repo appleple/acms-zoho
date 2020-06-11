@@ -4,13 +4,19 @@ namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
 use Storage;
+use Config;
 use Acms\Plugins\Zoho\Api;
 
 class oAuth extends ACMS_POST
 {
+    protected $config;
+
     public function post()
     {
-        $client = new Api(config("zoho_refresh_token"));
+        $this->config = Config::loadDefaultField();
+        $this->config->overload(Config::loadBlogConfig(BID));
+
+        $client = new Api($this->config->get("zoho_refresh_token"));
         try {
             $this->writeSettings();
             $client->authorize();
@@ -33,14 +39,15 @@ class oAuth extends ACMS_POST
 
         if (Storage::exists($configFilePath) && Storage::exists($configFileDestPath)) {
             $configFile = Storage::get($configFilePath);
-            $configFile = preg_replace('/{mail}/', config('zoho_user_identifier'), $configFile);
+            $configFile = preg_replace('/{mail}/', $this->config->get('zoho_user_identifier'), $configFile);
             Storage::put($configFileDestPath, $configFile);
         }
         if (Storage::exists($oauthConfigFilePath) && Storage::exists($oauthConfigFileDestPath)) {
             $oauthConfigFile = Storage::get($oauthConfigFilePath);
-            $oauthConfigFile = preg_replace('/{client_id}/', config('zoho_client_id'), $oauthConfigFile);
-            $oauthConfigFile = preg_replace('/{client_secret}/', config('zoho_client_secret'), $oauthConfigFile);
-            $oauthConfigFile = preg_replace('/{redirect_uri}/', config('zoho_redirect_uri'), $oauthConfigFile);
+            $oauthConfigFile = preg_replace('/{client_id}/', $this->config->get('zoho_client_id'), $oauthConfigFile);
+            $oauthConfigFile = preg_replace('/{client_secret}/', $this->config->get('zoho_client_secret'), $oauthConfigFile);
+            $oauthConfigFile = preg_replace('/{redirect_uri}/', $this->config->get('zoho_redirect_uri'), $oauthConfigFile);
+            $oauthConfigFile = preg_replace('/{mail}/', $this->config->get('zoho_user_identifier'), $oauthConfigFile);
             Storage::put($oauthConfigFileDestPath, $oauthConfigFile);
         }
     }

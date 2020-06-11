@@ -3,6 +3,7 @@
 namespace Acms\Plugins\Zoho;
 
 use Acms\Services\Facades\Process;
+use Acms\Services\Facades\Config;
 
 class Hook
 {
@@ -19,9 +20,12 @@ class Hook
         if ( $moduleName !== 'ACMS_POST_Form_Submit' ) {
             return;
         }
+        $blogConfig = Config::loadDefaultField();
+        $blogConfig->overload(Config::loadBlogConfig(BID));
         $id = $thisModule->Post->get('id');
+        $field = $thisModule->Post->getChild('field');
         $fd = $thisModule->Post->getChild('field')->serialize();
-        $refreshToken = config('zoho_refresh_token');
+        $refreshToken = $blogConfig->get('zoho_refresh_token');
 
         $info = $thisModule->loadForm($id);
         if (empty($info)) {
@@ -40,6 +44,9 @@ class Hook
                     $engine = new $className($id, $fd, $refreshToken);
                     $engine->send();
                 } catch (\Exception $e) {
+                    if (DEBUG_MODE) {
+                        var_dump($e->getMessage());
+                    }
                     userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
                 }
             });
@@ -49,6 +56,9 @@ class Hook
                 $engine = new $className($id, $fd, $refreshToken);
                 $engine->send();
             } catch (\Exception $e) {
+                if (DEBUG_MODE) {
+                    var_dump($e->getMessage());
+                }
                 userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
             }
         }
