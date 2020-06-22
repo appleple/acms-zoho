@@ -72,3 +72,8 @@ a-blog cmsのForm内のキーに対してZoho側のキーを紐づけること�
 
 ![](./images/lookupid.png)
 
+
+Gitで管理している場合、以下ファイルを.gitignoreで除外してください。
+
+- /extension/plugins/Zoho/vendor/zohocrm/php-sdk/src/resources
+- /extension/plugins/Zoho/vendor/zohocrm/php-sdk/src/com/zoho/oauth/logger/
