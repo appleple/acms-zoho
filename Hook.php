@@ -5,6 +5,8 @@ namespace Acms\Plugins\Zoho;
 use Acms\Services\Facades\Process;
 use Acms\Services\Facades\Config;
 
+use ACMS_POST_Form_Submit;
+
 class Hook
 {
     /**
@@ -15,15 +17,25 @@ class Hook
      */
     public function afterPostFire($thisModule)
     {
-        $moduleName = get_class($thisModule);
-
-        if ( $moduleName !== 'ACMS_POST_Form_Submit' ) {
+        // Hook処理動作条件
+        if (!($thisModule instanceof ACMS_POST_Form_Submit)) {
             return;
         }
+        if (!$thisModule->Post->isValidAll()) {
+            return;
+        }
+        $step = $thisModule->Post->get('error');
+        if (empty($step)) {
+            $step = $thisModule->Get->get('step');
+        }
+        $step = $thisModule->Post->get('step', $step);
+        if (in_array($step, ['forbidden', 'repeated'])) {
+            return;
+        }
+
         $blogConfig = Config::loadDefaultField();
         $blogConfig->overload(Config::loadBlogConfig(BID));
         $id = $thisModule->Post->get('id');
-        $field = $thisModule->Post->getChild('field');
         $fd = $thisModule->Post->getChild('field')->serialize();
         $refreshToken = $blogConfig->get('zoho_refresh_token');
 
@@ -35,7 +47,7 @@ class Hook
         $config = $info['data']->getChild('mail');
 
         $className = __NAMESPACE__ . '\\' . 'Engine';
-        if ($config->get('Background') === '1') {
+        if ($config->get('Background') === '1' && class_exists('Process')) {
             $autoload = dirname(__FILE__).'/vendor/autoload.php';
             $manager = Process::newProcessManager();
             $manager->addTask(function () use ($id, $fd, $refreshToken, $className, $autoload) {
@@ -45,7 +57,7 @@ class Hook
                     $engine->send();
                 } catch (\Exception $e) {
                     if (DEBUG_MODE) {
-                        var_dump($e->getMessage());
+                        throw $e;
                     }
                     userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
                 }
