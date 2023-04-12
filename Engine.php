@@ -6,13 +6,11 @@ use DB;
 use SQL;
 use Field;
 use Config;
-use Field_Validation;
 use ACMS_Filter;
 use ZCRMModule;
 use ZCRMRecord;
 use ZCRMRestClient;
 use ZCRMNote;
-use ZCRMException;
 use App;
 use Acms\Plugins\Zoho\Api;
 
@@ -85,14 +83,12 @@ class Engine
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
         $this->updateRecords($this->getRecordsByType($records, 'update'));
-//        var_dump($records); // ToDo デバッグ用
         $this->insertRecords($this->getRecordsByType($records, 'insert'));
         $this->updateRelatedRecords();
     }
 
     private function makeLabelConversionTable()
     {
-// 	    $zohoScopeGroup = $this->config->getArray('@zoho_form_group');
         $zohoScopeGroup = $this->config->getArray('zoho_form_group_index');
         $scopes = array();
         foreach ($zohoScopeGroup as $i => $zohoScopeItem) {

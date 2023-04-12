@@ -1,0 +1,141 @@
+<header>
+  <div>@include("/admin/topicpath.html")</div>
+  <div>
+    <h1 class="acms-admin-admin-title js-dialog-title">Zoho API 連携</h1>
+  </div>
+  <div class="acms-admin-col-md-6"></div>
+</header>
+
+<!-- BEGIN_MODULE Admin_Config -->
+
+<!-- BEGIN_IF [{notice_mess}/nem/] -->
+<p class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info">
+  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span
+  ><button class="js-acms-alert-close acms-admin-alert-icon-after">×</button
+  ><!--T-->設定を保存しました<!--/T-->
+</p>
+<!-- END_IF -->
+
+<!-- BEGIN_MODULE Admin_Errors -->
+<p class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-danger">
+  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
+  <button class="js-acms-alert-close acms-admin-alert-icon-after">×</button>
+  {error}
+</p>
+<!-- END_MODULE Admin_Errors -->
+
+<form action="" method="post" class="js-adminSave acms-admin-form">
+  <div class="js-acms_fix_marker acms_fix_bg">
+    <div class="acms-admin-form-group acms_fix_bg_index">
+      <input
+        type="submit"
+        name="ACMS_POST_Config"
+        value="保存"
+        class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save"
+      />
+
+      <!-- BEGIN_MODULE Zoho_Admin -->
+      <!-- BEGIN_IF [{authorized}/eq/true] -->
+      <input
+        type="submit"
+        class="acms-admin-btn-admin acms-admin-btn-admin-danger"
+        value="認証解除"
+        name="ACMS_POST_Zoho_Deauthorize"
+      />
+      <!-- T -->認証済み<!-- /T -->
+      <!-- ELSE -->
+      <input type="submit" class="acms-admin-btn-admin" value="認証" name="ACMS_POST_Zoho_Oauth"
+      <!-- BEGIN_IF [\{zoho_grant_token\}/em] -->
+      disabled<!-- END_IF -->/>
+      <!-- T -->認証してください<!-- /T -->
+      <!-- END_IF -->
+      <!-- END_MODULE Zoho_Admin -->
+    </div>
+  </div>
+  <h3 class="acms-admin-admin-title2"><!--T-->Zoho 認証トークン設定<!--/T--></h3>
+  <!-- BEGIN_MODULE Zoho_CheckPropertyFile -->
+  <ul>
+    <!-- BEGIN_IF [{userNameError}/eq/true] -->
+    <li>ユーザー名が正しくセットされていません。</li>
+    <!-- END_IF -->
+    <!-- BEGIN_IF [{tokenPathError}/eq/true] -->
+    <li>トークンパスが設定されていません（token_persistence_path）</li>
+    <!-- END_IF -->
+    <!-- BEGIN_IF [{accessTypeError}/eq/true] -->
+    <li>アクセスタイプが設定されていません（access_type: online, offline)</li>
+    <!-- END_IF -->
+  </ul>
+  <!-- END_MODULE Zoho_CheckPropertyFile -->
+  <table class="adminTable acms-admin-table-admin-edit" style="margin-bottom: 20px">
+    <tr>
+      <th><!--T-->認証スコープ<!--/T--></th>
+      <td>
+        <input
+          type="text"
+          value="ZohoCRM.modules.all,ZohoCRM.settings.all"
+          class="acms-admin-form-width-full"
+          readonly
+        />
+      </td>
+    </tr>
+    <tr>
+      <th>クライアントID</th>
+      <td>
+        <input type="text" name="zoho_client_id" value="{zoho_client_id}" class="acms-admin-form-width-full" />
+        <input type="hidden" name="config[]" value="zoho_client_id" />
+      </td>
+    </tr>
+    <tr>
+      <th>クライアントシークレット</th>
+      <td>
+        <input type="text" name="zoho_client_secret" value="{zoho_client_secret}" class="acms-admin-form-width-full" />
+        <input type="hidden" name="config[]" value="zoho_client_secret" />
+      </td>
+    </tr>
+    <tr>
+      <th>
+        grantトークンの設定
+        <i
+          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+          data-acms-tooltip="<!--T-->Zohoで取得した認証トークンを指定します。<!--/T-->"
+        ></i>
+      </th>
+      <td>
+        <input type="text" name="zoho_grant_token" value="{zoho_grant_token}" class="acms-admin-form-width-full" />
+        <input type="hidden" name="config[]" value="zoho_grant_token" />
+      </td>
+    </tr>
+    <tr>
+      <th>
+        メールアドレス
+        <i
+          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+          data-acms-tooltip="<!--T-->Zohoで登録しているメールアドレスを指定します。<!--/T-->"
+        ></i>
+      </th>
+      <td>
+        <input
+          type="text"
+          name="zoho_user_identifier"
+          value="{zoho_user_identifier}"
+          class="acms-admin-form-width-full"
+        />
+        <input type="hidden" name="config[]" value="zoho_user_identifier" />
+      </td>
+    </tr>
+    <tr>
+      <th>リダイレクトURL</th>
+      <td>
+        <input
+          type="text"
+          name="zoho_redirect_uri"
+          value="%{ROOT_BLOG_URL}bid/%{BID}/admin/app_zoho_index/callback.html"
+          class="acms-admin-form-width-full"
+          readonly
+        />
+        <input type="hidden" name="config[]" value="zoho_redirect_uri" />
+      </td>
+    </tr>
+  </table>
+</form>
+<!-- END_MODULE Admin_Config -->

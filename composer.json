@@ -1,5 +1,17 @@
 {
-    "require": {
-        "zohocrm/php-sdk": "^1.0"
+  "name": "appleple/zoho",
+  "description": "Zoho API と連携し、お問い合わせフォームなどで送信された内容をZoho CRMに登録します。",
+  "keywords": [
+    "SMS",
+    "a-blog cms"
+  ],
+  "homepage": "https://www.a-blogcms.jp",
+  "require": {
+    "zohocrm/php-sdk": "^1.0"
+  },
+  "config": {
+    "platform": {
+      "php": "5.6"
     }
+  }
 }
