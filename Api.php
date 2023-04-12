@@ -7,11 +7,26 @@ use ZohoOAuth;
 use DB;
 use SQL;
 use Config;
+use Cache;
 use Exception;
 
 class Api
 {
-    protected $config;
+
+    /**
+     * @var \Field
+     */
+    public $config;
+
+    /**
+     * @var \ZohoOAuthClient
+     */
+    public $client;
+
+    /**
+     * @var bool
+     */
+    public $authorized;
 
     public function __construct($refreshToken)
     {
@@ -58,11 +73,16 @@ class Api
 
     public function updateRefreshToken($refreshToken)
     {
+        if (class_exists('Cache')) {
+            Cache::flush('config');
+        }
+
         $DB = DB::singleton(dsn());
         $RemoveSQL = SQL::newDelete('config');
         $RemoveSQL->addWhereOpr('config_blog_id', BID);
         $RemoveSQL->addWhereOpr('config_key', 'zoho_refresh_token');
         $DB->query($RemoveSQL->get(dsn()), 'exec');
+
         $InsertSQL = SQL::newInsert('config');
         $InsertSQL->addInsert('config_key', 'zoho_refresh_token');
         $InsertSQL->addInsert('config_value', $refreshToken);
