@@ -44,10 +44,10 @@ class Hook
         if ($config->get('Background') === '1' && class_exists('Process')) {
             $autoload = dirname(__FILE__).'/vendor/autoload.php';
             $manager = Process::newProcessManager();
-            $manager->addTask(function () use ($id, $thisModule, $className, $autoload) {
+            $manager->addTask(function () use ($info, $thisModule, $className, $autoload) {
                 require_once $autoload;
                 try {
-                    $engine = new $className($id, $thisModule);
+                    $engine = new $className($info, $thisModule->Post);
                     $engine->send();
                 } catch (\Exception $e) {
                     if (DEBUG_MODE) {
@@ -59,7 +59,7 @@ class Hook
             $manager->run();
         } else {
             try {
-                $engine = new $className($id, $thisModule);
+                $engine = new $className($info, $thisModule->Post);
                 $engine->send();
             } catch (\Exception $e) {
                 if (DEBUG_MODE) {
