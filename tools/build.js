@@ -31,6 +31,13 @@ const ignores = [
   'fix',
 ];
 
+const renames = [
+  {
+    from: 'gitignore.txt',
+    to: '.gitignore',
+  },
+];
+
 co(function* () {
   try {
     /**
@@ -54,6 +61,15 @@ co(function* () {
     console.log(ignores);
     ignores.forEach((path) => {
       fs.removeSync(`Zoho/${path}`);
+    });
+
+    /**
+     * Rename files
+     */
+    console.log('Rename files.');
+    console.log(renames);
+    renames.forEach(({ from, to }) => {
+      fs.moveSync(`Zoho/${from}`, `Zoho/${to}`);
     });
 
     yield zipPromise('Zoho', `./build/v${version}/Zoho.zip`);
