@@ -5,12 +5,20 @@ const { systemCmd } = require('./lib/system.js');
 
 const fixes = [
   {
-    from: 'ZohoHTTPConnector.php',
-    to: 'zohocrm/php-sdk/src/com/zoho/crm/library/common/ZohoHTTPConnector.php',
+    from: 'fix/ZohoHTTPConnector.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/common/ZohoHTTPConnector.php',
   },
   {
-    from: 'Logger.php',
-    to: 'zohocrm/php-sdk/src/com/zoho/crm/library/exception/Logger.php',
+    from: 'fix/Logger.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/exception/Logger.php',
+  },
+  {
+    from: 'fix/ZohoOAuthException.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthException.php',
+  },
+  {
+    from: 'fix/ZCRMException.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/exception/ZCRMException.php',
   },
 ];
 
@@ -25,7 +33,7 @@ const fixes = [
     console.log('fix library files.');
     console.log(fixes);
     fixes.forEach(({ from, to }) => {
-      fs.copySync(`fix/${from}`, `vendor/${to}`);
+      fs.copySync(from, to);
     });
   } catch (err) {
     console.log(err);
