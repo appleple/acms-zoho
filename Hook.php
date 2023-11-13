@@ -2,8 +2,6 @@
 
 namespace Acms\Plugins\Zoho;
 
-use Acms\Services\Facades\Process;
-
 use ACMS_POST_Form_Submit;
 
 class Hook
@@ -38,36 +36,33 @@ class Hook
             userErrorLog('Not Found Form.');
             return;
         }
-        $config = $info['data']->getChild('mail');
 
-        $className = __NAMESPACE__ . '\\' . 'Engine';
-        if ($config->get('Background') === '1' && class_exists('Process')) {
-            $autoload = dirname(__FILE__).'/vendor/autoload.php';
-            $manager = Process::newProcessManager();
-            $manager->addTask(function () use ($info, $thisModule, $className, $autoload) {
-                require_once $autoload;
-                try {
-                    $engine = new $className($info, $thisModule->Post);
-                    $engine->send();
-                } catch (\Exception $e) {
-                    if (DEBUG_MODE) {
-                        throw $e;
-                    }
-                    userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
-                }
-            });
-            $manager->run();
-        } else {
-            try {
-                $engine = new $className($info, $thisModule->Post);
-                $engine->send();
-            } catch (\Exception $e) {
-                if (DEBUG_MODE) {
-                    throw $e;
-                }
-                userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
+        try {
+            $engine = new Engine($info, $thisModule->Post);
+            $engine->send();
+        } catch (\Exception $e) {
+            if ($this->isDebugMode()) {
+                throw $e;
             }
+            userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
         }
 
+    }
+
+    /**
+     * デバックモードかどうか
+     *
+     * @return bool
+     */
+    private function isDebugMode(): bool
+    {
+        if (function_exists('isDebugMode')) {
+            return isDebugMode();
+        }
+        if (defined('DEBUG_MODE') && DEBUG_MODE) {
+            return true;
+        }
+
+        return false;
     }
 }
