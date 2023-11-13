@@ -5,11 +5,13 @@ namespace Acms\Plugins\Zoho;
 use Field;
 use Config;
 use App;
+use Common;
 
 use ZCRMModule;
 use ZCRMRecord;
 use ZCRMRestClient;
 use ZCRMNote;
+use ZCRMJunctionRecord;
 use Acms\Plugins\Zoho\Api;
 
 class Engine
@@ -101,9 +103,7 @@ class Engine
             $this->conversions = $conversions;
             App::checkException();
         } catch (\Exception $e) {
-            if (DEBUG_MODE) {
-                var_dump(__FUNCTION__ . ': ' . $e->getMessage());
-            }
+            $this->warning(__FUNCTION__, $e);
         }
     }
 
@@ -275,9 +275,7 @@ class Engine
                     $responses = $bulkAPIResponse->getData();
                     continue;
                 } catch (\Exception $e) {
-                    if (DEBUG_MODE) {
-                        var_dump(__FUNCTION__ . ': ' . $e->getMessage());
-                    }
+                    $this->warning(__FUNCTION__, $e);
                 }
             }
             $newFields[] = $field;
@@ -305,9 +303,7 @@ class Engine
                             continue;
                         }
                     } catch (\Exception $e) {
-                        if (DEBUG_MODE) {
-                            var_dump(__FUNCTION__ . ': ' . $e->getMessage());
-                        }
+                        $this->warning(__FUNCTION__, $e);
                     }
                 }
             }
@@ -343,9 +339,7 @@ class Engine
                     $newRecords[] = $record;
                 }
             } catch (\Exception $e) {
-                if (DEBUG_MODE) {
-                    var_dump(__FUNCTION__ . ': ' . $e->getMessage());
-                }
+                $this->warning(__FUNCTION__, $e);
             }
         }
         return $newRecords;
@@ -435,9 +429,7 @@ class Engine
                     );
                 }
             } catch (\Exception $e) {
-                if (DEBUG_MODE) {
-                    var_dump(__FUNCTION__ . ': ' . $e->getMessage());
-                }
+                $this->warning(__FUNCTION__, $e);
             }
         }
     }
@@ -469,9 +461,7 @@ class Engine
                     );
                 }
             } catch (\Exception $e) {
-                if (DEBUG_MODE) {
-                    var_dump(__FUNCTION__ . ': ' . $e->getMessage());
-                }
+                $this->warning(__FUNCTION__, $e);
             }
         }
     }
@@ -518,9 +508,7 @@ class Engine
                             try {
                                 $parentRecord->update();
                             } catch (\Exception $e) {
-                                if (DEBUG_MODE) {
-                                    var_dump(__FUNCTION__ . ': ' . $e->getMessage());
-                                }
+                                $this->warning(__FUNCTION__, $e);
                             }
                         }
                     } else {
@@ -530,6 +518,22 @@ class Engine
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * 警告ログの出力
+     *
+     * @param string $methodName
+     * @param Exception $e
+     */
+    private function warning(string $methodName, \Exception $e)
+    {
+        $log = 'ACMS Warning: Zoho plugin, ' . $methodName . ': ' . $e->getMessage();
+        if (class_exists('AcmsLogger')) {
+            \AcmsLogger::warning($log, Common::exceptionArray($e));
+        } else {
+            userErrorLog($log);
         }
     }
 }
