@@ -5,6 +5,7 @@ use Acms\Plugins\Zoho\Api;
 use ACMS_GET;
 use Template;
 use ACMS_Corrector;
+use App;
 use Config;
 
 class Admin extends ACMS_GET
@@ -15,9 +16,9 @@ class Admin extends ACMS_GET
         $config = Config::loadDefaultField();
         $config->overload(Config::loadBlogConfig(BID));
         try {
-            $client = new Api($config->get("zoho_refresh_token"));
+            $client = App::make('zoho.api');
             $Tpl->add(null, array(
-                'authorized' => $client->authorized
+                'authorized' => $client->authorized ? 'true' : 'false'
             ));
         } catch (\Exception $e) {
 

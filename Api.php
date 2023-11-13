@@ -28,7 +28,7 @@ class Api
      */
     public $authorized;
 
-    public function __construct($refreshToken)
+    public function __construct()
     {
         ZCRMRestClient::initialize();
         $this->config = Config::loadDefaultField();
@@ -36,7 +36,8 @@ class Api
 
         $oAuthClient = ZohoOAuth::getClientInstance();
         $this->client = $oAuthClient;
-        $this->authorized = 'false';
+        $this->authorized = false;
+        $refreshToken = $this->config->get("zoho_refresh_token");
         $userIdentifier = $this->config->get('zoho_user_identifier');
         if (!$refreshToken) {
             return;
@@ -53,7 +54,7 @@ class Api
         }
         if ($oAuthTokens) {
             $this->updateRefreshToken($oAuthTokens->getRefreshToken());
-            $this->authorized = 'true';
+            $this->authorized = true;
         }
     }
 

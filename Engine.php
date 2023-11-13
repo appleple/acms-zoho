@@ -3,7 +3,6 @@
 namespace Acms\Plugins\Zoho;
 
 use Field;
-use Config;
 use App;
 use Common;
 
@@ -12,7 +11,6 @@ use ZCRMRecord;
 use ZCRMRestClient;
 use ZCRMNote;
 use ZCRMJunctionRecord;
-use Acms\Plugins\Zoho\Api;
 
 class Engine
 {
@@ -25,11 +23,6 @@ class Engine
      * @var \Field
      */
     private $field;
-
-    /**
-     * @var string
-     */
-    private $refreshToken;
 
     /**
      * @var array
@@ -48,12 +41,8 @@ class Engine
      */
     public function __construct($Form, $Post)
     {
-        $blogConfig = Config::loadDefaultField();
-        $blogConfig->overload(Config::loadBlogConfig(BID));
-
         $this->config = $Form['data']->getChild('mail');
         $this->field = $Post->getChild('field');
-        $this->refreshToken = $blogConfig->get('zoho_refresh_token');
         $this->records = array();
     }
 
@@ -62,7 +51,7 @@ class Engine
      */
     public function send()
     {
-        new Api($this->refreshToken);
+        App::make('zoho.api');
         $this->makeLabelConversionTable();
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);

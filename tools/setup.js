@@ -25,6 +25,7 @@ const fixes = [
 (async () => {
   try {
     await systemCmd('npm ci');
+    await systemCmd('rm -rf vendor');
     await systemCmd('composer install');
 
     /**
