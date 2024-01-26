@@ -51,6 +51,7 @@ class ServiceProvider extends ACMS_App
         App::singleton('zoho.api', Api::class);
 
         $this->initZohoConfig();
+        $this->initZohoOauthLogger();
 
         $hook = HookFactory::singleton();
         $hook->attach('Zoho', new Hook);
@@ -144,17 +145,38 @@ class ServiceProvider extends ACMS_App
 
         if (Storage::exists($configFileDestPath) === false) {
             if (Storage::exists($configFilePath) === false) {
-                $this->alert('ACMS Alert: Zoho plugin, Zohoの設定ファイルが見つかりません。');
-                die('configuration.properties is missing.');
+                if (class_exists('AcmsLogger')) {
+                    AcmsLogger::warning(
+                        "【Zoho plugin】 Zohoディレクトリに {$configFile} が見つかりませんでした。"
+                    );
+                } else {
+                    userErrorLog(
+                        "ACMS Warning: Zoho plugin Zohoディレクトリに {$configFile} が見つかりませんでした。"
+                    );
+                }
+                return;
             }
             $config = Storage::get($configFilePath);
             $config = preg_replace('/{mail}/', '', $config);
             Storage::put($configFileDestPath, $config);
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info("【Zoho plugin】 Zohoの設定ファイルを作成しました。", [
+                    'path' => $configFileDestPath,
+                ]);
+            }
         }
         if (Storage::exists($oauthConfigFileDestPath) === false) {
             if (Storage::exists($oauthConfigFilePath) === false) {
-                $this->alert('ACMS Alert: Zoho plugin, ZohoのOAuth設定ファイルが見つかりません。');
-                die('oauth_configuration.properties is missing.');
+                if (class_exists('AcmsLogger')) {
+                    AcmsLogger::warning(
+                        "【Zoho plugin】 Zohoディレクトリに {$oauthConfigFile} が見つかりませんでした。"
+                    );
+                } else {
+                    userErrorLog(
+                        "ACMS warning: Zoho plugin Zohoディレクトリに {$oauthConfigFile} が見つかりませんでした。"
+                    );
+                }
+                return;
             }
             $oauthConfig = Storage::get($oauthConfigFilePath);
             $oauthConfig = preg_replace('/{client_id}/', '', $oauthConfig);
@@ -162,20 +184,35 @@ class ServiceProvider extends ACMS_App
             $oauthConfig = preg_replace('/{redirect_uri}/', '', $oauthConfig);
             $oauthConfig = preg_replace('/{mail}/', '', $oauthConfig);
             Storage::put($oauthConfigFileDestPath, $oauthConfig);
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info("【Zoho plugin】 ZohoのOAuth設定ファイルを作成しました。", [
+                    'path' => $oauthConfigFileDestPath,
+                ]);
+            }
         }
     }
 
     /**
-     * アラート
-     *
-     * @param string $message
+     * ZohoOAuthログファイルの初期化
      */
-    private function alert(string $message)
+    private function initZohoOauthLogger()
     {
-        if (class_exists('AcmsLogger')) {
-            return AcmsLogger::alert($message);
+        $logFile = 'OAuth.log';
+        $zohoDir = PLUGIN_LIB_DIR . $this->name . '/';
+        $loggerDir = $zohoDir . 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/logger/';
+        $logFilePath = $loggerDir . $logFile;
+
+        if (Storage::exists($loggerDir) === false) {
+            Storage::makeDirectory($loggerDir);
         }
 
-        return userErrorLog($message);
+        if (Storage::exists($logFilePath) === false) {
+            Storage::put($logFilePath, '');
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info("【Zoho plugin】 ZohoのOAuthログファイルを作成しました。", [
+                    'path' => $logFilePath,
+                ]);
+            }
+        }
     }
 }
