@@ -6,6 +6,7 @@ use ACMS_App;
 use Acms\Services\Common\HookFactory;
 use Acms\Services\Common\InjectTemplate;
 use Acms\Services\Facades\Storage;
+use Acms\Services\Facades\Config;
 use App;
 use AcmsLogger;
 
@@ -48,7 +49,11 @@ class ServiceProvider extends ACMS_App
     {
         require_once dirname(__FILE__) . '/vendor/autoload.php';
 
-        App::singleton('zoho.api', Api::class);
+        $config = Config::loadDefaultField();
+        $config->overload(Config::loadBlogConfig(BID));
+
+        $userEmailId = $config->get('zoho_user_identifier', '');
+        App::singleton('zoho.api', Api::class, [$userEmailId]);
 
         $this->initZohoConfig();
         $this->initZohoOauthLogger();
@@ -181,7 +186,6 @@ class ServiceProvider extends ACMS_App
             $oauthConfig = Storage::get($oauthConfigFilePath);
             $oauthConfig = preg_replace('/{client_id}/', '', $oauthConfig);
             $oauthConfig = preg_replace('/{client_secret}/', '', $oauthConfig);
-            $oauthConfig = preg_replace('/{redirect_uri}/', '', $oauthConfig);
             $oauthConfig = preg_replace('/{mail}/', '', $oauthConfig);
             Storage::put($oauthConfigFileDestPath, $oauthConfig);
             if (class_exists('AcmsLogger')) {

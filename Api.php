@@ -2,21 +2,23 @@
 
 namespace Acms\Plugins\Zoho;
 
+use Exception;
 use ZCRMRestClient;
 use ZohoOAuth;
-use DB;
-use SQL;
-use Config;
-use Cache;
-use Exception;
+use Acms\Services\Facades\Storage;
 
 class Api
 {
 
     /**
-     * @var \Field
+     * @var string
      */
-    public $config;
+    private const PERSISTENCE_FILE_NAME = 'zcrm_oauthtokens.txt';
+
+    /**
+     * @var string
+     */
+    public $userEmailId;
 
     /**
      * @var \ZohoOAuthClient
@@ -28,66 +30,39 @@ class Api
      */
     public $authorized;
 
-    public function __construct()
+    public function __construct(string $userEmailId)
     {
         ZCRMRestClient::initialize();
-        $this->config = Config::loadDefaultField();
-        $this->config->overload(Config::loadBlogConfig(BID));
 
-        $oAuthClient = ZohoOAuth::getClientInstance();
-        $this->client = $oAuthClient;
-        $this->authorized = false;
-        $refreshToken = $this->config->get("zoho_refresh_token");
-        $userIdentifier = $this->config->get('zoho_user_identifier');
-        if (!$refreshToken) {
-            return;
+        $persistencePath = ZohoOAuth::getConfigValue("token_persistence_path");
+        $persistenceFilePath = $persistencePath . self::PERSISTENCE_FILE_NAME;
+
+        if (Storage::exists($persistenceFilePath) === false) {
+            // 認証情報保存用ファイルが存在しない場合は空ファイルを作成する
+            Storage::put($persistenceFilePath, '');
         }
-        try {
-            $oAuthTokens = $oAuthClient->refreshAccessToken($refreshToken, $userIdentifier);
-        } catch (Exception $e) {
-            $DB = DB::singleton(dsn());
-            $RemoveSQL = SQL::newDelete('config');
-            $RemoveSQL->addWhereOpr('config_blog_id', BID);
-            $RemoveSQL->addWhereOpr('config_key', 'zoho_refresh_token');
-            $DB->query($RemoveSQL->get(dsn()), 'exec');
-            $oAuthTokens = null;
-        }
-        if ($oAuthTokens) {
-            $this->updateRefreshToken($oAuthTokens->getRefreshToken());
-            $this->authorized = true;
-        }
+
+        $this->userEmailId = $userEmailId;
+        $this->client = ZohoOAuth::getClientInstance();
     }
 
-    public function authorize()
+    public function authorize($grantToken)
     {
-        $oAuthClient = ZohoOAuth::getClientInstance();
-        $grantToken = $this->config->get('zoho_grant_token');
-        $oAuthTokens = $oAuthClient->generateAccessToken($grantToken);
-        $this->updateRefreshToken($oAuthTokens->getRefreshToken());
+        $this->client->generateAccessToken($grantToken);
+    }
+
+    public function deauthorize()
+    {
+        ZohoOAuth::getPersistenceHandlerInstance()->deleteOAuthTokens($this->userEmailId);
     }
 
     public function getAccessToken()
     {
-        $userIdentifier = $this->config->get('zoho_user_identifier');
-        return $this->client->getAccessToken($userIdentifier);
-    }
-
-    public function updateRefreshToken($refreshToken)
-    {
-        if (class_exists('Cache')) {
-            Cache::flush('config');
+        try {
+            $accessToken = $this->client->getAccessToken($this->userEmailId);
+        } catch (Exception $e) {
+            $accessToken = null;
         }
-
-        $DB = DB::singleton(dsn());
-        $RemoveSQL = SQL::newDelete('config');
-        $RemoveSQL->addWhereOpr('config_blog_id', BID);
-        $RemoveSQL->addWhereOpr('config_key', 'zoho_refresh_token');
-        $DB->query($RemoveSQL->get(dsn()), 'exec');
-
-        $InsertSQL = SQL::newInsert('config');
-        $InsertSQL->addInsert('config_key', 'zoho_refresh_token');
-        $InsertSQL->addInsert('config_value', $refreshToken);
-        $InsertSQL->addInsert('config_blog_id', BID);
-        $DB->query($InsertSQL->get(dsn()), 'exec');
+        return $accessToken;
     }
 }

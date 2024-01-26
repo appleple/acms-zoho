@@ -35,6 +35,11 @@ class Engine
     private $conversions;
 
     /**
+     * @var Api
+     */
+    private $oauthClient;
+
+    /**
      * Engine constructor.
      * @param array $Form
      * @param \Field $Post
@@ -44,6 +49,7 @@ class Engine
         $this->config = $Form['data']->getChild('mail');
         $this->field = $Post->getChild('field');
         $this->records = array();
+        $this->oauthClient = App::make('zoho.api');
     }
 
     /**
@@ -51,7 +57,9 @@ class Engine
      */
     public function send()
     {
-        App::make('zoho.api');
+        if (is_null($this->oauthClient->getAccessToken())) {
+            return;
+        }
         $this->makeLabelConversionTable();
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);

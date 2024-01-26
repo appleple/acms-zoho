@@ -13,16 +13,12 @@ class Admin extends ACMS_GET
     public function get()
     {
         $Tpl = new Template($this->tpl, new ACMS_Corrector());
-        $config = Config::loadDefaultField();
-        $config->overload(Config::loadBlogConfig(BID));
-        try {
-            $client = App::make('zoho.api');
-            $Tpl->add(null, array(
-                'authorized' => $client->authorized ? 'true' : 'false'
-            ));
-        } catch (\Exception $e) {
 
-        }
-        return $Tpl->get();
+        /** @var Acms\Plugins\Zoho\Api $client */
+        $client = App::make('zoho.api');
+        $accessToken = $client->getAccessToken();
+        return $Tpl->render([
+            'authorized' => !empty($accessToken) ? 'true' : 'false',
+        ]);
     }
 }

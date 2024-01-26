@@ -24,119 +24,134 @@
 </p>
 <!-- END_MODULE Admin_Errors -->
 
-<form action="" method="post" class="js-adminSave acms-admin-form">
+<div>
   <div class="js-acms_fix_marker acms_fix_bg">
     <div class="acms-admin-form-group acms_fix_bg_index">
       <button
         type="submit"
         name="ACMS_POST_Config"
         class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save js-saving-splash"
+        form="configForm"
       >
         保存
       </button>
 
       <!-- BEGIN_MODULE Zoho_Admin -->
       <!-- BEGIN_IF [{authorized}/eq/true] -->
-      <input
-        type="submit"
-        class="acms-admin-btn-admin acms-admin-btn-admin-danger"
-        value="認証解除"
-        name="ACMS_POST_Zoho_Deauthorize"
-      />
-      <!-- T -->認証済み<!-- /T -->
+      <form action="" method="post" enctype="multipart/form-data" class="acms-admin-inline">
+        <button
+          type="submit"
+          class="acms-admin-btn-admin acms-admin-btn-admin-danger"
+          value="認証解除"
+          name="ACMS_POST_Zoho_Deauthorize"
+        >
+          <!-- T -->認証解除<!-- /T -->
+        </button>
+        <!-- T -->認証済み<!-- /T -->
+      </form>
       <!-- ELSE -->
-      <input type="submit" class="acms-admin-btn-admin" value="認証" name="ACMS_POST_Zoho_Oauth"
-      <!-- BEGIN_IF [\{zoho_grant_token\}/em] -->
-      disabled<!-- END_IF -->/>
-      <!-- T -->認証してください<!-- /T -->
+      <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
+        <button
+          type="submit"
+          class="acms-admin-btn-admin"
+          value="認証"
+          name="ACMS_POST_Zoho_Oauth"
+        >
+          <!-- T -->認証<!-- /T -->
+        </button>
+        <input type="hidden" name="zoho_grant_token" value="">
+        <!-- T -->認証してください<!-- /T -->
+      </form>
       <!-- END_IF -->
       <!-- END_MODULE Zoho_Admin -->
     </div>
   </div>
-  <h3 class="acms-admin-admin-title2"><!--T-->Zoho 認証トークン設定<!--/T--></h3>
-  <!-- BEGIN_MODULE Zoho_CheckPropertyFile -->
-  <ul>
-    <!-- BEGIN_IF [{userNameError}/eq/true] -->
-    <li>ユーザー名が正しくセットされていません。</li>
-    <!-- END_IF -->
-    <!-- BEGIN_IF [{tokenPathError}/eq/true] -->
-    <li>トークンパスが設定されていません（token_persistence_path）</li>
-    <!-- END_IF -->
-    <!-- BEGIN_IF [{accessTypeError}/eq/true] -->
-    <li>アクセスタイプが設定されていません（access_type: online, offline)</li>
-    <!-- END_IF -->
-  </ul>
-  <!-- END_MODULE Zoho_CheckPropertyFile -->
-  <table class="adminTable acms-admin-table-admin-edit" style="margin-bottom: 20px">
-    <tr>
-      <th><!--T-->認証スコープ<!--/T--></th>
-      <td>
-        <input
-          type="text"
-          value="ZohoCRM.modules.all,ZohoCRM.settings.all"
-          class="acms-admin-form-width-full"
-          readonly
-        />
-      </td>
-    </tr>
-    <tr>
-      <th>クライアントID</th>
-      <td>
-        <input type="text" name="zoho_client_id" value="{zoho_client_id}" class="acms-admin-form-width-full" />
-        <input type="hidden" name="config[]" value="zoho_client_id" />
-      </td>
-    </tr>
-    <tr>
-      <th>クライアントシークレット</th>
-      <td>
-        <input type="text" name="zoho_client_secret" value="{zoho_client_secret}" class="acms-admin-form-width-full" />
-        <input type="hidden" name="config[]" value="zoho_client_secret" />
-      </td>
-    </tr>
-    <tr>
-      <th>
-        grantトークンの設定
-        <i
-          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-          data-acms-tooltip="<!--T-->Zohoで取得した認証トークンを指定します。<!--/T-->"
-        ></i>
-      </th>
-      <td>
-        <input type="text" name="zoho_grant_token" value="{zoho_grant_token}" class="acms-admin-form-width-full" />
-        <input type="hidden" name="config[]" value="zoho_grant_token" />
-      </td>
-    </tr>
-    <tr>
-      <th>
-        メールアドレス
-        <i
-          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-          data-acms-tooltip="<!--T-->Zohoで登録しているメールアドレスを指定します。<!--/T-->"
-        ></i>
-      </th>
-      <td>
-        <input
-          type="text"
-          name="zoho_user_identifier"
-          value="{zoho_user_identifier}"
-          class="acms-admin-form-width-full"
-        />
-        <input type="hidden" name="config[]" value="zoho_user_identifier" />
-      </td>
-    </tr>
-    <tr>
-      <th>リダイレクトURL</th>
-      <td>
-        <input
-          type="text"
-          name="zoho_redirect_uri"
-          value="%{ROOT_BLOG_URL}bid/%{BID}/admin/app_zoho_index/callback.html"
-          class="acms-admin-form-width-full"
-          readonly
-        />
-        <input type="hidden" name="config[]" value="zoho_redirect_uri" />
-      </td>
-    </tr>
-  </table>
-</form>
+  <h3 class="acms-admin-admin-title2"><!--T-->Zoho 認証設定<!--/T--></h3>
+  <form action="" method="post" id="configForm" class="js-adminSave acms-admin-form">
+    <table class="adminTable acms-admin-table-admin-edit" style="margin-bottom: 20px">
+      <tr>
+        <th>
+          <label for="input-text-zoho_client_id">クライアントID</label>
+          <i
+            class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+            data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行された Client ID を入力してください。<!--/T-->"
+          ></i>
+        </th>
+        <td>
+          <input
+            type="text"
+            name="zoho_client_id"
+            value="{zoho_client_id}"
+            id="input-text-zoho_client_id"
+            class="acms-admin-form-width-full"
+          />
+          <input type="hidden" name="config[]" value="zoho_client_id" />
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label for="input-text-zoho_client_secret">クライアントシークレット</label>
+          <i
+            class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+            data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行された Client Secret を入力してください。<!--/T-->"
+          ></i>
+        </th>
+        <td>
+          <input
+            type="text"
+            name="zoho_client_secret"
+            value="{zoho_client_secret}"
+            id="input-text-zoho_client_secret"
+            class="acms-admin-form-width-full"
+          />
+          <input type="hidden" name="config[]" value="zoho_client_secret" />
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <label for="input-text-zoho_user_identifier">メールアドレス</label>
+          <i
+            class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+            data-acms-tooltip="<!--T-->Zohoで登録しているメールアドレスを指定します。<!--/T-->"
+          ></i>
+        </th>
+        <td>
+          <input
+            type="text"
+            name="zoho_user_identifier"
+            value="{zoho_user_identifier}"
+            id="input-text-zoho_user_identifier"
+            class="acms-admin-form-width-full"
+          />
+          <input type="hidden" name="config[]" value="zoho_user_identifier" />
+        </td>
+      </tr>
+      <tr>
+        <th>
+          <!-- T -->認証スコープ<!-- /T -->
+          <i
+            class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+            data-acms-tooltip="<!--T-->拡張アプリがアクセスできるリソースの種類です。<a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で認証トークンを作成する際に利用します。<!--/T-->"
+          ></i>
+        </th>
+        <td>
+          <strong>ZohoCRM.modules.all,ZohoCRM.settings.all,Aaaserver.profile.read</strong>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
 <!-- END_MODULE Admin_Config -->
+
+<script>
+  function submitOauthForm(evnet) {
+    const token = window.prompt('Zohoで取得した認証トークンを入力してください。');
+    if (token) {
+      event.target.elements['zoho_grant_token'].value = token;
+    }
+  }
+  const oauthForm = document.getElementById('oauthForm');
+  if (oauthForm) {
+    oauthForm.addEventListener('submit', submitOauthForm);
+  }
+</script>

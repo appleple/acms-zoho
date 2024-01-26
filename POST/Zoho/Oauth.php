@@ -6,22 +6,26 @@ use ACMS_POST;
 use Storage;
 use App;
 use Config;
+use AcmsLogger;
+use Common;
 
 class oAuth extends ACMS_POST
 {
-    protected $config;
-
     public function post()
     {
+        /** @var Acms\Plugins\Zoho\Api $client */
         $client = App::make('zoho.api');
         try {
             $this->writeSettings();
-            $client->authorize();
-            $this->redirect(acmsLink(array(
-                'bid' => BID,
-                'admin' => 'app_zoho_index',
-            )));
+
+            $grantToken = $this->Post->get('zoho_grant_token', '');
+            $client->authorize($grantToken);
         } catch (\Exception $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error('【Zoho plugin】認証に失敗しました。', Common::exceptionArray($e));
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
             $this->addError('認証に失敗しました。grantトークンが古い可能性があります。');
         }
         return $this->Post;
@@ -46,7 +50,6 @@ class oAuth extends ACMS_POST
             $oauthConfigFile = Storage::get($oauthConfigFilePath);
             $oauthConfigFile = preg_replace('/{client_id}/', $config->get('zoho_client_id'), $oauthConfigFile);
             $oauthConfigFile = preg_replace('/{client_secret}/', $config->get('zoho_client_secret'), $oauthConfigFile);
-            $oauthConfigFile = preg_replace('/{redirect_uri}/', $config->get('zoho_redirect_uri'), $oauthConfigFile);
             $oauthConfigFile = preg_replace('/{mail}/', $config->get('zoho_user_identifier'), $oauthConfigFile);
             Storage::put($oauthConfigFileDestPath, $oauthConfigFile);
         }

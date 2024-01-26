@@ -20,6 +20,11 @@ class Hook
         if (!($thisModule instanceof ACMS_POST_Form_Submit)) {
             return;
         }
+        /** @var Acms\Plugins\Zoho\Api $client */
+        $client = App::make('zoho.api');
+        if (is_null($client->getAccessToken())) {
+            return;
+        }
         if (!$thisModule->Post->isValidAll()) {
             return;
         }
@@ -51,7 +56,6 @@ class Hook
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
         }
-
     }
 
     /**
