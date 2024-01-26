@@ -2,6 +2,8 @@
 
 namespace Acms\Plugins\Zoho;
 
+use AcmsLogger;
+use Acms\Services\Facades\Common;
 use ACMS_POST_Form_Submit;
 
 class Hook
@@ -33,7 +35,6 @@ class Hook
         $id = $thisModule->Post->get('id');
         $info = $thisModule->loadForm($id);
         if (empty($info)) {
-            userErrorLog('Not Found Form.');
             return;
         }
 
@@ -44,7 +45,11 @@ class Hook
             if ($this->isDebugMode()) {
                 throw $e;
             }
-            userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error('【Zoho plugin】' . $e->getMessage(), Common::exceptionArray($e));
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
         }
 
     }

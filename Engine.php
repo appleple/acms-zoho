@@ -518,11 +518,13 @@ class Engine
      */
     private function warning(string $methodName, \Exception $e)
     {
-        $log = 'ACMS Warning: Zoho plugin, ' . $methodName . ': ' . $e->getMessage();
         if (class_exists('AcmsLogger')) {
-            \AcmsLogger::warning($log, Common::exceptionArray($e));
+            \AcmsLogger::warning(
+                '【Zoho plugin】 ' . $methodName . ': ' . $e->getMessage(),
+                Common::exceptionArray($e)
+            );
         } else {
-            userErrorLog($log);
+            userErrorLog('ACMS Warning: Zoho plugin, ' . $methodName . ': ' . $e->getMessage());
         }
     }
 }
