@@ -26,10 +26,9 @@ class Api
     public $client;
 
     /**
-     * @var bool
+     * Api constructor.
+     * @param string $userEmailId
      */
-    public $authorized;
-
     public function __construct(string $userEmailId)
     {
         ZCRMRestClient::initialize();
@@ -46,17 +45,28 @@ class Api
         $this->client = ZohoOAuth::getClientInstance();
     }
 
-    public function authorize($grantToken)
+    /**
+     * 認証
+     * @param string $grantToken
+     */
+    public function authorize(string $grantToken)
     {
         $this->client->generateAccessToken($grantToken);
     }
 
+    /**
+     * 認証解除
+     */
     public function deauthorize()
     {
         ZohoOAuth::getPersistenceHandlerInstance()->deleteOAuthTokens($this->userEmailId);
     }
 
-    public function getAccessToken()
+    /**
+     * アクセストークン取得
+     * @return string|null
+     */
+    public function getAccessToken(): ?string
     {
         try {
             $accessToken = $this->client->getAccessToken($this->userEmailId);
