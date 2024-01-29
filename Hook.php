@@ -3,6 +3,7 @@
 namespace Acms\Plugins\Zoho;
 
 use AcmsLogger;
+use Acms\Services\Facades\Application as App;
 use Acms\Services\Facades\Common;
 use ACMS_POST_Form_Submit;
 
@@ -20,7 +21,7 @@ class Hook
         if (!($thisModule instanceof ACMS_POST_Form_Submit)) {
             return;
         }
-        /** @var Acms\Plugins\Zoho\Api $client */
+        /** @var \Acms\Plugins\Zoho\Api $client */
         $client = App::make('zoho.api');
         if (is_null($client->getAccessToken())) {
             return;
@@ -46,6 +47,9 @@ class Hook
         try {
             $engine = new Engine($info, $thisModule->Post);
             $engine->send();
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info('【Zoho plugin】Zoho CRM にデータを登録しました。');
+            }
         } catch (\Exception $e) {
             if ($this->isDebugMode()) {
                 throw $e;

@@ -5,6 +5,7 @@ namespace Acms\Plugins\Zoho;
 use Field;
 use App;
 use Common;
+use AcmsLogger;
 
 use ZCRMModule;
 use ZCRMRecord;
@@ -527,7 +528,7 @@ class Engine
     private function warning(string $methodName, \Exception $e)
     {
         if (class_exists('AcmsLogger')) {
-            \AcmsLogger::warning(
+            AcmsLogger::warning(
                 '【Zoho plugin】 ' . $methodName . ': ' . $e->getMessage(),
                 Common::exceptionArray($e)
             );

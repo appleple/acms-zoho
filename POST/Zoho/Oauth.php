@@ -13,16 +13,19 @@ class oAuth extends ACMS_POST
 {
     public function post()
     {
-        /** @var Acms\Plugins\Zoho\Api $client */
+        /** @var \Acms\Plugins\Zoho\Api $client */
         $client = App::make('zoho.api');
         try {
             $this->writeSettings();
 
             $grantToken = $this->Post->get('zoho_grant_token', '');
             $client->authorize($grantToken);
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info('【Zoho plugin】OAuth認証に成功しました。');
+            }
         } catch (\Exception $e) {
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::error('【Zoho plugin】認証に失敗しました。', Common::exceptionArray($e));
+                AcmsLogger::error('【Zoho plugin】OAuth認証に失敗しました。', Common::exceptionArray($e));
             } else {
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
