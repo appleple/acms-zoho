@@ -56,6 +56,9 @@
           class="acms-admin-btn-admin"
           value="認証"
           name="ACMS_POST_Zoho_Oauth"
+          <!-- BEGIN_IF [\{zoho_client_id\}/em/_or_/\{zoho_client_secret\}/em] -->
+          disabled
+          <!-- END_IF -->
         >
           <!-- T -->認証<!-- /T -->
         </button>
@@ -107,25 +110,20 @@
           <input type="hidden" name="config[]" value="zoho_client_secret" />
         </td>
       </tr>
+      <!-- BEGIN zoho_user_identifier:veil -->
       <tr>
         <th>
           <label for="input-text-zoho_user_identifier">メールアドレス</label>
           <i
             class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-            data-acms-tooltip="<!--T-->Zohoで登録しているメールアドレスを指定します。<!--/T-->"
+            data-acms-tooltip="<!--T-->OAuth認証で利用しているZohoアカウントに設定されているメールアドレスです。<!--/T-->"
           ></i>
         </th>
         <td>
-          <input
-            type="text"
-            name="zoho_user_identifier"
-            value="{zoho_user_identifier}"
-            id="input-text-zoho_user_identifier"
-            class="acms-admin-form-width-full"
-          />
-          <input type="hidden" name="config[]" value="zoho_user_identifier" />
+          {zoho_user_identifier}
         </td>
       </tr>
+      <!-- END zoho_user_identifier:veil -->
       <tr>
         <th>
           <!-- T -->認証スコープ<!-- /T -->

@@ -53,7 +53,10 @@ class ServiceProvider extends ACMS_App
         $config->overload(Config::loadBlogConfig(BID));
 
         $userEmailId = $config->get('zoho_user_identifier', '');
-        App::singleton('zoho.api', Api::class, [$userEmailId]);
+
+        $_SERVER['user_email_id'] = $userEmailId;
+
+        App::singleton('zoho.api', Api::class);
 
         $this->initZohoConfig();
         $this->initZohoOauthLogger();
@@ -162,7 +165,6 @@ class ServiceProvider extends ACMS_App
                 return;
             }
             $config = Storage::get($configFilePath);
-            $config = preg_replace('/{mail}/', '', $config);
             Storage::put($configFileDestPath, $config);
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info("【Zoho plugin】 Zohoの設定ファイルを作成しました。", [
@@ -186,7 +188,6 @@ class ServiceProvider extends ACMS_App
             $oauthConfig = Storage::get($oauthConfigFilePath);
             $oauthConfig = preg_replace('/{client_id}/', '', $oauthConfig);
             $oauthConfig = preg_replace('/{client_secret}/', '', $oauthConfig);
-            $oauthConfig = preg_replace('/{mail}/', '', $oauthConfig);
             Storage::put($oauthConfigFileDestPath, $oauthConfig);
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info("【Zoho plugin】 ZohoのOAuth設定ファイルを作成しました。", [

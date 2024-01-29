@@ -17,6 +17,10 @@ class Deauthorize extends ACMS_POST
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】OAuth認証を解除しました。');
             }
+            $this->redirect(acmsLink([
+                'bid' => BID,
+                'admin' => 'app_zoho_index',
+            ]));
         } catch (\Exception $e) {
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error('【Zoho plugin】OAuth認証解除に失敗しました。', Common::exceptionArray($e));

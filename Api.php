@@ -6,6 +6,8 @@ use Exception;
 use ZCRMRestClient;
 use ZohoOAuth;
 use Acms\Services\Facades\Storage;
+use Acms\Services\Facades\Config;
+use Field;
 
 class Api
 {
@@ -16,21 +18,16 @@ class Api
     private const PERSISTENCE_FILE_NAME = 'zcrm_oauthtokens.txt';
 
     /**
-     * @var string
-     */
-    public $userEmailId;
-
-    /**
      * @var \ZohoOAuthClient
      */
     public $client;
 
     /**
      * Api constructor.
-     * @param string $userEmailId
      */
-    public function __construct(string $userEmailId)
+    public function __construct()
     {
+
         ZCRMRestClient::initialize();
 
         $persistencePath = ZohoOAuth::getConfigValue("token_persistence_path");
@@ -41,7 +38,6 @@ class Api
             Storage::put($persistenceFilePath, '');
         }
 
-        $this->userEmailId = $userEmailId;
         $this->client = ZohoOAuth::getClientInstance();
     }
 
@@ -51,7 +47,9 @@ class Api
      */
     public function authorize(string $grantToken)
     {
-        $this->client->generateAccessToken($grantToken);
+        $tokens = $this->client->generateAccessToken($grantToken);
+        $userEmailId = $tokens->getUserEmailId();
+        $this->saveUserEmailId($userEmailId);
     }
 
     /**
@@ -59,7 +57,9 @@ class Api
      */
     public function deauthorize()
     {
-        ZohoOAuth::getPersistenceHandlerInstance()->deleteOAuthTokens($this->userEmailId);
+        $userEmailId = ZCRMRestClient::getCurrentUserEmailID();
+        ZohoOAuth::getPersistenceHandlerInstance()->deleteOAuthTokens($userEmailId);
+        $this->saveUserEmailId('');
     }
 
     /**
@@ -68,11 +68,24 @@ class Api
      */
     public function getAccessToken(): ?string
     {
+        $userEmailId = ZCRMRestClient::getCurrentUserEmailID();
+
         try {
-            $accessToken = $this->client->getAccessToken($this->userEmailId);
+            $accessToken = $this->client->getAccessToken($userEmailId);
         } catch (Exception $e) {
             $accessToken = null;
         }
         return $accessToken;
+    }
+
+    /**
+     * OAuth認証ユーザーのメールアドレスを保存する
+     * @return string|null
+     */
+    protected function saveUserEmailId(string $userEmailId = '')
+    {
+        $config = new Field();
+        $config->set('zoho_user_identifier', $userEmailId);
+        Config::saveConfig($config, BID);
     }
 }

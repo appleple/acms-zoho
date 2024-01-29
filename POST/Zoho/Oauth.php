@@ -23,6 +23,10 @@ class oAuth extends ACMS_POST
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】OAuth認証に成功しました。');
             }
+            $this->redirect(acmsLink([
+                'bid' => BID,
+                'admin' => 'app_zoho_index',
+            ]));
         } catch (\Exception $e) {
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error('【Zoho plugin】OAuth認証に失敗しました。', Common::exceptionArray($e));
@@ -46,14 +50,12 @@ class oAuth extends ACMS_POST
 
         if (Storage::exists($configFilePath) && Storage::exists($configFileDestPath)) {
             $configFile = Storage::get($configFilePath);
-            $configFile = preg_replace('/{mail}/', $config->get('zoho_user_identifier'), $configFile);
             Storage::put($configFileDestPath, $configFile);
         }
         if (Storage::exists($oauthConfigFilePath) && Storage::exists($oauthConfigFileDestPath)) {
             $oauthConfigFile = Storage::get($oauthConfigFilePath);
             $oauthConfigFile = preg_replace('/{client_id}/', $config->get('zoho_client_id'), $oauthConfigFile);
             $oauthConfigFile = preg_replace('/{client_secret}/', $config->get('zoho_client_secret'), $oauthConfigFile);
-            $oauthConfigFile = preg_replace('/{mail}/', $config->get('zoho_user_identifier'), $oauthConfigFile);
             Storage::put($oauthConfigFileDestPath, $oauthConfigFile);
         }
     }
