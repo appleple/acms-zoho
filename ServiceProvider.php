@@ -59,7 +59,7 @@ class ServiceProvider extends ACMS_App
         $this->initZohoOauthLogger();
 
         $hook = HookFactory::singleton();
-        $hook->attach('Zoho', new Hook);
+        $hook->attach('Zoho', new Hook());
         $inject = InjectTemplate::singleton();
 
         if (ADMIN === 'app_zoho_index') {
