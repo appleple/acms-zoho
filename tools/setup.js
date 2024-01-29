@@ -20,6 +20,18 @@ const fixes = [
     from: 'fix/ZCRMException.php',
     to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/exception/ZCRMException.php',
   },
+  {
+    from: 'fix/ZohoOAuthTokens.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthTokens.php',
+  },
+  {
+    from: 'fix/ZohoOAuthClient.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/client/ZohoOAuthClient.php',
+  },
+  {
+    from: 'fix/ZohoOAuthConstants.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthConstants.php',
+  },
 ];
 
 (async () => {
