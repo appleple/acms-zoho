@@ -13,12 +13,12 @@ class oAuth extends ACMS_POST
 {
     public function post()
     {
+        $this->writeSettings();
         /** @var \Acms\Plugins\Zoho\Api $client */
         $client = App::make('zoho.api');
-        try {
-            $this->writeSettings();
 
-            $grantToken = $this->Post->get('zoho_grant_token', '');
+        $grantToken = $this->Post->get('zoho_grant_token', '');
+        try {
             $client->authorize($grantToken);
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】OAuth認証に成功しました。');
@@ -43,19 +43,14 @@ class oAuth extends ACMS_POST
         $config = Config::loadDefaultField();
         $config->overload(Config::loadBlogConfig(BID));
 
-        $configFilePath = PLUGIN_LIB_DIR. 'Zoho/configuration.properties';
-        $configFileDestPath = PLUGIN_LIB_DIR. 'Zoho/vendor/zohocrm/php-sdk/src/resources/configuration.properties';
         $oauthConfigFilePath = PLUGIN_LIB_DIR. 'Zoho/oauth_configuration.properties';
         $oauthConfigFileDestPath = PLUGIN_LIB_DIR. 'Zoho/vendor/zohocrm/php-sdk/src/resources/oauth_configuration.properties';
 
-        if (Storage::exists($configFilePath) && Storage::exists($configFileDestPath)) {
-            $configFile = Storage::get($configFilePath);
-            Storage::put($configFileDestPath, $configFile);
-        }
         if (Storage::exists($oauthConfigFilePath) && Storage::exists($oauthConfigFileDestPath)) {
             $oauthConfigFile = Storage::get($oauthConfigFilePath);
             $oauthConfigFile = preg_replace('/{client_id}/', $config->get('zoho_client_id'), $oauthConfigFile);
             $oauthConfigFile = preg_replace('/{client_secret}/', $config->get('zoho_client_secret'), $oauthConfigFile);
+            $oauthConfigFile = preg_replace('/{token_persistence_path}/', env('ZOHO_TOKEN_PERSISTENCE_PATH'), $oauthConfigFile);
             Storage::put($oauthConfigFileDestPath, $oauthConfigFile);
         }
     }

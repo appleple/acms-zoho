@@ -5,13 +5,12 @@ namespace Acms\Plugins\Zoho;
 use Exception;
 use ZCRMRestClient;
 use ZohoOAuth;
-use Acms\Services\Facades\Storage;
 use Acms\Services\Facades\Config;
+use Acms\Services\Facades\Storage;
 use Field;
 
 class Api
 {
-
     /**
      * @var string
      */
@@ -27,17 +26,7 @@ class Api
      */
     public function __construct()
     {
-
         ZCRMRestClient::initialize();
-
-        $persistencePath = ZohoOAuth::getConfigValue("token_persistence_path");
-        $persistenceFilePath = $persistencePath . self::PERSISTENCE_FILE_NAME;
-
-        if (Storage::exists($persistenceFilePath) === false) {
-            // 認証情報保存用ファイルが存在しない場合は空ファイルを作成する
-            Storage::put($persistenceFilePath, '');
-        }
-
         $this->client = ZohoOAuth::getClientInstance();
     }
 
@@ -47,6 +36,9 @@ class Api
      */
     public function authorize(string $grantToken)
     {
+        if (!$this->tokenPersistenceFileExists()) {
+            $this->createTokenPersistenceFile();
+        }
         $tokens = $this->client->generateAccessToken($grantToken);
         $userEmailId = $tokens->getUserEmailId();
         $this->saveUserEmailId($userEmailId);
@@ -57,6 +49,9 @@ class Api
      */
     public function deauthorize()
     {
+        if (!$this->tokenPersistenceFileExists()) {
+            return;
+        }
         $userEmailId = ZCRMRestClient::getCurrentUserEmailID();
         ZohoOAuth::getPersistenceHandlerInstance()->deleteOAuthTokens($userEmailId);
         $this->saveUserEmailId('');
@@ -68,6 +63,9 @@ class Api
      */
     public function getAccessToken(): ?string
     {
+        if (!$this->tokenPersistenceFileExists()) {
+            return null;
+        }
         $userEmailId = ZCRMRestClient::getCurrentUserEmailID();
 
         try {
@@ -80,12 +78,40 @@ class Api
 
     /**
      * OAuth認証ユーザーのメールアドレスを保存する
-     * @return string|null
+     * @param string $userEmailId
      */
     protected function saveUserEmailId(string $userEmailId = '')
     {
         $config = new Field();
         $config->set('zoho_user_identifier', $userEmailId);
         Config::saveConfig($config, BID);
+    }
+
+    /**
+     * 認証情報保存用ファイルが存在するかどうか
+     * @return bool
+     */
+    public function tokenPersistenceFileExists(): bool
+    {
+        $persistencePath = ZohoOAuth::getConfigValue("token_persistence_path");
+        if (empty($persistencePath)) {
+            return false;
+        }
+        $persistenceFilePath = $persistencePath . self::PERSISTENCE_FILE_NAME;
+
+        return Storage::exists($persistenceFilePath);
+    }
+
+    /**
+     * 認証情報保存用ファイルを作成する
+     */
+    public function createTokenPersistenceFile()
+    {
+        $persistencePath = ZohoOAuth::getConfigValue("token_persistence_path");
+        if (empty($persistencePath)) {
+            return;
+        }
+        $persistenceFilePath = $persistencePath . self::PERSISTENCE_FILE_NAME;
+        Storage::put($persistenceFilePath, '');
     }
 }

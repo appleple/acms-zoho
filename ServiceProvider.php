@@ -59,6 +59,7 @@ class ServiceProvider extends ACMS_App
         App::singleton('zoho.api', Api::class);
 
         $this->initZohoConfig();
+        $this->updateZohoConfig();
         $this->initZohoOauthLogger();
 
         $hook = HookFactory::singleton();
@@ -165,6 +166,7 @@ class ServiceProvider extends ACMS_App
                 return;
             }
             $config = Storage::get($configFilePath);
+            $config = preg_replace('/{application_log_file_path}/', '', $config);
             Storage::put($configFileDestPath, $config);
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info("【Zoho plugin】 Zohoの設定ファイルを作成しました。", [
@@ -188,6 +190,7 @@ class ServiceProvider extends ACMS_App
             $oauthConfig = Storage::get($oauthConfigFilePath);
             $oauthConfig = preg_replace('/{client_id}/', '', $oauthConfig);
             $oauthConfig = preg_replace('/{client_secret}/', '', $oauthConfig);
+            $oauthConfig = preg_replace('/{token_persistence_path}/', '', $oauthConfig);
             Storage::put($oauthConfigFileDestPath, $oauthConfig);
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info("【Zoho plugin】 ZohoのOAuth設定ファイルを作成しました。", [
@@ -195,6 +198,25 @@ class ServiceProvider extends ACMS_App
                 ]);
             }
         }
+    }
+
+    /**
+     * Zoho設定ファイルの更新
+     */
+    private function updateZohoConfig()
+    {
+        $configFile = 'configuration.properties';
+        $zohoDir = PLUGIN_LIB_DIR . $this->name . '/';
+        $resourcesDir = $zohoDir . 'vendor/zohocrm/php-sdk/src/resources/';
+        $configFilePath = $zohoDir . $configFile;
+        $configFileDestPath = $resourcesDir . $configFile;
+
+        if (Storage::exists($configFileDestPath) === false) {
+            return;
+        }
+        $config = Storage::get($configFilePath);
+        $config = preg_replace('/{application_log_file_path}/', env('ZOHO_APPLICATION_LOG_FILE_PATH', './'), $config);
+        Storage::put($configFileDestPath, $config);
     }
 
     /**
