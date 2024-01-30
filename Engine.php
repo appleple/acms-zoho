@@ -100,7 +100,7 @@ class Engine
             }
             $this->conversions = $conversions;
             App::checkException();
-        } catch (\Exception $e) {
+        } catch (\ZCRMEXCEption $e) {
             $this->warning(__FUNCTION__, $e);
         }
     }
@@ -272,7 +272,7 @@ class Engine
                     $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
                     $responses = $bulkAPIResponse->getData();
                     continue;
-                } catch (\Exception $e) {
+                } catch (\ZCRMEXCEption $e) {
                     $this->warning(__FUNCTION__, $e);
                 }
             }
@@ -300,7 +300,7 @@ class Engine
                         if (count($responses)) {
                             continue;
                         }
-                    } catch (\Exception $e) {
+                    } catch (\ZCRMEXCEption $e) {
                         $this->warning(__FUNCTION__, $e);
                     }
                 }
@@ -336,7 +336,7 @@ class Engine
                     $record->setEntityId($entityId);
                     $newRecords[] = $record;
                 }
-            } catch (\Exception $e) {
+            } catch (\ZCRMEXCEption $e) {
                 $this->warning(__FUNCTION__, $e);
             }
         }
@@ -426,7 +426,7 @@ class Engine
                         'scope' => $scope
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (\ZCRMEXCEption $e) {
                 $this->warning(__FUNCTION__, $e);
             }
         }
@@ -458,7 +458,7 @@ class Engine
                         'scope' => $scope
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (\ZCRMEXCEption $e) {
                 $this->warning(__FUNCTION__, $e);
             }
         }
@@ -505,7 +505,7 @@ class Engine
                             $parentRecord->setFieldValue($key, $lookupRecord);
                             try {
                                 $parentRecord->update();
-                            } catch (\Exception $e) {
+                            } catch (\ZCRMEXCEption $e) {
                                 $this->warning(__FUNCTION__, $e);
                             }
                         }
@@ -523,14 +523,17 @@ class Engine
      * 警告ログの出力
      *
      * @param string $methodName
-     * @param Exception $e
+     * @param \ZCRMException $e
      */
-    private function warning(string $methodName, \Exception $e)
+    private function warning(string $methodName, \ZCRMException $e)
     {
         if (class_exists('AcmsLogger')) {
             AcmsLogger::warning(
                 '【Zoho plugin】 ' . $methodName . ': ' . $e->getMessage(),
-                Common::exceptionArray($e)
+                Common::exceptionArray($e, [
+                    'code' => $e->getExceptionCode(),
+                    'details' => $e->getExceptionDetails()
+                ])
             );
         } else {
             userErrorLog('ACMS Warning: Zoho plugin, ' . $methodName . ': ' . $e->getMessage());
