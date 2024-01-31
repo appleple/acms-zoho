@@ -26,14 +26,11 @@ class Engine
     private $field;
 
     /**
-     * @var array
+     * ラベル名からAPI名への変換用マップデータ
+     *
+     * @var array{ moduleName: string, map: array<string, string>}
      */
-    private $records;
-
-    /**
-     * @var array
-     */
-    private $conversions;
+    private $labelNameToApiNameMap;
 
     /**
      * @var Api
@@ -49,7 +46,6 @@ class Engine
     {
         $this->config = $Form['data']->getChild('mail');
         $this->field = $Post->getChild('field');
-        $this->records = array();
         $this->oauthClient = App::make('zoho.api');
     }
 
@@ -61,202 +57,360 @@ class Engine
         if (is_null($this->oauthClient->getAccessToken())) {
             return;
         }
-        $this->makeLabelConversionTable();
-        $records = $this->makeRecords();
-        $records = $this->addFieldsToRecords($records);
-        $this->updateRecords($this->getRecordsByType($records, 'update'));
-        $this->insertRecords($this->getRecordsByType($records, 'insert'));
-        $this->updateRelatedRecords();
+        $moduleNames = $this->getIntegrationModuleNames();
+        $modules = array_map(
+            function (string $moduleName) {
+                return $this->getModuleByName($moduleName);
+            },
+            $moduleNames
+        );
+        $this->labelNameToApiNameMap = $this->getLabelNameToApiNameMap($modules);
+        $recordArray = $this->createRecordArray($this->field);
+        $updateRecordArray = $this->getRecordsByType($recordArray, 'update');
+        $insertRecordArray = $this->getRecordsByType($recordArray, 'insert');
+        $updated = $this->updateRecords($updateRecordArray);
+        $inserted = $this->insertRecords($insertRecordArray);
+        $this->updateRelatedRecords(array_merge($updated, $inserted));
     }
 
-    private function makeLabelConversionTable()
+    /**
+     * フォーム設定から連携するモジュール名を配列で取得する
+     *
+     * @return string[]
+     */
+    private function getIntegrationModuleNames(): array
     {
-        $zohoScopeGroup = $this->config->getArray('zoho_form_group_index');
-        $scopes = array();
-        foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
-            $zohoInsertScope = $this->config->get('zoho_form_insert_scope', '', $i);
-            $zohoUpdateScope = $this->config->get('zoho_form_update_scope', '', $i);
-            $insertScopes = explode(',', $zohoInsertScope);
-            $updateScopes = explode(',', $zohoUpdateScope);
-            $scopes = array_merge($scopes, $insertScopes, $updateScopes);
+        $moduleGroup = $this->config->getArray('zoho_form_group_index');
+        $moduleNames = [];
+        foreach (array_keys($moduleGroup) as $i) {
+            $insertModules = array_map('trim', explode(',', $this->config->get('zoho_form_insert_scope', '', $i)));
+            $updateModules = array_map('trim', explode(',', $this->config->get('zoho_form_update_scope', '', $i)));
+            $moduleNames = array_merge($moduleNames, $insertModules, $updateModules);
         }
-        $scopes = array_unique($scopes);
-        $scopes = array_filter($scopes);
+        $moduleNames = array_unique($moduleNames);
+        $moduleNames = array_filter($moduleNames);
+        return $moduleNames;
+    }
+
+    /**
+     * ラベル名からAPI名への変換用マップデータを取得する
+     *
+     * @param \ZCRMModule[] $module
+     * @return array{ moduleName: string, map: array<string, string>}
+     */
+    private function getLabelNameToApiNameMap(array $modules = [])
+    {
+        return array_map(
+            function (\ZCRMModule $module) {
+                return [
+                    'moduleName' => $module->getModuleName(),
+                    'map' => array_map(
+                        function (\ZCRMField $field) {
+                            return [$field->getFieldLabel() => $field->getApiName()];
+                        },
+                        $this->getFieldsByModule($module)
+                    ),
+                ];
+            },
+            $modules
+        );
+    }
+
+    /**
+     * モジュール名からモジュールを取得する
+     *
+     * @param string $moduleName
+     * @return \ZCRMModule|null
+     * @throws \ZCRMException
+     */
+    private function getModuleByName(string $moduleName): ?\ZCRMModule
+    {
         $ins = ZCRMRestClient::getInstance();
+        $module = null;
         try {
-            $conversions = array();
-            foreach ($scopes as $scope) {
-                $module = $ins->getModule($scope)->getData();
-                $moduleName = $module->getModuleName();
-                $data = $module->getAllFields();
-                $fields = $data->getData();
-                $labels = array();
-                foreach ($fields as $field) {
-                    $label = $field->getFieldLabel();
-                    $apiName = $field->getApiName();
-                    $labels[$label] = $apiName;
-                }
-                $conversions[$moduleName] = $labels;
+            $module = $ins->getModule($moduleName)->getData();
+        } catch (\ZCRMException $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error(
+                    '【Zoho plugin】 ' . $moduleName . 'モジュールの取得に失敗しました。モジュール名が正しいか確認してください。',
+                    Common::exceptionArray($e)
+                );
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
-            $this->conversions = $conversions;
-            App::checkException();
-        } catch (\ZCRMEXCEption $e) {
-            $this->warning(__FUNCTION__, $e);
         }
+        return $module;
     }
 
-    private function makeFieldNameByLabel($moduleName, $label)
+    /**
+     * モジュールからフィールドを取得する
+     *
+     * @param \ZCRMModule $module
+     * @return \ZCRMField[]
+     */
+    private function getFieldsByModule(\ZCRMModule $module): array
     {
-        if (isset($this->conversions[$moduleName][$label])) {
-            return $this->conversions[$moduleName][$label];
+        $fields = [];
+        try {
+            /** @var \ApiResponse $response */
+            $response = $module->getAllFields();
+            /** @var \ZCRMField[] $fields */
+            $fields = $response->getData();
+        } catch (\ZCRMException $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error(
+                    '【Zoho plugin】 ' . $module->getModuleName() . 'のフィールドの取得に失敗しました。',
+                    Common::exceptionArray($e)
+                );
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
         }
+        return $fields;
+    }
+
+    /**
+     * ラベル名からAPI名を取得する
+     *
+     * @param string $labelName
+     * @param string $moduleName
+     * @return string
+     */
+    private function getApiNameByLabelName($labelName, $moduleName)
+    {
+        foreach ($this->labelNameToApiNameMap as $dataset) {
+            if ($dataset['moduleName'] === $moduleName) {
+                $map = $dataset['map'];
+                if (isset($map[$labelName])) {
+                    return $map[$labelName];
+                }
+            }
+        }
+
         return '';
     }
 
     /**
-     * make scope list
+     * zohoに送信するレコードオブジェクトの元となる配列を作成する
+     *
+     * @param \Field $field
+     * @return array{
+     *  moduleName: string,
+     *  uniqueKey: string,
+     *  field: array<string, string>,
+     *  type: string
+     * }
      */
-    private function makeRecords()
+    private function createRecords(\Field $field)
     {
-        $zohoScopeGroup = $this->config->getArray('zoho_form_group_index');
-        $records = array();
-        foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
-            $insertScopes = array();
-            $updateScopes = array();
-            $zohoInsertScope = $this->config->get('zoho_form_insert_scope', '', $i);
-            $zohoUpdateScope = $this->config->get('zoho_form_update_scope', '', $i);
-            $uniqueKey = $this->config->get('zoho_form_unique_key', '', $i);
-            if ($zohoInsertScope) {
-                $insertScopes = explode(',', $zohoInsertScope);
-            }
-            if ($zohoUpdateScope) {
-                $updateScopes = explode(',', $zohoUpdateScope);
-            }
-            if (!$uniqueKey) {
-                $uniqueKey = 'メール';
-            }
-            foreach ($insertScopes as $insertScope) {
-                $records[] = array(
-                    'scope' => $insertScope,
-                    'uniqueKey' => array_search($insertScope, $updateScopes) !== false ? $uniqueKey : '',
-                    'field' => array(),
+        $moduleGroup = $this->config->getArray('zoho_form_group_index');
+        $records = [];
+        foreach (array_keys($moduleGroup) as $i) {
+            $insertModuleNames = array_map('trim', explode(',', $this->config->get('zoho_form_insert_scope', '', $i)));
+            $updateModuleNames = array_map('trim', explode(',', $this->config->get('zoho_form_update_scope', '', $i)));
+            $uniqueKey = $this->config->get('zoho_form_unique_key', 'メール', $i);
+
+            foreach ($insertModuleNames as $moduleName) {
+                $records[] = $this->createInsertRecords(
+                    $moduleName,
+                    array_search($moduleName, $updateModuleNames) !== false ? $uniqueKey : '',
+                    $this->createFields($field, $moduleName, 'insert')
+                );
+                $records[] = [
+                    'moduleName' => $moduleName,
+                    'uniqueKey' => array_search($moduleName, $updateModuleNames) !== false ? $uniqueKey : '',
+                    'fields' => $this->createFields($field, $moduleName, 'insert'),
                     'type' => 'insert'
-                );
+                ];
             }
-            foreach ($updateScopes as $updateScope) {
-                $records[] = array(
-                    'scope' => $updateScope,
+            foreach ($updateModuleNames as $moduleName) {
+                $records[] = [
+                    'moduleName' => $moduleName,
                     'uniqueKey' => $uniqueKey,
-                    'field' => array(),
+                    'fields' => $this->createFields($field, $moduleName, 'update'),
                     'type' => 'update'
-                );
+                ];
             }
         }
         return $records;
     }
 
-    private function getMaxKey($keys)
+    /**
+     * 追加処理用のZCRMRecordオブジェクトの配列を作成する
+     *
+     * @param string $moduleName
+     * @param string $uniqueKey
+     * @param array<{ key: string, value: string }> $fields
+     * @return \ZCRMRecord[]
+     */
+    private function createInsertRecords($moduleName, $uniqueKey, $fields)
     {
-        $max = 1;
-        $field = $this->field;
+        return array_map(
+            function (array $field) use ($moduleName, $uniqueKey) {
+                $record = ZCRMRecord::getInstance($moduleName, null);
+                foreach ($field as $labelName => $value) {
+                    if (empty($labelName)) {
+                        continue;
+                    }
+                    $apiName = $this->getApiNameByLabelName($labelName, $moduleName);
+                    if (empty($apiName)) {
+                        continue;
+                    }
+                    $record->setFieldValue($apiName, $value);
+                }
+                return [
+                    'record' => $record,
+                    'field' => $field,
+                    'moduleName' => $moduleName,
+                    'uniqueKey' => $uniqueKey
+                ];
+            },
+            $fields
+        );
+        )
+        foreach ($fields as $field) {
+            $record = ZCRMRecord::getInstance($moduleName, null);
+            foreach ($field as $labelName => $value) {
+                if (empty($labelName)) {
+                    continue;
+                }
+                $apiName = $this->getApiNameByLabelName($labelName, $moduleName);
+                if (empty($apiName)) {
+                    continue;
+                }
+                $record->setFieldValue($apiName, $value);
+            }
+            $records[] = $record;
+        }
+        return $records;
+    }
+
+    /**
+     * カスタムフィールドグループのグループ数を取得する
+     *
+     * @param string[] $keys
+     * @param \Field $field
+     * @return int
+     */
+    private function getFieldGroupLength(array $keys, \Field $field)
+    {
+        $length = 1;
         foreach ($keys as $key) {
             $arr = $field->getArray($key);
             $cnt = count($arr);
-            if ($cnt > $max) {
-                $max = $cnt;
+            if ($cnt > $length) {
+                $length = $cnt;
             }
         }
-        return $max;
+        return $length;
     }
 
-    private function getGroupArray($record)
+    /**
+     * カスタムフィールドグループの値を取得する
+     *
+     * @param \Field $field
+     * @param string $moduleName
+     * @param string $type
+     * @return string[]
+     */
+    private function getFieldGroupKeys(\Field $field, string $moduleName, string $type): array
     {
-        $zohoScope = $record['scope'];
-        $type = $record['type'];
-        $field = $this->field;
         $keys = $this->config->getArray('zoho_field_cms_key');
         foreach ($keys as $i => $key) {
-            $scopes = $this->config->get('zoho_field_scope', '', $i);
-            $insert = $this->config->get('zoho_field_insert', '', $i);
-            $update = $this->config->get('zoho_field_update', '', $i);
-            if ($type === 'insert' && !$insert) {
+            $isInsert = $this->config->get('zoho_field_insert', '', $i) === 'true';
+            $isUpdate = $this->config->get('zoho_field_update', '', $i) === 'true';
+            if ($type === 'insert' && $isInsert === false) {
                 continue;
             }
-            if ($type === 'update' && !$update) {
+            if ($type === 'update' && $isUpdate === false) {
                 continue;
             }
-            $scopes = explode(',', $scopes);
-            foreach ($scopes as $scope) {
-                if ($scope === $zohoScope) {
+            $fieldModuleNames = array_map('trim', explode(',', $this->config->get('zoho_field_scope', '', $i)));
+            foreach ($fieldModuleNames as $fieldModuleName) {
+                if ($fieldModuleName === $moduleName) {
                     if (isset($key) && isset($key[0]) && $key[0] === '@') {
                         return $field->getArray($key);
                     }
                 }
             }
         }
-        return null;
+        return [];
     }
 
-    private function addFieldsToRecords($records)
+    /**
+     * フィールドオブジェクトからzohoに送信するフィールドの配列を作成する
+     *
+     * @param \Field $_field
+     * @param string $moduleName
+     * @param string $type
+     * @return array<string, string>
+     */
+    private function createFields(\Field $_field, string $moduleName, string $type)
     {
-        $field = $this->field;
-        $fieldKeys = $this->config->getArray('zoho_field_key');
-        $attachedRecords = array();
-        foreach ($records as $record) {
-            $newRecord = array_merge(array(), $record);
-            $fields = array();
-            $length = 1;
-            $groupArr = $this->getGroupArray($record);
-            if ($groupArr) {
-                $length = $this->getMaxKey($groupArr);
-            }
+        $zohoKeys = $this->config->getArray('zoho_field_key');
 
-            for ($cnt = 0; $cnt < $length; $cnt++) {
-                $item = array();
-                foreach ($fieldKeys as $i => $fieldKey) {
-                    $key = $this->config->get('zoho_field_cms_key', '', $i);
-                    $scopes = $this->config->get('zoho_field_scope', '', $i);
-                    $scopes = explode(',', $scopes);
-                    $canInsert = $this->config->get('zoho_field_insert', '', $i);
-                    $canUpdate = $this->config->get('zoho_field_update', '', $i);
-                    foreach ($scopes as $scope) {
-                        if ($record['scope'] === $scope) {
-                            if (($record['type'] === 'insert' && $canInsert)
-                                || ($record['type'] === 'update' && $canUpdate)) {
-                                $value = null;
-                                if ($groupArr && in_array($key, $groupArr)) {
-                                    $value = $field->get($key, '', $cnt);
-                                } else {
-                                    $value = implode("-", $field->getArray($key));
-                                }
-                                if ($value === 'true') {
-                                    $value = true;
-                                } else {
-                                    if ($value === 'false') {
-                                        $value = false;
-                                    }
-                                }
-                                $item[$fieldKey] = $value;
-                            }
-                        }
-                    }
-                }
-                $fields[] = $item;
-            }
-            $newRecord['field'] = $fields;
-            $attachedRecords[] = $newRecord;
+        $field = [];
+        $length = 1;
+        $fieldGroupKeys = $this->getFieldGroupKeys($_field, $moduleName, $type);
+        if (!empty($fieldGroupKeys)) {
+            $length = $this->getFieldGroupLength($fieldGroupKeys, $_field);
         }
-        return $attachedRecords;
+
+        for ($cnt = 0; $cnt < $length; $cnt++) {
+            $fieldItems = [];
+            foreach ($zohoKeys as $i => $zohoKey) {
+                $acmskey = $this->config->get('zoho_field_cms_key', '', $i);
+                $fieldModuleNames = array_map('trim', explode(',', $this->config->get('zoho_field_scope', '', $i)));
+                $isInsert = $this->config->get('zoho_field_insert', '', $i) === 'true';
+                $isUpdate = $this->config->get('zoho_field_update', '', $i) === 'true';
+                foreach ($fieldModuleNames as $fieldModuleName) {
+                    if ($fieldModuleName !== $moduleName) {
+                        // フォームの権限設定で設定されたモジュール名以外はスキップ
+                        continue;
+                    }
+                    if ($type === 'insert' && $isInsert === false) {
+                        // フィールドの追加が許可されていない場合はスキップ
+                        continue;
+                    }
+
+                    if ($type === 'update' && $isUpdate === false) {
+                        // フィールドの更新が許可されていない場合はスキップ
+                        continue;
+                    }
+                    $value = null;
+                    if (!empty($fieldGroupKeys) && in_array($acmskey, $fieldGroupKeys)) {
+                        $value = $_field->get($acmskey, '', $cnt);
+                    } else {
+                        $value = implode("-", $_field->getArray($acmskey));
+                    }
+                    if ($value === 'true') {
+                        $value = true;
+                    }
+                    if ($value === 'false') {
+                        $value = false;
+                    }
+                    $fieldItems[] = [
+                        'key' => $zohoKey,
+                        'value' => $value
+                    ];
+                }
+            }
+            $field[] = $fieldItems;
+        }
+        return $fields;
     }
 
     private function getRecordsByType($records, $type)
     {
-        return array_filter($records, function ($record) use ($type) {
-            return $record['type'] === $type;
-        });
+        return array_filter(
+            $records,
+            function ($record) use ($type) {
+                return $record['type'] === $type;
+            }
+        );
     }
 
-    private function checkUniqueKeyExists($fields, $scope, $uniqueKey)
+    private function checkUniqueKeyExists($fields, $moduleName, $uniqueKey)
     {
         $newFields = array();
         foreach ($fields as $field) {
@@ -267,45 +421,57 @@ class Engine
             $uniqueValue = $field[$uniqueKey];
             if ($uniqueValue) {
                 try {
-                    $zcrmModuleIns = ZCRMModule::getInstance($scope);
-                    $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-                    $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
-                    $responses = $bulkAPIResponse->getData();
+                    $zcrmModuleIns = ZCRMModule::getInstance($moduleName);
+                    $apiName = $this->getApiNameByLabelName($uniqueKey, $moduleName);
+                    $zcrmModuleIns->searchRecordsByCriteria("(" . $apiName . ":equals:" . $uniqueValue . ")");
+
+                    // エラーにならなかった場合は既に存在するレコードなのでスキップ
                     continue;
-                } catch (\ZCRMEXCEption $e) {
-                    $this->warning(__FUNCTION__, $e);
+                } catch (\ZCRMException $e) {
+                    if ($e->getExceptionCode() === 'No Content') {
+                        // エラーコードがNo Contentの場合はレコードが存在しないので処理を続行
+                        $newFields[] = $field;
+                    } else {
+                        // それ以外のエラーの場合は例外をスロー
+                        throw $e;
+                    }
                 }
             }
-            $newFields[] = $field;
         }
         return $newFields;
     }
 
-    private function getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey)
+    private function getFieldsWhereNotExistInContact($fields, $moduleName, $uniqueKey)
     {
         $newFields = array();
         foreach ($fields as $field) {
             if (isset($field[$uniqueKey])) {
                 $uniqueValue = $field[$uniqueKey];
-                if ($scope === 'Leads' && $uniqueValue) {
+                if ($moduleName === 'Leads' && $uniqueValue) {
                     $zcrmModuleIns = ZCRMModule::getInstance("Leads");
-                    $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-                    if (!$key || !$uniqueValue) {
+                    $apiName = $this->getApiNameByLabelName($uniqueKey, $moduleName);
+                    if (!$apiName || !$uniqueValue) {
                         continue;
                     }
                     try {
                         $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
-                        $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
+                        $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $apiName . ":equals:" . $uniqueValue . ")");
                         $responses = $bulkAPIResponse->getData();
                         if (count($responses)) {
+                            // 既にContactsに存在する場合はスキップ
                             continue;
                         }
-                    } catch (\ZCRMEXCEption $e) {
-                        $this->warning(__FUNCTION__, $e);
+                    } catch (\ZCRMException $e) {
+                        if ($e->getExceptionCode() === 'No Content') {
+                            // エラーコードがNo Contentの場合はレコードが存在しないので処理を続行
+                            $newFields[] = $field;
+                        } else {
+                            // それ以外のエラーの場合は例外をスロー
+                            throw $e;
+                        }
                     }
                 }
             }
-            $newFields[] = $field;
         }
         return $newFields;
     }
@@ -318,26 +484,39 @@ class Engine
         $record->addNote($note);
     }
 
-    private function addIdsToRecords($records, $scope, $uniqueKey, $fields)
+    private function addIdsToRecords($records, $moduleName, $uniqueKey, $fields)
     {
         $newRecords = array();
         foreach ($records as $i => $record) {
-            $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+            $apiName = $this->getApiNameByLabelName($uniqueKey, $moduleName);
             $uniqueValue = isset($fields[$i][$uniqueKey]) ? $fields[$i][$uniqueKey] : false;
-            if (!$key || !$uniqueValue) {
+            if (!$apiName || !$uniqueValue) {
                 continue;
             }
             try {
-                $zcrmModuleIns = ZCRMModule::getInstance($scope);
-                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
+                $zcrmModuleIns = ZCRMModule::getInstance($moduleName);
+                $criteria = "(" . $apiName . ":equals:" . $uniqueValue . ")";
+                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria($criteria);
                 $responses = $bulkAPIResponse->getData();
                 if (count($responses)) {
                     $entityId = $responses[0]->getEntityId();
                     $record->setEntityId($entityId);
                     $newRecords[] = $record;
                 }
-            } catch (\ZCRMEXCEption $e) {
-                $this->warning(__FUNCTION__, $e);
+            } catch (\ZCRMException $e) {
+                if (class_exists('AcmsLogger')) {
+                    AcmsLogger::warning(
+                        '【Zoho plugin】 レコードの検索でエラーが発生したため、',
+                        Common::exceptionArray($e, [
+                            'code' => $e->getExceptionCode(),
+                            'details' => $e->getExceptionDetails(),
+                            'moduleName' => $moduleName,
+                            'criteria' => $criteria,
+                        ])
+                    );
+                } else {
+                    userErrorLog('ACMS Warning: Zoho plugin, ' . $e->getMessage());
+                }
             }
         }
         return $newRecords;
@@ -379,19 +558,26 @@ class Engine
         return $records;
     }
 
-    private function createRecords($scope, $fields)
+    /**
+     * create records
+     * @param string $moduleName
+     * @param array $fields
+     * @return \ZCRMRecord[]
+     */
+    private function createRecords($moduleName, $fields)
     {
-        $records = array();
+        $records = [];
         foreach ($fields as $field) {
-            $record = ZCRMRecord::getInstance($scope, null);
-            foreach ($field as $label => $value) {
-                if ($label) {
-                    $key = $this->makeFieldNameByLabel($scope, $label);
-                    if (!$key) {
-                        continue;
-                    }
-                    $record->setFieldValue($key, $value);
+            $record = ZCRMRecord::getInstance($moduleName, null);
+            foreach ($field as $labelName => $value) {
+                if (empty($labelName)) {
+                    continue;
                 }
+                $apiName = $this->getApiNameByLabelName($labelName, $moduleName);
+                if (empty($apiName)) {
+                    continue;
+                }
+                $record->setFieldValue($apiName, $value);
             }
             $records[] = $record;
         }
@@ -400,19 +586,20 @@ class Engine
 
     private function insertRecords($records)
     {
+        $insertedRecords = [];
         foreach ($records as $record) {
-            $scope = $record['scope'];
+            $moduleName = $record['moduleName'];
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
             $fields = $this->arrayCheck($fields);
-            $fields = $this->getFieldsWhereNotExistInContact($fields, $scope, $uniqueKey);
-            $fields = $this->checkUniqueKeyExists($fields, $scope, $uniqueKey);
+            $fields = $this->getFieldsWhereNotExistInContact($fields, $moduleName, $uniqueKey);
+            $fields = $this->checkUniqueKeyExists($fields, $moduleName, $uniqueKey);
             if (empty($fields)) {
                 continue;
             }
             try {
-                $client = ZCRMModule::getInstance($scope);
-                $data = $this->createRecords($scope, $fields);
+                $client = ZCRMModule::getInstance($moduleName);
+                $data = $this->createRecords($moduleName, $fields);
                 $bulkAPIResponse = $client->createRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
@@ -420,31 +607,34 @@ class Engine
                     if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content']) && $updated) {
                         $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
                     }
-                    $this->records[] = array(
+                    $insertedRecords[] = array(
                         'record' => $updated,
                         'field' => $fields[$i],
-                        'scope' => $scope
+                        'moduleName' => $moduleName
                     );
                 }
             } catch (\ZCRMEXCEption $e) {
                 $this->warning(__FUNCTION__, $e);
             }
         }
+
+        return $insertedRecords;
     }
 
     private function updateRecords($records)
     {
+        $updatedRecords = [];
         foreach ($records as $record) {
-            $scope = $record['scope'];
+            $moduleName = $record['moduleName'];
             $uniqueKey = $record['uniqueKey'];
             $fields = $record['field'];
             if (empty($fields)) {
                 continue;
             }
             try {
-                $client = ZCRMModule::getInstance($scope);
-                $data = $this->createRecords($scope, $fields);
-                $data = $this->addIdsToRecords($data, $scope, $uniqueKey, $fields);
+                $client = ZCRMModule::getInstance($moduleName);
+                $data = $this->createRecords($moduleName, $fields);
+                $data = $this->addIdsToRecords($data, $moduleName, $uniqueKey, $fields);
                 $bulkAPIResponse = $client->updateRecords($data);
                 $responses = $bulkAPIResponse->getEntityResponses();
                 foreach ($responses as $i => $response) {
@@ -452,34 +642,40 @@ class Engine
                     if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content'])) {
                         $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
                     }
-                    $this->records[] = array(
+                    $updatedRecords[] = array(
                         'record' => $updated,
                         'field' => $fields[$i],
-                        'scope' => $scope
+                        'moduleName' => $moduleName
                     );
                 }
             } catch (\ZCRMEXCEption $e) {
                 $this->warning(__FUNCTION__, $e);
             }
         }
+        return $updatedRecords;
     }
 
-    private function updateRelatedRecords()
+    private function updateRelatedRecords(array $records)
     {
-        $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
-        $records = $this->records;
-        foreach ($zohoRelatedScopes as $i => $zohoRelatedScope) {
-            $zohoRelatedTargetScope = $this->config->get('zoho_related_target_scope', '', $i);
+        $relatedModuleNames = $this->config->getArray('zoho_related_scope');
+        foreach ($relatedModuleNames as $i => $relatedModuleName) {
+            $relatedTargetModuleName = $this->config->get('zoho_related_target_scope', '', $i);
             $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
             $compareField = $this->config->get('zoho_related_compare_field', '', $i);
 
-            $targets = array_filter($records, function ($item) use ($zohoRelatedTargetScope) {
-                return $item['scope'] === $zohoRelatedTargetScope;
-            });
+            $targets = array_filter(
+                $records,
+                function ($record) use ($relatedTargetModuleName) {
+                    return $record['moduleName'] === $relatedTargetModuleName;
+                }
+            );
 
-            $items = array_filter($records, function ($item) use ($zohoRelatedScope) {
-                return $item['scope'] === $zohoRelatedScope;
-            });
+            $items = array_filter(
+                $records,
+                function ($record) use ($relatedModuleName) {
+                    return $record['moduleName'] === $relatedModuleName;
+                }
+            );
 
 
             if (!count($targets) || !count($items)) {
@@ -497,12 +693,12 @@ class Engine
                     $parentRecord = $item['record'];
                     $lookupRecord = $target['record'];
                     if ($lookupId) {
-                        $key = $this->makeFieldNameByLabel($zohoRelatedScope, $lookupId);
-                        if (!$key) {
+                        $apiName = $this->getApiNameByLabelName($lookupId, $relatedModuleName);
+                        if (!$apiName) {
                             continue;
                         }
                         if ($parentRecord) {
-                            $parentRecord->setFieldValue($key, $lookupRecord);
+                            $parentRecord->setFieldValue($apiName, $lookupRecord);
                             try {
                                 $parentRecord->update();
                             } catch (\ZCRMEXCEption $e) {
@@ -510,8 +706,10 @@ class Engine
                             }
                         }
                     } else {
-                        $junctionRecord = ZCRMJunctionRecord::getInstance($zohoRelatedTargetScope,
-                        $lookupRecord->getEntityId());
+                        $junctionRecord = ZCRMJunctionRecord::getInstance(
+                            $relatedTargetModuleName,
+                            $lookupRecord->getEntityId()
+                        );
                         $parentRecord->addRelation($junctionRecord);
                     }
                 }
