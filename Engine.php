@@ -31,9 +31,11 @@ class Engine
     private $records;
 
     /**
-     * @var array
+     * ラベル名からAPI名への変換用マップデータ
+     *
+     * @var array{ moduleName: string, map: array<string, string>}
      */
-    private $conversions;
+    private $labelNameToApiNameMap;
 
     /**
      * @var Api
@@ -61,7 +63,14 @@ class Engine
         if (is_null($this->oauthClient->getAccessToken())) {
             return;
         }
-        $this->makeLabelConversionTable();
+        $moduleNames = $this->getIntegrationModuleNames();
+        $modules = array_map(
+            function (string $moduleName) {
+                return $this->getModuleByName($moduleName);
+            },
+            $moduleNames
+        );
+        $this->labelNameToApiNameMap = $this->getLabelNameToApiNameMap($modules);
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
         $this->updateRecords($this->getRecordsByType($records, 'update'));
@@ -69,48 +78,122 @@ class Engine
         $this->updateRelatedRecords();
     }
 
-    private function makeLabelConversionTable()
+    /**
+     * フォーム設定から連携するモジュール名を配列で取得する
+     *
+     * @return string[]
+     */
+    private function getIntegrationModuleNames(): array
     {
-        $zohoScopeGroup = $this->config->getArray('zoho_form_group_index');
-        $scopes = array();
-        foreach ($zohoScopeGroup as $i => $zohoScopeItem) {
-            $zohoInsertScope = $this->config->get('zoho_form_insert_scope', '', $i);
-            $zohoUpdateScope = $this->config->get('zoho_form_update_scope', '', $i);
-            $insertScopes = explode(',', $zohoInsertScope);
-            $updateScopes = explode(',', $zohoUpdateScope);
-            $scopes = array_merge($scopes, $insertScopes, $updateScopes);
+        $moduleGroup = $this->config->getArray('zoho_form_group_index');
+        $moduleNames = [];
+        foreach (array_keys($moduleGroup) as $i) {
+            $insertModules = array_map('trim', explode(',', $this->config->get('zoho_form_insert_scope', '', $i)));
+            $updateModules = array_map('trim', explode(',', $this->config->get('zoho_form_update_scope', '', $i)));
+            $moduleNames = array_merge($moduleNames, $insertModules, $updateModules);
         }
-        $scopes = array_unique($scopes);
-        $scopes = array_filter($scopes);
-        $ins = ZCRMRestClient::getInstance();
-        try {
-            $conversions = array();
-            foreach ($scopes as $scope) {
-                $module = $ins->getModule($scope)->getData();
-                $moduleName = $module->getModuleName();
-                $data = $module->getAllFields();
-                $fields = $data->getData();
-                $labels = array();
-                foreach ($fields as $field) {
-                    $label = $field->getFieldLabel();
-                    $apiName = $field->getApiName();
-                    $labels[$label] = $apiName;
-                }
-                $conversions[$moduleName] = $labels;
-            }
-            $this->conversions = $conversions;
-            App::checkException();
-        } catch (\ZCRMEXCEption $e) {
-            $this->warning(__FUNCTION__, $e);
-        }
+        $moduleNames = array_unique($moduleNames);
+        $moduleNames = array_filter($moduleNames);
+        return $moduleNames;
     }
 
-    private function makeFieldNameByLabel($moduleName, $label)
+    /**
+     * ラベル名からAPI名への変換用マップデータを取得する
+     *
+     * @param \ZCRMModule[] $module
+     * @return array{ moduleName: string, map: array<string, string>}
+     */
+    private function getLabelNameToApiNameMap(array $modules = [])
     {
-        if (isset($this->conversions[$moduleName][$label])) {
-            return $this->conversions[$moduleName][$label];
+        return array_map(
+            function (\ZCRMModule $module) {
+                return [
+                    'moduleName' => $module->getModuleName(),
+                    'map' => array_reduce(
+                        $this->getFieldsByModule($module),
+                        function (array $map, \ZCRMField $field) {
+                            return $map + [$field->getFieldLabel() => $field->getApiName()];
+                        },
+                        []
+                    ),
+                ];
+            },
+            $modules
+        );
+    }
+
+    /**
+     * ラベル名からAPI名を取得する
+     *
+     * @param string $labelName
+     * @param string $moduleName
+     * @return string
+     */
+    private function getApiNameByLabelName($labelName, $moduleName)
+    {
+        foreach ($this->labelNameToApiNameMap as $dataset) {
+            if ($dataset['moduleName'] === $moduleName) {
+                $map = $dataset['map'];
+                if (isset($map[$labelName])) {
+                    return $map[$labelName];
+                }
+            }
         }
+
         return '';
+    }
+
+    /**
+     * モジュール名からモジュールを取得する
+     *
+     * @param string $moduleName
+     * @return \ZCRMModule|null
+     * @throws \ZCRMException
+     */
+    private function getModuleByName(string $moduleName): ?\ZCRMModule
+    {
+        $ins = ZCRMRestClient::getInstance();
+        $module = null;
+        try {
+            $module = $ins->getModule($moduleName)->getData();
+        } catch (\ZCRMException $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error(
+                    '【Zoho plugin】 ' . $moduleName . 'モジュールの取得に失敗しました。モジュール名が正しいか確認してください。',
+                    Common::exceptionArray($e)
+                );
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
+        }
+        return $module;
+    }
+
+    /**
+     * モジュールからフィールドを取得する
+     *
+     * @param \ZCRMModule $module
+     * @return \ZCRMField[]
+     */
+    private function getFieldsByModule(\ZCRMModule $module): array
+    {
+        $fields = [];
+        try {
+            /** @var \ApiResponse $response */
+            $response = $module->getAllFields();
+            /** @var \ZCRMField[] $fields */
+            $fields = $response->getData();
+        } catch (\ZCRMException $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error(
+                    '【Zoho plugin】 ' . $module->getModuleName() . 'のフィールドの取得に失敗しました。',
+                    Common::exceptionArray($e)
+                );
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
+        }
+        return $fields;
     }
 
     /**
@@ -268,12 +351,16 @@ class Engine
             if ($uniqueValue) {
                 try {
                     $zcrmModuleIns = ZCRMModule::getInstance($scope);
-                    $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-                    $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
-                    $responses = $bulkAPIResponse->getData();
+                    $apiName = $this->getApiNameByLabelName($uniqueKey, $scope);
+                    $zcrmModuleIns->searchRecordsByCriteria("(" . $apiName . ":equals:" . $uniqueValue . ")");
+                    // エラーにならなかった場合は既に存在するレコードなのでスキップ
                     continue;
                 } catch (\ZCRMEXCEption $e) {
-                    $this->warning(__FUNCTION__, $e);
+                    if ($e->getExceptionCode() !== 'NO CONTENT') {
+                        // エラーコードがNO CONTENTの場合はレコードが存在しないので処理を続行
+                        // それ以外のエラーの場合は例外をスロー
+                        throw $e;
+                    }
                 }
             }
             $newFields[] = $field;
@@ -289,19 +376,24 @@ class Engine
                 $uniqueValue = $field[$uniqueKey];
                 if ($scope === 'Leads' && $uniqueValue) {
                     $zcrmModuleIns = ZCRMModule::getInstance("Leads");
-                    $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
-                    if (!$key || !$uniqueValue) {
+                    $apiName = $this->getApiNameByLabelName($uniqueKey, $scope);
+                    if (empty($apiName) || empty($uniqueValue)) {
                         continue;
                     }
                     try {
                         $zcrmModuleIns = ZCRMModule::getInstance("Contacts");
-                        $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
-                        $responses = $bulkAPIResponse->getData();
-                        if (count($responses)) {
+                        $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $apiName . ":equals:" . $uniqueValue . ")");
+                        $records = $bulkAPIResponse->getData();
+                        if (count($records) > 0) {
+                            // 既にContactsに存在する項目はスキップ
                             continue;
                         }
                     } catch (\ZCRMEXCEption $e) {
-                        $this->warning(__FUNCTION__, $e);
+                        if ($e->getExceptionCode() !== 'NO CONTENT') {
+                            // エラーコードがNO CONTENTの場合はレコードが存在しないので処理を続行
+                            // それ以外のエラーの場合は例外をスロー
+                            throw $e;
+                        }
                     }
                 }
             }
@@ -322,22 +414,26 @@ class Engine
     {
         $newRecords = array();
         foreach ($records as $i => $record) {
-            $key = $this->makeFieldNameByLabel($scope, $uniqueKey);
+            $apiName = $this->getApiNameByLabelName($uniqueKey, $scope);
             $uniqueValue = isset($fields[$i][$uniqueKey]) ? $fields[$i][$uniqueKey] : false;
-            if (!$key || !$uniqueValue) {
+            if (empty($apiName) || empty($uniqueValue)) {
                 continue;
             }
             try {
                 $zcrmModuleIns = ZCRMModule::getInstance($scope);
-                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $key . ":equals:" . $uniqueValue . ")");
-                $responses = $bulkAPIResponse->getData();
-                if (count($responses)) {
-                    $entityId = $responses[0]->getEntityId();
+                $bulkAPIResponse = $zcrmModuleIns->searchRecordsByCriteria("(" . $apiName . ":equals:" . $uniqueValue . ")");
+                $records = $bulkAPIResponse->getData();
+                if (count($records) > 0) {
+                    $entityId = $records[0]->getEntityId();
                     $record->setEntityId($entityId);
                     $newRecords[] = $record;
                 }
             } catch (\ZCRMEXCEption $e) {
-                $this->warning(__FUNCTION__, $e);
+                if ($e->getExceptionCode() !== 'NO CONTENT') {
+                    // エラーコードがNO CONTENTの場合はレコードが存在しないので処理を続行
+                    // それ以外のエラーの場合は例外をスロー
+                    throw $e;
+                }
             }
         }
         return $newRecords;
@@ -384,14 +480,15 @@ class Engine
         $records = array();
         foreach ($fields as $field) {
             $record = ZCRMRecord::getInstance($scope, null);
-            foreach ($field as $label => $value) {
-                if ($label) {
-                    $key = $this->makeFieldNameByLabel($scope, $label);
-                    if (!$key) {
-                        continue;
-                    }
-                    $record->setFieldValue($key, $value);
+            foreach ($field as $labelName => $value) {
+                if (empty($labelName)) {
+                    continue;
                 }
+                $apiName = $this->getApiNameByLabelName($labelName, $scope);
+                if (empty($apiName)) {
+                    continue;
+                }
+                $record->setFieldValue($apiName, $value);
             }
             $records[] = $record;
         }
@@ -410,24 +507,74 @@ class Engine
             if (empty($fields)) {
                 continue;
             }
+
+            $module = ZCRMModule::getInstance($scope);
+            $zohoRecords = $this->createRecords($scope, $fields);
+
+            if (empty($zohoRecords)) {
+                continue;
+            }
+
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info(
+                    '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード作成を行います。' ,
+                    ['redords' => array_map([$this, 'recordToArray'], $zohoRecords)]
+                );
+            }
+
             try {
-                $client = ZCRMModule::getInstance($scope);
-                $data = $this->createRecords($scope, $fields);
-                $bulkAPIResponse = $client->createRecords($data);
+                /** @var \BulkAPIResponse $bulkAPIResponse */
+                $bulkAPIResponse = $module->createRecords($zohoRecords);
+
+                /** @var \EntityResponse[] $responses */
                 $responses = $bulkAPIResponse->getEntityResponses();
+                $createdRecords = [];
                 foreach ($responses as $i => $response) {
-                    $updated = $response->getData();
-                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content']) && $updated) {
-                        $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
+                    /** @var \ZCRMRecord|null $createdRecord */
+                    $createdRecord = $response->getData();
+                    if (is_null($createdRecord)) {
+                        if (class_exists('AcmsLogger')) {
+                            $failedRecords = $zohoRecords[$i];
+                            AcmsLogger::error(
+                                '【Zoho plugin】 ' . $failedRecords->getModuleApiName() . 'タブのレコード作成に失敗しました。' ,
+                                $this->entityResponseToArray($response, [
+                                    'redords' => $this->recordToArray($failedRecords)
+                                ])
+                            );
+                        }
+                        return;
                     }
+                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content']) && $createdRecord) {
+                        $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $createdRecord);
+                    }
+                    $createdRecords[] = $createdRecord;
                     $this->records[] = array(
-                        'record' => $updated,
+                        'record' => $createdRecord,
                         'field' => $fields[$i],
                         'scope' => $scope
                     );
                 }
+                if (empty($createdRecords) !== true) {
+                    if (class_exists('AcmsLogger')) {
+                        AcmsLogger::info(
+                            '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード作成に成功しました。' ,
+                            ['redords' => array_map([$this, 'recordToArray'], $createdRecords)]
+                        );
+                    }
+                }
             } catch (\ZCRMEXCEption $e) {
-                $this->warning(__FUNCTION__, $e);
+                if (class_exists('AcmsLogger')) {
+                    AcmsLogger::error(
+                        '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード作成に失敗しました。' ,
+                        Common::exceptionArray($e, [
+                            'code' => $e->getExceptionCode(),
+                            'details' => $e->getExceptionDetails(),
+                            'redords' => array_map([$this, 'recordToArray'], $zohoRecords)
+                        ]),
+                    );
+                } else {
+                    userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+                }
             }
         }
     }
@@ -441,25 +588,76 @@ class Engine
             if (empty($fields)) {
                 continue;
             }
+            $module = ZCRMModule::getInstance($scope);
+            $zohoRecords = $this->createRecords($scope, $fields);
+            $zohoRecords = $this->addIdsToRecords($zohoRecords, $scope, $uniqueKey, $fields);
+
+            if (empty($zohoRecords)) {
+                continue;
+            }
+
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info(
+                    '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード更新を行います。' ,
+                    ['redords' => array_map([$this, 'recordToArray'], $zohoRecords)]
+                );
+            }
+
             try {
-                $client = ZCRMModule::getInstance($scope);
-                $data = $this->createRecords($scope, $fields);
-                $data = $this->addIdsToRecords($data, $scope, $uniqueKey, $fields);
-                $bulkAPIResponse = $client->updateRecords($data);
+                /** @var \BulkAPIResponse $bulkAPIResponse */
+                $bulkAPIResponse = $module->updateRecords($zohoRecords);
+                /** @var \EntityResponse[] $responses */
                 $responses = $bulkAPIResponse->getEntityResponses();
+
+                $updatedRecords = [];
                 foreach ($responses as $i => $response) {
-                    $updated = $response->getData();
-                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content'])) {
-                        $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updated);
+                    /** @var \ZCRMRecord|null $updatedRecord */
+                    $updatedRecord = $response->getData();
+                    if (is_null($updatedRecord)) {
+                        if (class_exists('AcmsLogger')) {
+                            $failedRecords = $zohoRecords[$i];
+                            AcmsLogger::error(
+                                '【Zoho plugin】 ' . $failedRecords->getModuleApiName() . 'タブのレコード更新に失敗しました。' ,
+                                $this->entityResponseToArray($response, [
+                                    'redords' => $this->recordToArray($failedRecords)
+                                ])
+                            );
+                        }
+                        return;
                     }
+                    if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content'])) {
+                        $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updatedRecord);
+                    }
+
+                    $updatedRecords[] = $updatedRecord;
                     $this->records[] = array(
-                        'record' => $updated,
+                        'record' => $updatedRecord,
                         'field' => $fields[$i],
                         'scope' => $scope
                     );
                 }
+
+                if (empty($updatedRecords) !== true) {
+                    if (class_exists('AcmsLogger')) {
+                        AcmsLogger::info(
+                            '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード更新に成功しました。' ,
+                            ['redords' => array_map([$this, 'recordToArray'], $zohoRecords)]
+                        );
+                    }
+                }
             } catch (\ZCRMEXCEption $e) {
-                $this->warning(__FUNCTION__, $e);
+                if (class_exists('AcmsLogger')) {
+                    AcmsLogger::error(
+                        '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード更新に失敗しました。' ,
+                        Common::exceptionArray($e, [
+                            'code' => $e->getExceptionCode(),
+                            'details' => $e->getExceptionDetails(),
+                            'redords' => array_map([$this, 'recordToArray'], $zohoRecords)
+                        ]),
+                    );
+                } else {
+                    userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+                }
             }
         }
     }
@@ -494,29 +692,86 @@ class Engine
                     if ($item['field'][$compareField] !== $target['field'][$compareField]) {
                         continue;
                     }
+                    /** @var \ZCRMRecord $parentRecord */
                     $parentRecord = $item['record'];
+                    /** @var \ZCRMRecord $lookupRecord */
                     $lookupRecord = $target['record'];
                     if ($lookupId) {
-                        $key = $this->makeFieldNameByLabel($zohoRelatedScope, $lookupId);
-                        if (!$key) {
+                        $apiName = $this->getApiNameByLabelName($lookupId, $zohoRelatedScope);
+                        if (empty($apiName)) {
                             continue;
                         }
                         if ($parentRecord) {
-                            $parentRecord->setFieldValue($key, $lookupRecord);
+                            $parentRecord->setFieldValue($apiName, $lookupRecord);
                             try {
-                                $parentRecord->update();
+                                $response = $parentRecord->update();
+                                $updatedRecord = $response->getData();
+                                if (class_exists('AcmsLogger')) {
+                                    AcmsLogger::info(
+                                        '【Zoho plugin】 ルックアップ項目「' . $lookupId . '(' . $apiName . ')' . '」の更新に成功しました。' ,
+                                        [
+                                            'updatedRecord' => $this->recordToArray($updatedRecord),
+                                        ]
+                                    );
+                                }
                             } catch (\ZCRMEXCEption $e) {
-                                $this->warning(__FUNCTION__, $e);
+                                if (class_exists('AcmsLogger')) {
+                                    AcmsLogger::error(
+                                        '【Zoho plugin】 ルックアップ項目「' . $lookupId . '(' . $apiName . ')' . '」の更新に失敗しました。' ,
+                                        Common::exceptionArray($e, [
+                                            'code' => $e->getExceptionCode(),
+                                            'details' => $e->getExceptionDetails(),
+                                            'parentRecord' => $this->recordToArray($parentRecord),
+                                            'lookupRecord' => $this->recordToArray($lookupRecord)
+                                        ]),
+                                    );
+                                } else {
+                                    userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+                                }
                             }
                         }
                     } else {
-                        $junctionRecord = ZCRMJunctionRecord::getInstance($zohoRelatedTargetScope,
-                        $lookupRecord->getEntityId());
+                        $junctionRecord = ZCRMJunctionRecord::getInstance($zohoRelatedTargetScope, $lookupRecord->getEntityId());
                         $parentRecord->addRelation($junctionRecord);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * ログ出力用にZCRMRecordオブジェクトをフォーマットする
+     *
+     * @param \ZCRMRecord $record
+     * @return array
+     */
+    private function recordToArray(\ZCRMRecord $record): array
+    {
+        return [
+            'id' => $record->getEntityId(),
+            'module' => $record->getModuleApiName(),
+            'fields' => $record->getData()
+        ];
+    }
+
+    /**
+     * ログ出力用にEntityResponseオブジェクトをフォーマットする
+     *
+     * @param \EntityResponse $entityResponse
+     * @param array $info
+     * @return array
+     */
+    private function entityResponseToArray(\EntityResponse $entityResponse, array $info = []): array
+    {
+        return array_merge(
+            [
+                'status' => $entityResponse->getStatus(),
+                'message' => $entityResponse->getMessage(),
+                'code' => $entityResponse->getCode(),
+                'details' => $entityResponse->getDetails()
+            ],
+            $info,
+        );
     }
 
     /**

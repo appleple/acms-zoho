@@ -45,17 +45,35 @@ class Hook
         }
 
         try {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::info('【Zoho plugin】Zoho CRM へデータ登録処理開始します。');
+            }
             $engine = new Engine($info, $thisModule->Post);
             $engine->send();
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::info('【Zoho plugin】Zoho CRM にデータを登録しました。');
+                AcmsLogger::info('【Zoho plugin】Zoho CRM へのデータ登録処理が終了しました。');
+            }
+        } catch (\ZCRMException $e) {
+            if ($this->isDebugMode()) {
+                throw $e;
+            }
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error(
+                    '【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。' ,
+                    Common::exceptionArray($e, [
+                        'code' => $e->getExceptionCode(),
+                        'details' => $e->getExceptionDetails(),
+                    ]),
+                );
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
         } catch (\Exception $e) {
             if ($this->isDebugMode()) {
                 throw $e;
             }
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::error('【Zoho plugin】' . $e->getMessage(), Common::exceptionArray($e));
+                AcmsLogger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。' , Common::exceptionArray($e));
             } else {
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
