@@ -8,91 +8,116 @@ Zoho CRM とはオンラインの顧客管理システムです。a-blog cmsの�
 
 ## 動作環境
 
-php: >=7.4
+- a-blog cms >= 3.0.0
+- php >=7.4
 
-## 設定
+## インストール
 
-下記のURLより API Console 画面を開きます。<br>
-[https://api-console.zoho.com/](https://api-console.zoho.com/)
-
-初めてAPI追加する場合は「GET STARTED」から登録画面に入ります。
-
-<img width="1037" alt="welcome" src="https://user-images.githubusercontent.com/41937532/136872658-c134b8bd-d632-4ccd-80d4-a07ff15365ad.png">
-
-Self Client API を追加します。
-
-![select](https://user-images.githubusercontent.com/41937532/136872684-a07e37db-bb8b-49d9-b669-d9e9425381f2.png)
-
-Client ID と Client Secret はあとでCMS側に入力するので控えておきます。
-
-<img width="369" alt="secret" src="https://user-images.githubusercontent.com/41937532/136877162-55648f6d-3a9b-406f-87fc-e263daa718dc.png">
-
-Generate Code タブを開いてトークン生成します。
-
-スコープには `ZohoCRM.modules.all,ZohoCRM.settings.all` と入力してください。<br>
-期限は何分でも構いませんが、その期限内にoAuth認証を済ませる必要があります。<br>
-入力をすませるとoAuth認証に必要なgrantトークンが表示されるはずです。このトークンを覚えておきましょう。
-
-<img width="371" alt="code" src="https://user-images.githubusercontent.com/41937532/136876932-13db0112-6c22-4e9a-93a7-94eb97da0c92.png">
-<img width="844" alt="crm-select" src="https://user-images.githubusercontent.com/41937532/136877048-cb0638d1-0a28-4b2e-9b21-5654bb2368ae.png">
-<img width="526" alt="copy" src="https://user-images.githubusercontent.com/41937532/136877123-01c70ea4-c75d-45fe-9d7b-a3bc801f6dd5.png">
-
-※API を CREATE した時に「You are not a part of any ZohoCRM service orgs. Please remove the scope to generate the token.」と出る場合は Zoho CRM が未登録になっているので先にCRMへの登録をしてください。<br>
-[https://crm.zoho.com/crm/ShowHomePage.do](https://crm.zoho.com/crm/ShowHomePage.do)
-
-先ほどの、認証スコープ、Client ID、Client Secret、grantトークン、Zohoで登録しているメールアドレスなどを入力していきます。<br>
-入力後は設定を保存し、「認証」ボタンをクリックします。無事に認証ができると、下の図のように「認証済み」というラベルが表示されるはずです。
-
-![sumi](https://user-images.githubusercontent.com/41937532/136877663-77e66bc8-b9fb-462c-be0a-79c050916073.png)
+1. ダウンロードしたファイルを解凍し、`Zoho` ディレクトリを a-blog cms の `extensions` ディレクトリに配置します。
+2. 管理画面にログインし、`拡張アプリ管理` から `Zoho` をインストールします。
 
 ### 注意
 
-config.server.phpでHOOKを有効にしておく必要があります。
+config.server.php で HOOK_ENABLE を有効にしておく必要があります。
 
 ```php
 define('HOOK_ENABLE', 1);
 ```
 
+
+## 認証
+
+Zoho CRM との連携にはOAuth認証が必要です。OAuth認証を行うためには、Zoho CRM のAPIを利用するためのクライアントを作成する必要があります。
+
+### 認証コードの生成
+
+下記のURLより API Console 画面を開きます。<br>
+[https://api-console.zoho.com/](https://api-console.zoho.com/)
+
+初めてAPI追加する場合は「GET STARTED」から登録画面に遷移してください。
+クライアント作成画面に遷移すると、Client Type 選択画面が表示されます。ここでは「Self client」を選択してください。
+
+![Client Type 選択画面](images/choose-a-client-type.png)
+
+Client ID と Client Secret はあとでCMS側に入力するので控えておきます。
+
+![Client ID と Client Secret](images/client-id-and-client-secret.png)
+
+Generate Code タブを開いてトークン生成します。
+
+タブには `ZohoCRM.modules.all,ZohoCRM.settings.all,Aaaserver.profile.read` と入力してください。<br>
+期限は何分でも構いませんが、その期限内にOAuth認証を済ませる必要があります。<br>
+入力をすませるとOAuth認証に必要な認証用トークンが表示されるはずです。このトークンを覚えておきましょう。
+
+![認証用トークン生成画面](images/generate-code.png)
+![認証先となるポータル選択画面](images/select-portal.png)
+![認証トークン生成完了画面](images/generated-code.png)
+
+※API を CREATE した時に「You are not a part of any ZohoCRM service orgs. Please remove the scope to generate the token.」と出る場合は Zoho CRM が未登録になっているので先にCRMへの登録をしてください。<br>
+[https://crm.zoho.com/crm/ShowHomePage.do](https://crm.zoho.com/crm/ShowHomePage.do)
+
+### OAuth認証
+
+次に、先ほど取得した、Client ID、Client Secretを拡張アプリ管理画面から入力していきます。
+
+入力後は設定を保存し、「認証」ボタンをクリックします。クリックすると、認証トークンを入力するプロンプトが表示されるので、API Console で取得した認証トークンを入力して認証を行います。
+
+認証が完了すると、下の図のように「認証済み」というラベルが表示され、認証に利用しているZohoアカウントに設定されているメールアドレスが表示されます。
+
+![認証完了画面](images/success-authorization.png)
+
+
 ## 拡張アプリZohoの使い方
 
-「管理画面 > フォーム管理 > 設定したいフォームID」よりフォームに対するZohoの設定を行うことができます。<br>
-a-blog cmsのForm内のキーに対してZoho側のキーを紐づけることで、a-blog cms側のフォームの送信結果を処理してzohoに送信することができます。Zoho側のキーは下の図のようにラベル名に対応しています。
+管理画面 > フォーム管理 > 設定したいフォームID よりフォームに対するZohoの設定を行うことができます。<br>
+a-blog cmsのフォームから送信されたカスタムフィールドのフィールド名に対してZohoの項目のラベルを紐づけることで、a-blog cms側のフォームの送信結果をZohoに送信することができます。
 
-![](zoho_keys.png)
+Zohoの項目のラベルは設定 > タブと項目から確認できます。
+
+![Zohoの項目のラベルは設定 > タブと項目から確認できます](images/zoho-field-label.png)
 
 以下3つの作業が必要になります。
 
-1. Formの権限設定
-2. Zohoのカスタムフィールドの設定
-3. lookupIdの関連付け
-
-![](zoho-keys.png)
+1. フォームの権限設定
+2. Zoho カスタムフィールドの設定
+3. Zoho リレーショナル設定
 
 ### 1. フォームの権限設定
 
-フォームIDごとに、Zohoのどのスコープに対してInsert（データの挿入）及びUpdate（データの更新）ができるかを設定できます。<br>
-例えば、下の画像の場合、Leads,CustomModule6のスコープに対してデータ挿入の権限があり、Leads,Contactsのスコープに対してはデータ更新の権限があります。
+フォームIDごとに、Zohoのどのタブに対してInsert（データの作成）及びUpdate（データの更新）ができるかを設定できます。
 
-![form01](https://user-images.githubusercontent.com/41937532/136880142-9d625559-ea81-445c-8ab0-e7ff2ede2198.png)
+例えば、下の画像の場合、Leads,CustomModule6のタブに対してデータ作成の権限があり、Leads,Contactsのタブに対してはデータ更新の権限があります。
 
-### 2. Zohoのカスタムフィールドの設定
+![フォームの権限設定の例](images/zoho-permission-config.png)
 
-次は、カスタムフィールドの設定です。ここではa-blog cmsのフォーム側の変数とZoho側のカスタムフィールドの紐付けを行います。<br>
-例えば、一番最初の列では、nameの項目はzoho側のCustomModule6,Leads,Contactsのスコープの 姓 に対応しています。
+### 2. Zoho カスタムフィールドの設定
 
-フォームの権限設定でInsertするタブを設定している場合は、カスタムフィールド設定にユニークキーになるものの項目を追加しInsertにチェックをいれてください。また、フォームの権限設定でUpdateするタブを設定している場合は、カスタムフィールド設定ユニークキーになるものの項目を追加しUpdateにチェックをいれてください。
+次は、カスタムフィールドの設定です。ここでは a-blog cms のフォームから送信されたカスタムフィールドのフィールド名とZoho側のカスタムフィールドの項目のラベルの紐付けを行います。
 
-![form02](https://user-images.githubusercontent.com/41937532/136880366-4b5ae510-a271-4ef2-907a-74b1ab578a55.png)
+例えば、一番最初の列では、nameの項目はZohoのCustomModule6,Leads,Contactsのタブの 姓 に対応しています。
 
-### 3. lookupIDの関連付け
+フォームの権限設定でInsertするタブを設定している場合は、カスタムフィールド設定にユニークキーになる項目のラベルを追加しInsertを有効にしてください。
 
-またZoho側に登録したデータどうしをlookupIDを通して紐づけることができます。<br>
-例えば、そのお問い合わせをしたユーザー（Zohoに登録されているまたはお問い合わせと同時に登録されたユーザー）が誰なのかをルックアップIDを使って以下のように紐づけます。<br>
+また、フォームの権限設定でUpdateするタブを設定している場合は、カスタムフィールド設定ユニークキーになるものの項目を追加しUpdateを有効にしてください。
+
+![Zoho カスタムフィールドの設定例](images/zoho-field-config.png)
+
+### 3. Zoho リレーショナル設定
+
+また、Zoho側に登録したデータどうしをlookupIDを通して紐づけることができます。
+
+例えば、そのお問い合わせをしたユーザー（Zohoに登録されているまたは、お問い合わせと同時に登録されたユーザー）が誰なのかをルックアップIDを使って以下のように紐づけます。
+
 ルックアップIDにはそのルックアップIDに使用されているZoho側のラベル名を登録します。
 
-![form03](https://user-images.githubusercontent.com/41937532/136880673-1ad47430-85bf-44c1-9265-5e8223721ec1.png)
+![Zoho リレーショナル設定例](images/zoho-lookup-config.png)
 
-Gitで管理している場合、以下ファイルを.gitignoreで除外してください。
+
+## トラブルシューティング
+
+拡張アプリのソースコードを Git で管理している場合、拡張アプリ内に環境に依存するファイルが含まれているため、不具合が発生する可能性があります。
+
+そのため、以下ファイルを .gitignore で除外してください。
 
 - /extension/plugins/Zoho/vendor/zohocrm/php-sdk/src/resources
 - /extension/plugins/Zoho/vendor/zohocrm/php-sdk/src/com/zoho/oauth/logger/
