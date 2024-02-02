@@ -33,7 +33,7 @@ class oAuth extends ACMS_POST
             } else {
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
-            $this->addError('認証に失敗しました。grantトークンが古い可能性があります。');
+            $this->addError('認証に失敗しました。認証トークンが古い可能性があります。');
         }
         return $this->Post;
     }
