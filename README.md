@@ -71,11 +71,16 @@ a-blog cms 設置ディレクトリの .env ファイルに以下の情報を設
 # Zohoの設定
 
 ## Zohoのアクセストークンを保存するディレクトリを指定します。ドキュメントルートより上の階層など、外部からアクセスできない場所を指定してください。
-ZOHO_TOKEN_PERSISTENCE_PATH=
+ZOHO_TOKEN_PERSISTENCE_PATH=/path/to/your/directory/
 
 ## Zohoのアプリケーションログを保存するディレクトリを指定します。ドキュメントルートより上の階層など、外部からアクセスできない場所を指定してください。
-ZOHO_APPLICATION_LOG_FILE_PATH=
+ZOHO_APPLICATION_LOG_FILE_PATH=/path/to/your/directory/
 ```
+
+ZOHO_TOKEN_PERSISTENCE_PATH が指定されていない場合、拡張アプリ管理画面に以下のアラートが表示されます。
+
+![ZOHO_TOKEN_PERSISTENCE_PATH が指定されていない場合のアラート](images/zoho-token-persistence-path-alert.png)
+
 
 #### 認証
 
