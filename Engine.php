@@ -518,7 +518,7 @@ class Engine
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info(
                     '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード作成を行います。' ,
-                    ['redords' => array_map([$this, 'recordToArray'], $zohoRecords)]
+                    ['records' => array_map([$this, 'recordToArray'], $zohoRecords)]
                 );
             }
 
@@ -538,7 +538,7 @@ class Engine
                             AcmsLogger::error(
                                 '【Zoho plugin】 ' . $failedRecords->getModuleApiName() . 'タブのレコード作成に失敗しました。' ,
                                 $this->entityResponseToArray($response, [
-                                    'redords' => $this->recordToArray($failedRecords)
+                                    'record' => $this->recordToArray($failedRecords)
                                 ])
                             );
                         }
@@ -558,7 +558,7 @@ class Engine
                     if (class_exists('AcmsLogger')) {
                         AcmsLogger::info(
                             '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード作成に成功しました。' ,
-                            ['redords' => array_map([$this, 'recordToArray'], $createdRecords)]
+                            ['records' => array_map([$this, 'recordToArray'], $createdRecords)]
                         );
                     }
                 }
@@ -569,7 +569,7 @@ class Engine
                         Common::exceptionArray($e, [
                             'code' => $e->getExceptionCode(),
                             'details' => $e->getExceptionDetails(),
-                            'redords' => array_map([$this, 'recordToArray'], $zohoRecords)
+                            'records' => array_map([$this, 'recordToArray'], $zohoRecords)
                         ]),
                     );
                 } else {
@@ -599,7 +599,7 @@ class Engine
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info(
                     '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード更新を行います。' ,
-                    ['redords' => array_map([$this, 'recordToArray'], $zohoRecords)]
+                    ['records' => array_map([$this, 'recordToArray'], $zohoRecords)]
                 );
             }
 
@@ -619,7 +619,7 @@ class Engine
                             AcmsLogger::error(
                                 '【Zoho plugin】 ' . $failedRecords->getModuleApiName() . 'タブのレコード更新に失敗しました。' ,
                                 $this->entityResponseToArray($response, [
-                                    'redords' => $this->recordToArray($failedRecords)
+                                    'record' => $this->recordToArray($failedRecords)
                                 ])
                             );
                         }
@@ -641,7 +641,7 @@ class Engine
                     if (class_exists('AcmsLogger')) {
                         AcmsLogger::info(
                             '【Zoho plugin】 ' . $module->getAPIName() . 'タブのレコード更新に成功しました。' ,
-                            ['redords' => array_map([$this, 'recordToArray'], $zohoRecords)]
+                            ['records' => array_map([$this, 'recordToArray'], $zohoRecords)]
                         );
                     }
                 }
@@ -652,7 +652,7 @@ class Engine
                         Common::exceptionArray($e, [
                             'code' => $e->getExceptionCode(),
                             'details' => $e->getExceptionDetails(),
-                            'redords' => array_map([$this, 'recordToArray'], $zohoRecords)
+                            'records' => array_map([$this, 'recordToArray'], $zohoRecords)
                         ]),
                     );
                 } else {
@@ -772,26 +772,5 @@ class Engine
             ],
             $info,
         );
-    }
-
-    /**
-     * 警告ログの出力
-     *
-     * @param string $methodName
-     * @param \ZCRMException $e
-     */
-    private function warning(string $methodName, \ZCRMException $e)
-    {
-        if (class_exists('AcmsLogger')) {
-            AcmsLogger::warning(
-                '【Zoho plugin】 ' . $methodName . ': ' . $e->getMessage(),
-                Common::exceptionArray($e, [
-                    'code' => $e->getExceptionCode(),
-                    'details' => $e->getExceptionDetails()
-                ])
-            );
-        } else {
-            userErrorLog('ACMS Warning: Zoho plugin, ' . $methodName . ': ' . $e->getMessage());
-        }
     }
 }

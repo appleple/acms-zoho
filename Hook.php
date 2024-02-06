@@ -46,7 +46,7 @@ class Hook
 
         try {
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::info('【Zoho plugin】Zoho CRM へデータ登録処理開始します。');
+                AcmsLogger::info('【Zoho plugin】Zoho CRM へデータ登録処理を開始します。');
             }
             $engine = new Engine($info, $thisModule->Post);
             $engine->send();
