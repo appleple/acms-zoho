@@ -542,7 +542,7 @@ class Engine
                                 ])
                             );
                         }
-                        return;
+                        continue;
                     }
                     if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content']) && $createdRecord) {
                         $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $createdRecord);
@@ -623,7 +623,7 @@ class Engine
                                 ])
                             );
                         }
-                        return;
+                        continue;
                     }
                     if (isset($fields[$i]['Note Title']) && isset($fields[$i]['Note Content'])) {
                         $this->addNote($fields[$i]['Note Title'], $fields[$i]['Note Content'], $updatedRecord);
