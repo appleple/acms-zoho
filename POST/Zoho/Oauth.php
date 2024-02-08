@@ -27,13 +27,20 @@ class oAuth extends ACMS_POST
                 'bid' => BID,
                 'admin' => 'app_zoho_index',
             ]));
-        } catch (\Exception $e) {
+        } catch (\ZohoOAuthException $e) {
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error('【Zoho plugin】OAuth認証に失敗しました。', Common::exceptionArray($e));
             } else {
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
             $this->addError('認証に失敗しました。認証トークンが古い可能性があります。');
+        } catch (\Exception $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error('【Zoho plugin】OAuth認証に失敗しました。', Common::exceptionArray($e));
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
+            $this->addError('認証に失敗しました。ZOHO_TOKEN_PERSISTENCE_PATH として設定したディレクトリが存在していない、または書き込み権限が存在しない可能性があります。');
         }
         return $this->Post;
     }
