@@ -7,6 +7,7 @@ use Acms\Services\Common\HookFactory;
 use Acms\Services\Common\InjectTemplate;
 use Acms\Services\Facades\Storage;
 use Acms\Services\Facades\Config;
+use Acms\Services\Facades\Common;
 use App;
 use AcmsLogger;
 
@@ -58,9 +59,35 @@ class ServiceProvider extends ACMS_App
 
         App::singleton('zoho.api', Api::class);
 
-        $this->initZohoConfig();
-        $this->updateZohoConfig();
-        $this->initZohoOauthLogger();
+        try {
+            $this->initZohoConfig();
+        } catch (\Exception $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error('【Zoho plugin】Zohoの設定ファイルの初期化時に例外が発生しました。', Common::exceptionArray($e));
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
+        }
+
+        try {
+            $this->updateZohoConfig();
+        } catch (\Exception $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error('【Zoho plugin】Zohoの設定ファイルの更新時に例外が発生しました。', Common::exceptionArray($e));
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
+        }
+
+        try {
+            $this->initZohoOauthLogger();
+        } catch (\Exception $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error('【Zoho plugin】ZohoのOAuthログファイルの初期化時に例外が発生しました。', Common::exceptionArray($e));
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
+        }
 
         $hook = HookFactory::singleton();
         $hook->attach('Zoho', new Hook());
