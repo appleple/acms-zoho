@@ -6,7 +6,6 @@ use Field;
 use App;
 use Common;
 use AcmsLogger;
-
 use ZCRMModule;
 use ZCRMRecord;
 use ZCRMRestClient;
@@ -63,13 +62,7 @@ class Engine
         if (is_null($this->oauthClient->getAccessToken())) {
             return;
         }
-        $moduleNames = $this->getIntegrationModuleNames();
-        $modules = array_map(
-            function (string $moduleName) {
-                return $this->getModuleByName($moduleName);
-            },
-            $moduleNames
-        );
+        $modules = $this->getIntegrationModules();
         $this->labelNameToApiNameMap = $this->getLabelNameToApiNameMap($modules);
         $records = $this->makeRecords();
         $records = $this->addFieldsToRecords($records);
@@ -95,6 +88,31 @@ class Engine
         $moduleNames = array_unique($moduleNames);
         $moduleNames = array_filter($moduleNames);
         return $moduleNames;
+    }
+
+    /**
+     * 連携するモジュールオブジェクトを取得する
+     *
+     * @return \ZCRMModule[]
+     */
+    private function getIntegrationModules()
+    {
+        $moduleNames = $this->getIntegrationModuleNames();
+        $modules = array_map(
+            function (string $moduleName) {
+                return $this->getModuleByName($moduleName);
+            },
+            $moduleNames
+        );
+
+        return array_values(
+            array_filter(
+                $modules,
+                function ($module) {
+                    return !is_null($module);
+                }
+            )
+        );
     }
 
     /**
@@ -160,7 +178,10 @@ class Engine
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error(
                     '【Zoho plugin】 ' . $moduleName . 'モジュールの取得に失敗しました。モジュール名が正しいか確認してください。',
-                    Common::exceptionArray($e)
+                    Common::exceptionArray($e, [
+                        'code' => $e->getExceptionCode(),
+                        'details' => $e->getExceptionDetails()
+                    ])
                 );
             } else {
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
@@ -187,7 +208,10 @@ class Engine
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error(
                     '【Zoho plugin】 ' . $module->getModuleName() . 'のフィールドの取得に失敗しました。',
-                    Common::exceptionArray($e)
+                    Common::exceptionArray($e, [
+                        'code' => $e->getExceptionCode(),
+                        'details' => $e->getExceptionDetails()
+                    ])
                 );
             } else {
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
@@ -570,7 +594,7 @@ class Engine
                             'code' => $e->getExceptionCode(),
                             'details' => $e->getExceptionDetails(),
                             'records' => array_map([$this, 'recordToArray'], $zohoRecords)
-                        ]),
+                        ])
                     );
                 } else {
                     userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
@@ -653,7 +677,7 @@ class Engine
                             'code' => $e->getExceptionCode(),
                             'details' => $e->getExceptionDetails(),
                             'records' => array_map([$this, 'recordToArray'], $zohoRecords)
-                        ]),
+                        ])
                     );
                 } else {
                     userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
@@ -723,7 +747,7 @@ class Engine
                                             'details' => $e->getExceptionDetails(),
                                             'parentRecord' => $this->recordToArray($parentRecord),
                                             'lookupRecord' => $this->recordToArray($lookupRecord)
-                                        ]),
+                                        ])
                                     );
                                 } else {
                                     userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
@@ -770,7 +794,7 @@ class Engine
                 'code' => $entityResponse->getCode(),
                 'details' => $entityResponse->getDetails()
             ],
-            $info,
+            $info
         );
     }
 }
