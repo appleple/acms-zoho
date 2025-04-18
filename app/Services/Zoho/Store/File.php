@@ -16,4 +16,24 @@ class File extends Store
     {
         $this->store = new FileStore($path);
     }
+
+    public function removeTokenById(int $id)
+    {
+        $store = $this->store;
+        $store->deleteToken($id);
+    }
+
+    public function getTokenById(int $id)
+    {
+        $store = $this->store;
+        $tokens = $store->getTokens();
+
+        foreach ($tokens as $token) {
+            if ($token->getId() == $id) {
+                return $token;
+            }
+        }
+
+        return null;
+    }
 }
