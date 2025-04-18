@@ -17,6 +17,8 @@ use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
 
 class Client
 {
+    private $tokenStore;
+
     private $tokenId;
 
     private $userName;
@@ -37,17 +39,18 @@ class Client
 
     private $apiDomain;
 
-    public function __construct(string $clientId, string $clientSecret, string $redirectUrl, ?string $refreshToken = null, ?string $grantToken = null)
+    public function __construct()
     {
-        $this->clientId = $clientId;
-        $this->clientSecret = $clientSecret;
-        $this->redirectUrl = $redirectUrl;
-
-        if($refreshToken) {
-            $this->refreshToken = $refreshToken;
-        } else if ($grantToken) {
-            $this->grantToken = $grantToken;
+        $tokenStore = env('ZOHO_TOKEN_STORE', 'file');
+        if ($tokenStore !== 'file' && $tokenStore !== 'database') {
+            throw new \InvalidArgumentException('ZOHO_TOKEN_STORE は file または database である必要があります。');
         }
+        $this->tokenStore = $tokenStore;
+    }
+
+    public function getTokenStore()
+    {
+        return $this->tokenStore;
     }
 
     public function setTokenId($id)
@@ -60,8 +63,18 @@ class Client
         return $this->tokenId;
     }
 
-    public function initialize(): bool
+    public function initialize(string $clientId, string $clientSecret, string $redirectUrl, ?string $refreshToken = null, ?string $grantToken = null): bool
     {
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        $this->redirectUrl = $redirectUrl;
+
+        if($refreshToken) {
+            $this->refreshToken = $refreshToken;
+        } else if ($grantToken) {
+            $this->grantToken = $grantToken;
+        }
+
         try {
             /**
              * Domain: USDataCenter、EUDataCenter、INDataCenter、CNDataCenter、AUDataCenter
@@ -81,7 +94,7 @@ class Client
              * customは一旦対応しない(redisが必要なら実装)
              */
             $tokenStore = null;
-            if (true) {
+            if ($this->tokenStore === 'file') {
                 $tokenPresistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH');
                 if ($tokenPresistencePath === '' || !is_string($tokenPresistencePath)) {
                     // 永続化トークンのパスが未設定
@@ -90,17 +103,6 @@ class Client
 
                 $fileStore = new ZohoFileStore($tokenPresistencePath);
                 $tokenStore = $fileStore->getStore();
-                // $tokenStore = new FileStore($tokenPresistencePath);
-            } else {
-                // Todo: 未実装
-                $tokenStore = (new DBBuilder())
-                    ->host("hostName")
-                    ->databaseName("dataBaseName")
-                    ->userName("userName")
-                    ->password("password")
-                    ->portNumber("portNumber")
-                    ->tableName("tableName")
-                    ->build();
             }
 
             (new InitializeBuilder())

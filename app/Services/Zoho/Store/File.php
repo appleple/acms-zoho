@@ -23,7 +23,7 @@ class File extends Store
         $store->deleteToken($id);
     }
 
-    public function getTokenById(int $id)
+    public function findTokenById(int $id)
     {
         $store = $this->store;
         $tokens = $store->getTokens();
@@ -36,4 +36,5 @@ class File extends Store
 
         return null;
     }
+
 }

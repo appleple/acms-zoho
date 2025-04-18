@@ -34,7 +34,7 @@ class Deauthorize extends ACMS_POST
             $fileStore = new ZohoFileStore(env('ZOHO_TOKEN_PERSISTENCE_PATH'));
 
             // トークンIDからトークン情報を取得
-            $token = $fileStore->getTokenById((int)$tokenId);
+            $token = $fileStore->findTokenById((int)$tokenId);
 
             if (!$token) {
                 throw new \RuntimeException('指定されたトークンが見つかりませんでした。');
@@ -44,18 +44,19 @@ class Deauthorize extends ACMS_POST
             $refreshToken = $token->getRefreshToken();
 
             // Zoho Clientの作成
-            $zohoClient = new ZohoClient(
+            $zohoClient = new ZohoClient();
+
+            // トークンIDをセット
+            $zohoClient->setTokenId((int)$tokenId);
+
+            $zohoClientExists = $zohoClient->initialize(
                 $clientId,
                 $clientSecret,
                 $redirectUrl,
                 $refreshToken
             );
-
-            // トークンIDをセット
-            $zohoClient->setTokenId((int)$tokenId);
-
             // 初期化
-            if (!$zohoClient->initialize()) {
+            if (!$zohoClientExists) {
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 
