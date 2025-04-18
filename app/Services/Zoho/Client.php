@@ -3,7 +3,6 @@
 namespace Acms\Plugins\Zoho\Services\Zoho;
 
 use com\zoho\api\authenticator\OAuthBuilder;
-use com\zoho\api\authenticator\store\FileStore;
 use com\zoho\crm\api\InitializeBuilder;
 use com\zoho\crm\api\dc\USDataCenter;
 use com\zoho\api\logger\LogBuilder;
@@ -13,6 +12,8 @@ use \com\zoho\crm\api\Initializer;
 // use com\zoho\crm\api\SDKConfigBuilder;
 // use com\zoho\crm\api\ProxyBuilder;
 use com\zoho\crm\api\exception\SDKException;
+
+use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
 
 class Client
 {
@@ -58,14 +59,17 @@ class Client
              * database, file
              * customは一旦対応しない(redisが必要なら実装)
              */
-            $tokenStore = '';
+            $tokenStore = null;
             if (true) {
                 $tokenPresistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH');
                 if ($tokenPresistencePath === '' || !is_string($tokenPresistencePath)) {
                     // 永続化トークンのパスが未設定
                     return false;
                 }
-                $tokenStore = new FileStore($tokenPresistencePath);
+
+                $fileStore = new ZohoFileStore($tokenPresistencePath);
+                $tokenStore = $fileStore->getStore();
+                // $tokenStore = new FileStore($tokenPresistencePath);
             } else {
                 // Todo: 未実装
                 $tokenStore = (new DBBuilder())
