@@ -1,0 +1,39 @@
+<!-- BEGIN_MODULE Touch_Zoho_NotTokenPersistencePath -->
+<div class="acms-admin-alert acms-admin-alert-warning">
+  「.env」ファイルで「ZOHO_TOKEN_PERSISTENCE_PATH」を設定してください。
+</div>
+<!-- END_MODULE Touch_Zoho_NotTokenPersistencePath -->
+
+
+<form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
+  <input type="hidden" name="zoho_user_email" value="info@basecamp-nagoya.jp">
+  <input type="hidden" name="zoho_client_id" value="1000.BEUYIXD7O58N6IR143VY5SOTL4WLHJ">
+  <input type="hidden" name="zoho_client_secret" value="20031a216f87158f8e728e90c0b6820f0f58bf6dae">
+  <input type="hidden" name="zoho_grant_token" value="1000.c118f2f77e5c7336ce3a04b431f50a3a.f9fd6a5d34c624bcb3b647ef32503d41">
+  <input type="hidden" name="zoho_redirect_url" value="%{CURRENT_URL}">
+  <button
+    type="submit"
+    class="acms-admin-btn-admin"
+    value="認証"
+    name="ACMS_POST_Zoho_OAuth2"
+  >
+    <!-- T -->認証<!-- /T -->
+  </button>
+</form>
+
+<form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
+  <input type="hidden" name="zoho_user_email" value="info@basecamp-nagoya.jp">
+  <input type="hidden" name="zoho_client_id" value="1000.BEUYIXD7O58N6IR143VY5SOTL4WLHJ">
+  <input type="hidden" name="zoho_client_secret" value="20031a216f87158f8e728e90c0b6820f0f58bf6dae">
+  <input type="hidden" name="zoho_refresh_token" value="1000.c118f2f77e5c7336ce3a04b431f50a3a.f9fd6a5d34c624bcb3b647ef32503d41">
+  <input type="hidden" name="zoho_redirect_url" value="%{CURRENT_URL}">
+  <button
+    type="submit"
+    class="acms-admin-btn-admin"
+    value="認証解除"
+    name="ACMS_POST_Zoho_Deauthorize"
+  >
+    <!-- T -->認証解除<!-- /T -->
+  </button>
+</form>
+<!-- END_IF -->
