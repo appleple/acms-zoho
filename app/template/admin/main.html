@@ -1,80 +1,120 @@
+<header>
+  <div>@include("/admin/topicpath.html")</div>
+  <div>
+    <h1 class="acms-admin-admin-title js-dialog-title">Zoho API 連携</h1>
+  </div>
+  <div class="acms-admin-col-md-6"></div>
+</header>
+
 <!-- BEGIN_MODULE Touch_Zoho_NotTokenPersistencePath -->
 <div class="acms-admin-alert acms-admin-alert-warning">
   「.env」ファイルで「ZOHO_TOKEN_PERSISTENCE_PATH」を設定してください。
 </div>
 <!-- END_MODULE Touch_Zoho_NotTokenPersistencePath -->
 
+<!-- BEGIN_MODULE Admin_Config -->
 
-<form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
-  <input type="text" name="zoho_user_email" value="">
-  <input type="text" name="zoho_client_id" value="">
-  <input type="text" name="zoho_client_secret" value="">
-  <input type="text" name="zoho_grant_token" value="">
-  <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
+<!-- BEGIN_IF [{notice_mess}/nem/] -->
+<div class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info">
+  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
   <button
-    type="submit"
-    class="acms-admin-btn-admin"
-    value="認証"
-    name="ACMS_POST_Zoho_OAuth2"
+    type="button"
+    class="js-acms-alert-close acms-admin-alert-icon-after"
+    aria-label="アラートを閉じる"
   >
-    <!-- T -->認証<!-- /T -->
+    ×
   </button>
-</form>
+  <!--T-->設定を保存しました<!--/T-->
+</div>
+<!-- END_IF -->
 
-<form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
-  <table>
-    <tbody>
-      <tr>
-        <th>id</th>
-        <td>
-          <span>1</span>
-          <input type="hidden" name="zoho_token_id" value="1">
-        </td>
-      </tr>
+<!-- BEGIN_MODULE Admin_Errors -->
+<p class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-danger">
+  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
+  <button class="js-acms-alert-close acms-admin-alert-icon-after">×</button>
+  {error}
+</p>
+<!-- END_MODULE Admin_Errors -->
 
-      <tr>
-        <th>メールアドレス</th>
-        <td>
-          <span>info@basecamp-nagoya.jp</span>
-          <input type="hidden" name="zoho_user_email" value="">
-        </td>
-      </tr>
+<div>
+  <div class="js-acms_fix_marker acms_fix_bg">
+    <div class="acms-admin-form-group acms_fix_bg_index">
+      <button
+        type="submit"
+        name="ACMS_POST_Config"
+        class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save js-saving-splash"
+        form="configForm"
+      >
+        保存
+      </button>
 
-      <tr>
-        <th>クライアントID</th>
-        <td>
-          <input type="text" name="zoho_client_id" value="" readonly>
-        </td>
-      </tr>
+      <!-- BEGIN_MODULE Zoho_Admin -->
+      <!-- BEGIN_IF [{authorized}/eq/true] -->
+      <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
+        <table>
+          <tbody>
+            <!-- Todo: テスト用ID -->
+            <tr>
+              <th>id</th>
+              <td>
+                <span>1</span>
+                <input type="hidden" name="zoho_token_id" value="1">
+              </td>
+            </tr>
 
-      <tr>
-        <th>シークレットID</th>
-        <td>
-          <input type="text" name="zoho_client_secret" value="" readonly>
-        </td>
-      </tr>
+            <tr>
+              <th>クライアントID</th>
+              <td>
+                <input type="text" name="zoho_client_id" value="" >
+              </td>
+            </tr>
 
-      <tr>
-        <td>リダイレクトURL</td>
-        <td>
-          <span>%{CURRENT_URL}</span>
-          <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
-        </td>
-      </tr>
-    </tbody>
-    <tfoot>
-      <tr></tr>
-      <td>
+            <tr>
+              <th>シークレットID</th>
+              <td>
+                <input type="text" name="zoho_client_secret" value="" >
+              </td>
+            </tr>
+
+            <tr>
+              <td>リダイレクトURL</td>
+              <td>
+                <span>%{CURRENT_URL}</span>
+                <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr></tr>
+            <td>
+              <button
+                type="submit"
+                class="acms-admin-btn-admin"
+                value="認証解除"
+                name="ACMS_POST_Zoho_Deauthorize"
+              >
+                <!-- T -->認証解除<!-- /T -->
+              </button>
+            </td>
+          </tfoot>
+        </table>
+      </form>
+      <!-- ELSE -->
+      <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
+        <input type="text" name="zoho_client_id" value="">
+        <input type="text" name="zoho_client_secret" value="">
+        <input type="text" name="zoho_grant_token" value="">
+        <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
         <button
           type="submit"
           class="acms-admin-btn-admin"
-          value="認証解除"
-          name="ACMS_POST_Zoho_Deauthorize"
+          value="認証"
+          name="ACMS_POST_Zoho_OAuth2"
         >
-          <!-- T -->認証解除<!-- /T -->
+          <!-- T -->認証<!-- /T -->
         </button>
-      </td>
-    </tfoot>
-  </table>
-</form>
-<!-- END_IF -->
+      </form>
+      <!-- END_IF -->
+      <!-- END_MODULE Zoho_Admin -->
+</div>
+<!-- END_MODULE Admin_Config -->
