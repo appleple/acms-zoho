@@ -17,26 +17,47 @@ use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
 
 class Client
 {
-    private $userEmail;
+    private $tokenId;
+
+    private $userName;
 
     private $clientId;
 
     private $clientSecret;
 
-    private $redirectUrl;
-
     private $refreshToken = null;
+
+    private $accessToken = null;
 
     private $grantToken = null;
 
-    public function __construct(string $userEmail, string $clientId, string $clientSecret, string $redirectUrl, ?string $refreshToken = null, ?string $grantToken = null)
+    private $expiryTime;
+
+    private $redirectUrl;
+
+    private $apiDomain;
+
+    public function __construct(string $clientId, string $clientSecret, string $redirectUrl, ?string $refreshToken = null, ?string $grantToken = null)
     {
-        $this->userEmail = $userEmail;
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->redirectUrl = $redirectUrl;
-        $this->refreshToken = $refreshToken;
-        $this->grantToken = $grantToken;
+
+        if($refreshToken) {
+            $this->refreshToken = $refreshToken;
+        } else if ($grantToken) {
+            $this->grantToken = $grantToken;
+        }
+    }
+
+    public function setTokenId($id)
+    {
+        $this->tokenId = $id;
+    }
+
+    public function getTokenId()
+    {
+        return $this->tokenId;
     }
 
     public function initialize(): bool
@@ -92,25 +113,12 @@ class Client
                 // ->requestProxy($requestProxy)
                 ->initialize();
 
-            // 初期化後に、生成されたトークンにIDを設定し保存する
-            if (!empty($this->userEmail) && Initializer::getInitializer()) {
-                try {
-                    // トークンを取得
-                    $tokens = $tokenStore->getTokens();
-                    if (!empty($tokens)) {
-                        // 新しく作成されたトークンを見つける（最初のものを使用）
-                        $latestToken = $tokens[0];
-                        // IDを設定
-                        $latestToken->setId($this->userEmail);
-                        // トークンを保存
-                        $tokenStore->saveToken($latestToken);
-                    }
-                } catch (\Exception $e) {
-                    // IDの設定に失敗しても続行
-                }
-            }
+            // refreshTokenの取得
+            // $tokens = $tokenStore->getTokens();
+            // $refreshToken = $tokens[0]->getRefreshToken();
+            // var_dump($refreshToken);
+            return true;
 
-                return true;
         } catch (SDKException $e) {
             throw new \RuntimeException("Zoho SDK Error: " . $e->getMessage(), $e->getCode(), $e);
             return false;
@@ -126,7 +134,7 @@ class Client
         return $this->buildToken(true);
     }
 
-    public function deauthorize(): void
+    public function deauthorize(): bool
     {
         try {
             // 初期化済みであることを確認
@@ -134,11 +142,28 @@ class Client
                 throw new \RuntimeException('Zohoクライアントが初期化されていません。');
             }
 
-            $token = $this->buildToken();
+            // トークンを取得
+            $token = $this->buildToken();  // refreshToken を使う場合
+
+            // 初期化解除
             Initializer::removeUserConfiguration($token);
 
-            var_dump('削除できました');
+            // FileStore からトークン削除
+            $fileStore = new ZohoFileStore(env('ZOHO_TOKEN_PERSISTENCE_PATH'));
+            if ($this->tokenId) {
+                $fileStore->removeTokenById($this->tokenId);
+            } else {
+                // トークンIDが設定されていない場合、現在のリフレッシュトークンに関連するトークンを検索して削除
+                $tokens = $fileStore->getStore()->getTokens();
+                foreach ($tokens as $token) {
+                    if ($token->getRefreshToken() === $this->refreshToken) {
+                        $fileStore->removeTokenById($token->getId());
+                        break;
+                    }
+                }
+            }
 
+            return true;
         } catch (SDKException $e) {
             throw new \RuntimeException("トークンの無効化に失敗: " . $e->getMessage(), $e->getCode(), $e);
         }

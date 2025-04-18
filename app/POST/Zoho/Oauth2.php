@@ -17,7 +17,6 @@ class OAuth2 extends ACMS_POST
         $redirectUrl = $this->Post->get('zoho_redirect_Url', '');
 
         $zohoClient = new ZohoClient(
-            $userEmail,
             $clientId,
             $clientSecret,
             $redirectUrl,

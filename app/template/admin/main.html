@@ -6,10 +6,10 @@
 
 
 <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
-  <input type="text" name="zoho_user_email" value="info@basecamp-nagoya.jp">
-  <input type="text" name="zoho_client_id" value="1000.BEUYIXD7O58N6IR143VY5SOTL4WLHJ">
-  <input type="text" name="zoho_client_secret" value="20031a216f87158f8e728e90c0b6820f0f58bf6dae">
-  <input type="text" name="zoho_grant_token" value="1000.84c604769abb5256d2bfb30a595f9fd3.8b95585160eb5609ade07b5acc031aaf">
+  <input type="text" name="zoho_user_email" value="">
+  <input type="text" name="zoho_client_id" value="">
+  <input type="text" name="zoho_client_secret" value="">
+  <input type="text" name="zoho_grant_token" value="">
   <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
   <button
     type="submit"
@@ -22,18 +22,59 @@
 </form>
 
 <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
-  <input type="text" name="zoho_user_email" value="info@basecamp-nagoya.jp">
-  <input type="text" name="zoho_client_id" value="1000.BEUYIXD7O58N6IR143VY5SOTL4WLHJ">
-  <input type="text" name="zoho_client_secret" value="20031a216f87158f8e728e90c0b6820f0f58bf6dae">
-  <input type="text" name="zoho_refresh_token" value="1000.84c604769abb5256d2bfb30a595f9fd3.8b95585160eb5609ade07b5acc031aaf">
-  <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
-  <button
-    type="submit"
-    class="acms-admin-btn-admin"
-    value="認証解除"
-    name="ACMS_POST_Zoho_Deauthorize"
-  >
-    <!-- T -->認証解除<!-- /T -->
-  </button>
+  <table>
+    <tbody>
+      <tr>
+        <th>id</th>
+        <td>
+          <span>1</span>
+          <input type="hidden" name="zoho_token_id" value="1">
+        </td>
+      </tr>
+
+      <tr>
+        <th>メールアドレス</th>
+        <td>
+          <span>info@basecamp-nagoya.jp</span>
+          <input type="hidden" name="zoho_user_email" value="">
+        </td>
+      </tr>
+
+      <tr>
+        <th>クライアントID</th>
+        <td>
+          <input type="text" name="zoho_client_id" value="" readonly>
+        </td>
+      </tr>
+
+      <tr>
+        <th>シークレットID</th>
+        <td>
+          <input type="text" name="zoho_client_secret" value="" readonly>
+        </td>
+      </tr>
+
+      <tr>
+        <td>リダイレクトURL</td>
+        <td>
+          <span>%{CURRENT_URL}</span>
+          <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr></tr>
+      <td>
+        <button
+          type="submit"
+          class="acms-admin-btn-admin"
+          value="認証解除"
+          name="ACMS_POST_Zoho_Deauthorize"
+        >
+          <!-- T -->認証解除<!-- /T -->
+        </button>
+      </td>
+    </tfoot>
+  </table>
 </form>
 <!-- END_IF -->
