@@ -8,7 +8,6 @@ use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
 use ACMS_GET;
 use Template;
 use ACMS_Corrector;
-use App;
 
 class Admin extends ACMS_GET
 {
@@ -16,23 +15,26 @@ class Admin extends ACMS_GET
     {
         $Tpl = new Template($this->tpl, new ACMS_Corrector());
 
-        // tokenIdの取得
-        //
-        $tokenId = '1';
-        if(!$tokenId && is_string($tokenId)) {
+        $zohoClient = new ZohoClient();
+
+        /**
+         * Todo: ZohoClientを使用した実装に変更
+         */
+        // 現在のブログのトークンが保存されているかどうか
+        $tokenId = $zohoClient->getTokenIdByBid(BID);
+        if(!$tokenId) {
             return $Tpl->render([
                 'authorized' => 'false',
             ]);
         }
 
-        $zohoClient = new ZohoClient();
+        // トークンIDを元にストアからトークンを取得
         $tokenStore = $zohoClient->getTokenStore();
-
         $token = null;
         if($tokenStore === 'file') {
-            $tokenPresistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH');
+            $tokenPresistencePath = $zohoClient->getTokenPresistencePath();
                 if ($tokenPresistencePath === '' || !is_string($tokenPresistencePath)) {
-                    // 永続化トークンのパスが未設定
+                    // 永続化トークンのストアパスが未設定
                     return $Tpl->render([
                         'authorized' => 'false',
                     ]);
@@ -40,15 +42,24 @@ class Admin extends ACMS_GET
             $fileStore = new ZohoFileStore($tokenPresistencePath);
             $token = $fileStore->findTokenById($tokenId);
         }
-
         if (!$token) {
             return $Tpl->render([
                 'authorized' => 'false',
             ]);
         }
         $accessToken = $token->getAccessToken();
+
+        if(is_null($accessToken)) {
+            return $Tpl->render([
+                'authorized' => 'false',
+            ]);
+        }
+
         return $Tpl->render([
-            'authorized' => !is_null($accessToken) ? 'true' : 'false',
+            'authorized' => 'true',
+            'tokenId' => $token->getId(),
+            'clientId' => $token->getClientId(),
+            'secretId' => $token->getClientSecret(),
         ]);
     }
 }

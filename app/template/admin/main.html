@@ -12,22 +12,6 @@
 </div>
 <!-- END_MODULE Touch_Zoho_NotTokenPersistencePath -->
 
-<!-- BEGIN_MODULE Admin_Config -->
-
-<!-- BEGIN_IF [{notice_mess}/nem/] -->
-<div class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info">
-  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
-  <button
-    type="button"
-    class="js-acms-alert-close acms-admin-alert-icon-after"
-    aria-label="アラートを閉じる"
-  >
-    ×
-  </button>
-  <!--T-->設定を保存しました<!--/T-->
-</div>
-<!-- END_IF -->
-
 <!-- BEGIN_MODULE Admin_Errors -->
 <p class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-danger">
   <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
@@ -39,48 +23,30 @@
 <div>
   <div class="js-acms_fix_marker acms_fix_bg">
     <div class="acms-admin-form-group acms_fix_bg_index">
-      <button
-        type="submit"
-        name="ACMS_POST_Config"
-        class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save js-saving-splash"
-        form="configForm"
-      >
-        保存
-      </button>
-
       <!-- BEGIN_MODULE Zoho_Admin -->
       <!-- BEGIN_IF [{authorized}/eq/true] -->
       <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
         <table>
           <tbody>
-            <!-- Todo: テスト用ID -->
             <tr>
               <th>id</th>
               <td>
-                <span>1</span>
-                <input type="hidden" name="zoho_token_id" value="1">
+                <span>{tokenId}</span>
+                <input type="hidden" name="zoho_token_id" value="{tokenId}">
               </td>
             </tr>
 
             <tr>
               <th>クライアントID</th>
               <td>
-                <input type="text" name="zoho_client_id" value="" >
+                <input type="text" name="zoho_client_id" value="{clientId}" readonly>
               </td>
             </tr>
 
             <tr>
               <th>シークレットID</th>
               <td>
-                <input type="text" name="zoho_client_secret" value="" >
-              </td>
-            </tr>
-
-            <tr>
-              <td>リダイレクトURL</td>
-              <td>
-                <span>%{CURRENT_URL}</span>
-                <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
+                <input type="text" name="zoho_client_secret" value="{secretId}" readonly>
               </td>
             </tr>
           </tbody>
@@ -101,10 +67,23 @@
       </form>
       <!-- ELSE -->
       <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
-        <input type="text" name="zoho_client_id" value="">
-        <input type="text" name="zoho_client_secret" value="">
-        <input type="text" name="zoho_grant_token" value="">
-        <input type="text" name="zoho_redirect_url" value="%{CURRENT_URL}">
+        <table>
+          <tr>
+            <th>クライアントID</th>
+            <td><input type="text" name="zoho_client_id" value=""></td>
+          </tr>
+          <tr>
+            <th>シークレットID</th>
+            <td><input type="text" name="zoho_client_secret" value=""></td>
+          </tr>
+          <tr>
+            <th>リダイレクトURL</th>
+            <td>
+              <span>%{BASE_URL}admin/app_zoho_callback/</span>
+              <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/">
+            </td>
+          </tr>
+        </table>
         <button
           type="submit"
           class="acms-admin-btn-admin"
@@ -116,5 +95,6 @@
       </form>
       <!-- END_IF -->
       <!-- END_MODULE Zoho_Admin -->
+    </div>
+  </div>
 </div>
-<!-- END_MODULE Admin_Config -->

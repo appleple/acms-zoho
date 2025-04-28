@@ -3,10 +3,11 @@
 namespace Acms\Plugins\Zoho;
 
 use AcmsLogger;
-use Acms\Services\Facades\Application as App;
+// use Acms\Services\Facades\Application as App;
 use Acms\Services\Facades\Common;
 use ACMS_POST_Form_Submit;
-use Acms\Services\Common\HookFactory as ACMS_Hook;
+
+use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class Hook
 {
@@ -23,10 +24,7 @@ class Hook
             return;
         }
         /** @var \Acms\Plugins\Zoho\Api $client */
-        $client = App::make('zoho.api');
-        if (is_null($client->getAccessToken())) {
-            return;
-        }
+        // $client = App::make('zoho.api');
         if (!$thisModule->Post->isValidAll()) {
             return;
         }
@@ -45,29 +43,23 @@ class Hook
             return;
         }
 
-        if (HOOK_ENABLE) {
-            $hook = ACMS_Hook::singleton();
-            $hook->call('beforeZohoRequest', [$thisModule]);
+        $zohoClient = new ZohoClient();
+        $zohoClient->initialize();
+
+        if (is_null($zohoClient->getAccessToken())) {
+            return;
         }
 
         try {
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】Zoho CRM へデータ登録処理を開始します。');
             }
-            $engine = new Engine($info, $thisModule->Post);
+            $engine = new Engine($info, $thisModule->Post, $zohoClient);
             $engine->send();
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】Zoho CRM へのデータ登録処理が終了しました。');
             }
-            if (HOOK_ENABLE) {
-                $hook = ACMS_Hook::singleton();
-                $hook->call('afterZohoRequestSuccess', [$thisModule]);
-            }
         } catch (\ZCRMException $e) {
-            if (HOOK_ENABLE) {
-                $hook = ACMS_Hook::singleton();
-                $hook->call('afterZohoRequestError', [$thisModule, $e]);
-            }
             if ($this->isDebugMode()) {
                 throw $e;
             }
@@ -83,10 +75,6 @@ class Hook
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
         } catch (\Exception $e) {
-            if (HOOK_ENABLE) {
-                $hook = ACMS_Hook::singleton();
-                $hook->call('afterZohoRequestError', [$thisModule, $e]);
-            }
             if ($this->isDebugMode()) {
                 throw $e;
             }
@@ -95,10 +83,6 @@ class Hook
             } else {
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
-        }
-        if (HOOK_ENABLE) {
-            $hook = ACMS_Hook::singleton();
-            $hook->call('afterZohoRequest', [$thisModule]);
         }
     }
 

@@ -9,5 +9,10 @@ interface StoreInterface
     /**
      * @return TokenStore
      */
-    public function getStore(): TokenStore;
+    public function getStore();
+
+    /**
+     * @return OAuthToken|null
+     */
+    public function findTokenByGrantToken(string $grantToken);
 }

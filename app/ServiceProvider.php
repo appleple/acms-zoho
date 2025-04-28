@@ -97,6 +97,10 @@ class ServiceProvider extends ACMS_App
             $inject->add('admin-topicpath', PLUGIN_DIR . 'Zoho/template/admin/topicpath.html');
             $inject->add('admin-main', PLUGIN_DIR . 'Zoho/template/admin/main.html');
         }
+        elseif (ADMIN === 'app_zoho_callback') {
+            $inject->add('admin-topicpath', PLUGIN_DIR . 'Zoho/template/admin/topicpath.html');
+            $inject->add('admin-main', PLUGIN_DIR . 'Zoho/template/admin/callback.html');
+        }
         $inject->add('admin-form', PLUGIN_DIR . 'Zoho/template/admin/form.html');
     }
     /**
