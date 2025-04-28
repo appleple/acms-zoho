@@ -46,12 +46,13 @@ class Engine
      * @param array $Form
      * @param \Field $Post
      */
-    public function __construct($Form, $Post)
+    public function __construct($Form, $Post, $zohoClient)
     {
         $this->config = $Form['data']->getChild('mail');
         $this->field = $Post->getChild('field');
         $this->records = array();
-        $this->oauthClient = App::make('zoho.api');
+        // $this->oauthClient = App::make('zoho.api');
+        $this->oauthClient = $zohoClient;
     }
 
     /**
@@ -59,6 +60,7 @@ class Engine
      */
     public function send()
     {
+        var_dump($this->oauthClient->getAccessToken());
         if (is_null($this->oauthClient->getAccessToken())) {
             return;
         }
