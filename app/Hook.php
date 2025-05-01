@@ -7,8 +7,6 @@ use AcmsLogger;
 use Acms\Services\Facades\Common;
 use ACMS_POST_Form_Submit;
 
-use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
-
 class Hook
 {
     /**
@@ -20,11 +18,14 @@ class Hook
     public function afterPostFire($thisModule)
     {
         // Hook処理動作条件
-        if (!($thisModule instanceof ACMS_POST_Form_Submit)) {
-            return;
+        if (($thisModule instanceof ACMS_POST_Form_Submit)) {
+            $this->zohoFormSubmit($thisModule);
+        } else if (($thisModule instanceof ACMS_POST_Form_Update)) {
+            $this->zohoFormUpdate($thisModule);
         }
-        /** @var \Acms\Plugins\Zoho\Api $client */
-        // $client = App::make('zoho.api');
+    }
+
+    public function zohoFormSubmit($thisModule) {
         if (!$thisModule->Post->isValidAll()) {
             return;
         }
@@ -43,18 +44,11 @@ class Hook
             return;
         }
 
-        $zohoClient = new ZohoClient();
-        $zohoClient->initialize();
-
-        if (is_null($zohoClient->getAccessToken())) {
-            return;
-        }
-
         try {
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】Zoho CRM へデータ登録処理を開始します。');
             }
-            $engine = new Engine($info, $thisModule->Post, $zohoClient);
+            $engine = new Engine($info, $thisModule->Post);
             $engine->send();
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】Zoho CRM へのデータ登録処理が終了しました。');
@@ -84,6 +78,10 @@ class Hook
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
         }
+    }
+
+    public function zohoFormUpdate($thisModule) {
+
     }
 
     /**
