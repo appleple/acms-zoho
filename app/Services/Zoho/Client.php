@@ -4,18 +4,16 @@ namespace Acms\Plugins\Zoho\Services\Zoho;
 
 use SQL;
 use DB;
-
 use com\zoho\api\authenticator\OAuthBuilder;
 use com\zoho\crm\api\InitializeBuilder;
 use com\zoho\crm\api\dc\USDataCenter;
 use com\zoho\api\logger\LogBuilder;
 use com\zoho\api\logger\Levels;
 use com\zoho\api\authenticator\Token;
-use \com\zoho\crm\api\Initializer;
+use com\zoho\crm\api\Initializer;
 // use com\zoho\crm\api\SDKConfigBuilder;
 // use com\zoho\crm\api\ProxyBuilder;
 use com\zoho\crm\api\exception\SDKException;
-
 use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
 use Acms\Plugins\Zoho\Services\Zoho\Store;
 use Error;
@@ -71,7 +69,7 @@ class Client
         /**
          * 最新のトークン情報を取得
          */
-        if($tokenStore === 'file' && env('ZOHO_TOKEN_PERSISTENCE_PATH')) {
+        if ($tokenStore === 'file' && env('ZOHO_TOKEN_PERSISTENCE_PATH')) {
             $this->tokenPresistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH');
             if ($this->tokenPresistencePath === '' || !is_string($this->tokenPresistencePath)) {
                 // ファイルストアのパスが未設定
@@ -131,13 +129,13 @@ class Client
             $this->grantToken = $grantToken;
         } else {
             $tokenId = $this->getTokenIdByBid(BID);
-            if(!$tokenId) {
+            if (!$tokenId) {
                 '認証されていません';
                 return null;
             }
             $this->tokenId = $tokenId;
             $token = $this->store->findTokenById($tokenId);
-            if(!$token) {
+            if (!$token) {
                 'トークンがストアから削除された可能性があります。再認証してください。';
                 return null;
             }
@@ -177,7 +175,7 @@ class Client
                 ->initialize();
 
             $authorizedToken = '';
-            if(!!$grantToken && $authorizedToken = $this->store->findTokenByGrantToken($this->grantToken)) {
+            if (!!$grantToken && $authorizedToken = $this->store->findTokenByGrantToken($this->grantToken)) {
                 $this->tokenId = $authorizedToken->getId();
                 $this->refreshToken = $authorizedToken->getRefreshToken();
                 $this->accessToken = $authorizedToken->getAccessToken();
@@ -240,17 +238,17 @@ class Client
         $token = null;
         if ($useGrantToken && $this->grantToken) {
             $token = $builder->grantToken($this->grantToken)->build();
-        } else if ($this->refreshToken) {
+        } elseif ($this->refreshToken) {
             $token = $builder->refreshToken($this->refreshToken)->build();
-        }
-        else {
+        } else {
             throw new \InvalidArgumentException('grantTokenまたはrefreshTokenが必要です。認証情報を確認してください。');
         }
 
         return $token;
     }
 
-    public function getTokenIdByBid(int $bid) {
+    public function getTokenIdByBid(int $bid)
+    {
         $sql = SQL::newSelect('config', 'config_value');
         $where = SQL::newWhere();
         $where->addWhereOpr('config_blog_id', $bid);
@@ -259,7 +257,7 @@ class Client
 
         $tokenId = DB::query($sql->get(dsn()), 'row');
 
-        if($tokenId['config_value']) {
+        if ($tokenId['config_value']) {
             return $tokenId['config_value'];
         }
         return null;

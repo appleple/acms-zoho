@@ -1,23 +1,28 @@
 <?php
 
-namespace Acms\Plugins\Zoho\Services\Zoho;
+namespace Acms\Plugins\Zoho\Services\Zoho\Mapper;
 
 use Field;
-use Acms\Plugins\Zoho\Services\Zoho\Models\Record;
+use Acms\Plugins\Zoho\Services\Zoho\Mapper;
+use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
 
-class Helper
+/**
+ * Recordオブジェクトのマッパー
+ * a-blog cms と Zoho のフィールドをマッピングやデータ整形するためのクラス
+ */
+class Record extends Mapper
 {
     /** @var Field */
-    private $field;
+    private $config;
 
     /** @var Field */
-    private $config;
+    private $field;
 
     /**
      * コンストラクタ
      *
      * @param Field $field フォームフィールド
-     * @param Field $config プラグイン設定
+     * @param Field $config FormIDの拡張アプリ設定
      */
     public function __construct(Field $field, Field $config)
     {
@@ -28,9 +33,9 @@ class Helper
     /**
      * フォーム設定からZohoレコード構造を作成
      *
-     * @return Record[]
+     * @return RecordModel[]
      */
-    public function makeRecords(): array
+    public function makeRecords()
     {
         $zohoScopeGroup = $this->config->getArray('zoho_form_group_index');
         $records = [];
@@ -53,7 +58,7 @@ class Helper
             }
 
             foreach ($insertScopes as $insertScope) {
-                $records[] = new Record(
+                $records[] = new RecordModel(
                     $insertScope,
                     'insert',
                     array_search($insertScope, $updateScopes) !== false ? $uniqueKey : ''
@@ -61,7 +66,7 @@ class Helper
             }
 
             foreach ($updateScopes as $updateScope) {
-                $records[] = new Record(
+                $records[] = new RecordModel(
                     $updateScope,
                     'update',
                     $uniqueKey
@@ -75,10 +80,10 @@ class Helper
     /**
      * レコードにフィールドデータを追加
      *
-     * @param Record[] $records
-     * @return Record[]
+     * @param RecordModel[] $records
+     * @return RecordModel[]
      */
-    public function addFieldsToRecords(array $records): array
+    public function addFieldsToRecords(array $records)
     {
         $attachedRecords = [];
 
@@ -90,7 +95,7 @@ class Helper
                 $mappedFields = $this->mapFields($record, $groupArr, $cnt);
 
                 // 新しいレコードを作成してフィールドをコピー
-                $newRecord = new Record(
+                $newRecord = new RecordModel(
                     $record->getScope(),
                     $record->getType(),
                     $record->getUniqueKey()
@@ -112,12 +117,12 @@ class Helper
     /**
      * フィールドマッピングを行う
      *
-     * @param Record $record
+     * @param RecordModel $record
      * @param array|null $groupArr
      * @param int $index
      * @return array
      */
-    private function mapFields(Record $record, ?array $groupArr, int $index): array
+    private function mapFields(RecordModel $record, ?array $groupArr, int $index)
     {
         $scope = $record->getScope();
         $type = $record->getType();
@@ -170,7 +175,7 @@ class Helper
     {
         if ($value === 'true') {
             return true;
-        } else if ($value === 'false') {
+        } elseif ($value === 'false') {
             return false;
         }
         return $value;
@@ -179,10 +184,10 @@ class Helper
     /**
      * グループ配列を取得
      *
-     * @param Record $record
+     * @param RecordModel $record
      * @return array|null
      */
-    public function getGroupArray(Record $record): ?array
+    public function getGroupArray(RecordModel $record)
     {
         $zohoScope = $record->getScope();
         $type = $record->getType();
@@ -219,7 +224,7 @@ class Helper
      * @param array $keys
      * @return int
      */
-    private function getMaxKey(array $keys): int
+    private function getMaxKey(array $keys)
     {
         $max = 1;
         foreach ($keys as $key) {
@@ -235,15 +240,15 @@ class Helper
     /**
      * タイプでレコードをフィルタリング
      *
-     * @param Record[] $records
+     * @param RecordModel[] $records
      * @param string $type
-     * @return Record[]
+     * @return RecordModel[]
      */
-    public function getRecordsByType(array $records, string $type): array
+    public function getRecordsByType(array $records, string $type)
     {
-        return array_filter($records, function (Record $record) use ($type) {
+        return array_values(array_filter($records, function (RecordModel $record) use ($type) {
             return $record->getType() === $type;
-        });
+        }));
     }
 
     /**
@@ -252,7 +257,7 @@ class Helper
      * @param array $fieldRecords
      * @return array
      */
-    public function arrayCheck(array $fieldRecords): array
+    public function arrayCheck(array $fieldRecords)
     {
         $records = [];
 
@@ -286,7 +291,7 @@ class Helper
      * @param array $field
      * @return int
      */
-    private function getRecordLength(array $field): int
+    private function getRecordLength(array $field)
     {
         $count = 0;
         foreach ($field as $label => $value) {

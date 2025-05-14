@@ -5,50 +5,38 @@ namespace Acms\Plugins\Zoho;
 use Field;
 use Common;
 use AcmsLogger;
-
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
-use Acms\Plugins\Zoho\Services\Zoho\Helper;
-use Acms\Plugins\Zoho\Services\Zoho\Api;
+use Acms\Plugins\Zoho\Services\Zoho\Mapper\Record as RecordMapper;
+use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 
+/**
+ * Zoho拡張アプリの実行クラス
+ */
 class Engine
 {
-    /**
-     * @var \Field
-     */
-    private $config;
-
-    /**
-     * @var \Field
-     */
+    /** @var Field */
     private $field;
+
+    /** @var Field */
+    private $config;
 
     /**
      * @var array
      */
     private $records;
 
-    /**
-     * ラベル名からAPI名への変換用マップデータ
-     *
-     * @var array{ moduleName: string, map: array<string, string>}
-     */
-    private $labelNameToApiNameMap;
-
-    /**
-     * @var ZohoClient
-     */
+    /** @var ZohoClient */
     private $zohoClient;
 
     /**
-     * Engine constructor.
-     * @param array $Form
-     * @param \Field $Post
+     * @param $field Postされたフォームのデータ
+     * @param $config フォームIDのconfigデータ
      */
-    public function __construct($Form, $Post)
+    public function __construct($field, $config)
     {
-        $this->config = $Form['data']->getChild('mail');
-        $this->field = $Post->getChild('field');
-        $this->records = array();
+        $this->field = $field;
+        $this->config = $config;
+        $this->records = [];
 
         $zohoClient = new ZohoClient();
         $zohoClient->initialize();
@@ -60,7 +48,7 @@ class Engine
         $this->zohoClient = $zohoClient;
     }
 
-        /**
+    /**
      * Zoho CRMにデータを送信
      */
     public function send()
@@ -73,32 +61,41 @@ class Engine
                 return;
             }
 
-            // Helperの初期化
-            $helper = new Helper($this->field, $this->config);
+            $recordMapper = new RecordMapper($this->field, $this->config);
 
             // Zoho APIクライアントの作成
-            $api = new Api($this->zohoClient);
+            $api = new ZohoApi($this->zohoClient);
 
             // レコードの作成と処理
-            $records = $helper->makeRecords();
-            $records = $helper->addFieldsToRecords($records);
+            $records = $recordMapper->makeRecords();
+            $records = $recordMapper->addFieldsToRecords($records);
 
             // レコードの更新と作成、更新データと作成データに分割
-            // $updateRecords = $helper->getRecordsByType($records, 'update');
-            $insertRecords = $helper->getRecordsByType($records, 'insert');
+            $updateRecords = $recordMapper->getRecordsByType($records, 'update');
+            $insertRecords = $recordMapper->getRecordsByType($records, 'insert');
 
-            // if (!empty($updateRecords)) {
-            //     var_dump('updateRecords', $updateRecords);
-            //     $api->updateRecords($updateRecords);
-            // }
+            if (!empty($updateRecords)) {
+                // var_dump(
+                //     'updateRecords',
+                //     '<pre>',
+                //     $updateRecords,
+                //     '</pre>'
+                // );
+                $api->updateRecords($updateRecords);
+            }
             if (!empty($insertRecords)) {
+                // var_dump(
+                //     'insertRecords',
+                //     '<pre>',
+                //     $insertRecords,
+                //     '</pre>'
+                // );
                 $api->insertRecords($insertRecords);
             }
 
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::info('【Zoho plugin】 データの送信が完了しました。');
             }
-
         } catch (\Exception $e) {
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error(

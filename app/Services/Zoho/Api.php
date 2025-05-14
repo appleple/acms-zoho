@@ -7,19 +7,31 @@ use Acms\Plugins\Zoho\Services\Zoho\Client;
 use AcmsLogger;
 use Common;
 
-use com\zoho\crm\api\record\RecordOperations;
-use com\zoho\crm\api\record\GetRecordsParam;
-// use com\zoho\crm\api\record\GetRecordsHeader;
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
 
+// record
+use com\zoho\crm\api\record\RecordOperations;
+use com\zoho\crm\api\record\GetRecordsParam;
+use com\zoho\crm\api\record\SearchRecordsParam;
+// use com\zoho\crm\api\record\GetRecordsHeader;
 use com\zoho\crm\api\record\ActionWrapper;
 use com\zoho\crm\api\record\APIException;
 use com\zoho\crm\api\record\BodyWrapper;
 use com\zoho\crm\api\record\Record as ZohoRecord;
 use com\zoho\crm\api\record\SuccessResponse;
-// use com\zoho\crm\api\tags\Tag;
 // use com\zoho\crm\api\record\Leads;
+
+// module
+use com\zoho\crm\api\modules\ModulesOperations;
+use com\zoho\crm\api\modules\ResponseWrapper;
+use com\zoho\crm\api\modules\Modules as ZohoModules;
+
+// fields
+use com\zoho\crm\api\fields\ResponseWrapper as FieldsResponseWrapper;
+use com\zoho\crm\api\fields\FieldsOperations;
+
+// use com\zoho\crm\api\tags\Tag;
 use com\zoho\crm\api\util\Choice;
 use com\zoho\crm\api\exception\SDKException;
 // use \com\zoho\crm\api\notes\NotesOperations;
@@ -171,7 +183,6 @@ class Api
 
             // APIレコードに変換
             foreach ($records as $record) {
-                // var_dump($record);
                 $apiRecord = $this->createZohoRecord($record);
                 $apiRecords[] = $apiRecord;
             }
@@ -210,7 +221,7 @@ class Api
                                     ['details' => $details]
                                 );
                             }
-                        } else if ($actionResponse instanceof APIException) {
+                        } elseif ($actionResponse instanceof APIException) {
                             $exception = $actionResponse;
 
                             if (class_exists('AcmsLogger')) {
@@ -259,8 +270,8 @@ class Api
         }
 
         // すべて同じスコープであると仮定
-        $scope = $records[1]->getScope();
-        $uniqueKey = $records[1]->getUniqueKey();
+        $scope = $records[0]->getScope();
+        $uniqueKey = $records[0]->getUniqueKey();
 
         try {
             $recordOperations = new RecordOperations($scope);
@@ -318,7 +329,7 @@ class Api
                                     ['details' => $details]
                                 );
                             }
-                        } else if ($actionResponse instanceof APIException) {
+                        } elseif ($actionResponse instanceof APIException) {
                             $exception = $actionResponse;
 
                             if (class_exists('AcmsLogger')) {
@@ -694,4 +705,120 @@ class Api
     //         'fields' => $record->getKeyValues()
     //     ];
     // }
+
+    /**
+     * Zoho CRMからモジュール情報を取得
+     *
+     * @return ZohoModules[] モジュール情報の配列
+     */
+    public function getModules(): array
+    {
+        try {
+            if (is_null($this->client)) {
+                if (class_exists('AcmsLogger')) {
+                    AcmsLogger::error('【Zoho plugin】 Zohoクライアントの初期化に失敗しました。');
+                }
+                return [];
+            }
+
+            // モジュール操作用のクラスをインスタンス化
+            $moduleOperations = new ModulesOperations();
+            $headerInstance = new HeaderMap();
+
+            // モジュール一覧を取得
+            $response = $moduleOperations->getModules(null, $headerInstance);
+
+            if ($response != null && $response->isExpected()) {
+                $responseObject = $response->getObject();
+
+                if ($responseObject instanceof ResponseWrapper) {
+                    $modules = $responseObject->getModules();
+                    $moduleInfoList = [];
+
+                    foreach ($modules as $module) {
+                        $moduleInfo = [
+                            // 'id' => $module->getId(),
+                            // 'apiName' => $module->getAPIName(),
+                            // 'moduleName' => $module->getModuleName(),
+                            // 'generatedType' => $module->getGeneratedType()->getValue(),
+                            // 'isVisible' => $module->getVisible(),
+                            // 'creatable' => $module->getCreatable()
+                        ];
+
+                        // 各モジュールのフィールド情報を取得
+                        // $moduleInfo['fields'] = $this->getModuleFields($module->getAPIName());
+
+                        // $moduleInfoList[] = $moduleInfo;
+
+                        $moduleInfoList[] = $module;
+                    }
+
+                    return $moduleInfoList;
+                }
+            }
+
+            return [];
+        } catch (\Exception $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error(
+                    '【Zoho plugin】 モジュール情報の取得に失敗しました。',
+                    Common::exceptionArray($e)
+                );
+            } else {
+                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+            }
+            return [];
+        }
+    }
+
+    /**
+     * 特定のモジュールのフィールド情報を取得
+     *
+     * @param string $moduleApiName モジュールのAPI名
+     * @return array フィールド情報の配列
+     */
+    private function getModuleFields(string $moduleApiName): array
+    {
+        try {
+            // フィールド操作用のクラスをインスタンス化
+            $fieldOperations = new FieldsOperations($moduleApiName);
+            $paramInstance = new ParameterMap();
+
+            // フィールド一覧を取得
+            $response = $fieldOperations->getFields($paramInstance);
+
+            if ($response != null && $response->isExpected()) {
+                $responseObject = $response->getObject();
+
+                if ($responseObject instanceof FieldsResponseWrapper) {
+                    $fields = $responseObject->getFields();
+                    $fieldInfoList = [];
+
+                    foreach ($fields as $field) {
+                        $fieldInfo = [
+                            'id' => $field->getId(),
+                            'apiName' => $field->getAPIName(),
+                            'fieldLabel' => $field->getFieldLabel(),
+                            'dataType' => $field->getDataType(),
+                            'required' => $field->getSystemMandatory()
+                        ];
+
+                        $fieldInfoList[] = $fieldInfo;
+                    }
+
+                    return $fieldInfoList;
+                }
+            }
+
+            return [];
+        } catch (\Exception $e) {
+            if (class_exists('AcmsLogger')) {
+                AcmsLogger::error(
+                    '【Zoho plugin】 フィールド情報の取得に失敗しました。',
+                    ['module' => $moduleApiName, 'error' => Common::exceptionArray($e)]
+                );
+            }
+            return [];
+        }
+    }
 }
