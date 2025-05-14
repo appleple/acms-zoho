@@ -17,35 +17,4 @@ class File extends Store
     {
         $this->store = new FileStore($path);
     }
-
-    /**
-     * IDを元にトークンを削除
-     *
-     * @param string $path 保存先のファイルパス
-     */
-    public function removeTokenById(int $id)
-    {
-        $store = $this->store;
-        $store->deleteToken($id);
-    }
-
-    /**
-     * リフレッシュトークンを元にトークンを削除
-     *
-     * @param string $path 保存先のファイルパス
-     */
-    public function removeTokenByRefreshToken(string $refreshToken)
-    {
-        if(!$refreshToken  || is_string($refreshToken)) {
-            return null;
-        }
-        $store = $this->store;
-        $tokens = $store->getTokens();
-        foreach ($tokens as $token) {
-            if ($token->getRefreshToken() === $refreshToken) {
-                $this->removeTokenById($token->getId());
-                break;
-            }
-        }
-    }
 }

@@ -1,4 +1,28 @@
-<h2 class="acms-admin-admin-title2">Zoho Form 設定</h2>
+<h2 class="acms-admin-admin-title2">
+  <span>Zoho Form 設定</span>
+  <button
+    class="acms-admin-btn-admin acms-admin-btn-info"
+    type="button"
+    onclick="(async () => {
+      console.log('check post');
+      const formData = new FormData();
+      formData.append('ACMS_POST_Zoho_Check', 'exec')
+      formData.append('formCode', '{code}')
+      formData.append('formToken', window.csrfToken)
+      const response = await fetch('/', {
+        method: 'POST',
+        body: formData,
+      });
+      if(!response.ok) {
+        return null;
+      }
+
+      console.log(response.json());
+    })()"
+  >
+    タブの設定をチェックする ※設定を保存してから試してください。
+  </button>
+</h2>
 <div class="acms-admin-table-admin-edit" style="padding: 15px">
   <h2 class="acms-admin-admin-title2">フォームの権限設定</h2>
   <table class="js-fieldgroup-sortable">

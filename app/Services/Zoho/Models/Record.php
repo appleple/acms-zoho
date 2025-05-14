@@ -3,7 +3,7 @@
 namespace Acms\Plugins\Zoho\Services\Zoho\Models;
 
 /**
- * a-blog cms と ZohoCRM のデータマッピングを表現するレコードクラス
+ * フォームからPOSTするときのa-blogcms のフィールド と ZohoCRM のデータマッピングを表現するレコードクラス
  */
 class Record
 {
@@ -20,7 +20,7 @@ class Record
     private $uniqueKey;
 
     /**
-     * Todo: 何用か調査
+     * a-blog cms のフィールド
      * @var array
      */
     private $fields = [];
@@ -41,9 +41,7 @@ class Record
     }
 
     /**
-     * スコープ（モジュール名）を取得
-     *
-     * @return string
+     * @return string ex) Reads, Contacts
      */
     public function getScope(): string
     {
@@ -51,8 +49,6 @@ class Record
     }
 
     /**
-     * 操作タイプを取得
-     *
      * @return string
      */
     public function getType(): string
@@ -71,8 +67,6 @@ class Record
     }
 
     /**
-     * エンティティIDを設定
-     *
      * @param string|null $id
      * @return self
      */
@@ -83,8 +77,6 @@ class Record
     }
 
     /**
-     * エンティティIDを取得
-     *
      * @return string|null
      */
     public function getId()
