@@ -126,7 +126,7 @@ class Engine
         return array_map(
             function (\ZCRMModule $module) {
                 return [
-                    'moduleName' => $module->getModuleName(),
+                    'moduleName' => $module->getAPIName(),
                     'map' => array_reduce(
                         $this->getFieldsByModule($module),
                         function (array $map, \ZCRMField $field) {
