@@ -138,6 +138,39 @@ Zohoの項目のラベルは設定 > タブと項目から確認できます。
 
 ![Zoho リレーショナル設定例](images/zoho-lookup-config.png)
 
+## フック
+
+Zoho プラグインでは以下のフックポイントを提供しています。
+
+### beforeZohoRequest
+
+Zoho CRM へのデータ送信前に呼ばれます。
+
+**引数**
+- `$postModule` : ACMS_POST_Form_Submit インスタンス
+
+### afterZohoRequestSuccess
+
+Zoho CRM へのデータ送信が成功した後に呼ばれます。
+
+**引数**
+- `$postModule` : ACMS_POST_Form_Submit インスタンス
+
+### afterZohoRequestError
+
+Zoho CRM へのデータ送信でエラーが発生した場合に呼ばれます。
+
+**引数**
+- `$postModule` : ACMS_POST_Form_Submit インスタンス
+- `$throwable` : 発生した例外オブジェクト
+
+### afterZohoRequest
+
+Zoho CRM へのデータ送信処理の完了後(成功/エラー問わず)に呼ばれます。
+
+**引数**
+- `$postModule` : ACMS_POST_Form_Submit インスタンス
+
 
 ## トラブルシューティング
 
