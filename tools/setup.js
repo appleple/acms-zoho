@@ -32,6 +32,10 @@ const fixes = [
     from: 'fix/ZohoOAuthConstants.php',
     to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthConstants.php',
   },
+  {
+    from: 'fix/APIRquest.php',
+    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/api/APIRequest.php',
+  },
 ];
 
 (async () => {
