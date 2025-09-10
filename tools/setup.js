@@ -3,55 +3,51 @@
 const fs = require('fs-extra');
 const { systemCmd } = require('./lib/system.js');
 
-const fixes = [
-  {
-    from: 'fix/ZohoHTTPConnector.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/common/ZohoHTTPConnector.php',
-  },
-  {
-    from: 'fix/Logger.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/exception/Logger.php',
-  },
-  {
-    from: 'fix/ZohoOAuthException.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthException.php',
-  },
-  {
-    from: 'fix/ZCRMException.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/exception/ZCRMException.php',
-  },
-  {
-    from: 'fix/ZohoOAuthTokens.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthTokens.php',
-  },
-  {
-    from: 'fix/ZohoOAuthClient.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/client/ZohoOAuthClient.php',
-  },
-  {
-    from: 'fix/ZohoOAuthConstants.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthConstants.php',
-  },
-  {
-    from: 'fix/APIRquest.php',
-    to: 'vendor/zohocrm/php-sdk/src/com/zoho/crm/library/api/APIRequest.php',
-  },
-];
+// const fixes = [
+//   {
+//     from: '../app/fix/ZohoHTTPConnector.php',
+//     to: '../app/vendor/zohocrm/php-sdk/src/com/zoho/crm/library/common/ZohoHTTPConnector.php',
+//   },
+//   {
+//     from: '../app/fix/Logger.php',
+//     to: '../app/vendor/zohocrm/php-sdk/src/com/zoho/crm/library/exception/Logger.php',
+//   },
+//   {
+//     from: '../app/fix/ZohoOAuthException.php',
+//     to: '../app/vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthException.php',
+//   },
+//   {
+//     from: '../app/fix/ZCRMException.php',
+//     to: '../app/vendor/zohocrm/php-sdk/src/com/zoho/crm/library/exception/ZCRMException.php',
+//   },
+//   {
+//     from: '../app/fix/ZohoOAuthTokens.php',
+//     to: '../app/vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthTokens.php',
+//   },
+//   {
+//     from: '../app/fix/ZohoOAuthClient.php',
+//     to: '../app/vendor/zohocrm/php-sdk/src/com/zoho/oauth/client/ZohoOAuthClient.php',
+//   },
+//   {
+//     from: '../app/fix/ZohoOAuthConstants.php',
+//     to: '../app/vendor/zohocrm/php-sdk/src/com/zoho/oauth/common/ZohoOAuthConstants.php',
+//   },
+// ];
 
 (async () => {
   try {
     await systemCmd('npm ci');
-    await systemCmd('rm -rf vendor');
-    await systemCmd('composer install');
+    await systemCmd('cd app && rm -rf vendor');
+    await systemCmd('cd app && composer install');
 
     /**
      * fix files
      */
-    console.log('fix library files.');
-    console.log(fixes);
-    fixes.forEach(({ from, to }) => {
-      fs.copySync(from, to);
-    });
+    // console.log('fix library files.');
+    // console.log(fixes);
+    // fixes.forEach(({ from, to }) => {
+    //   fs.copySync(from, to);
+    // });
   } catch (err) {
     console.log(err);
   }
