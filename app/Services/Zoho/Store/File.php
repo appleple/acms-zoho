@@ -2,7 +2,7 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Store;
 
-use com\zoho\api\authenticator\store\FileStore;
+use Acms\Plugins\Zoho\Services\Zoho\Store\CustomFileStore;
 use Acms\Plugins\Zoho\Services\Zoho\Store;
 use com\zoho\api\authenticator\OAuthToken;
 
@@ -15,6 +15,6 @@ class File extends Store
      */
     public function __construct(string $path)
     {
-        $this->store = new FileStore($path);
+        $this->store = new CustomFileStore($path);
     }
 }

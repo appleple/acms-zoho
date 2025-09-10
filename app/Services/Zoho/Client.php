@@ -257,7 +257,7 @@ class Client
 
         $tokenId = DB::query($sql->get(dsn()), 'row');
 
-        if ($tokenId['config_value']) {
+        if ($tokenId && $tokenId['config_value']) {
             return $tokenId['config_value'];
         }
         return null;
