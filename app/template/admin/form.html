@@ -24,14 +24,31 @@
   </button>
 </h2>
 <div class="acms-admin-table-admin-edit" style="padding: 15px">
-  <h2 class="acms-admin-admin-title2">フォームの権限設定</h2>
+  <h2 class="acms-admin-admin-title2">
+    ユニークキーの設定
+    <i
+      class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+      data-acms-tooltip="<!--T-->元のフォーム権限設定。ユニークキーを設定してフォームの権限を作成します。<!--/T-->"
+    ></i>
+  </h2>
   <table class="js-fieldgroup-sortable">
     <thead class="acms-admin-hide-sp">
       <tr>
         <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
-        <th class="acms-admin-table-left">タブ（Insert）</th>
-        <th class="acms-admin-table-left">タブ（Update）</th>
-        <th class="acms-admin-table-left">ユニークキー</th>
+        <th class="acms-admin-table-left">
+          ユニークキーにする項目のAPI名
+          <i
+          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+          data-acms-tooltip="<!--T-->InsertまたはUpdateを許可するタブのZohoCRMの項目のラベルを設定します。<!--/T-->"
+        ></i>
+
+        </th>
+        <th class="acms-admin-table-left">
+          Insertを許可するタブのAPI名
+        </th>
+        <th class="acms-admin-table-left">
+          Updateを許可するタブのAPI名
+        </th>
         <th class="acms-admin-table-left acms-admin-admin-config-table-action">削除</th>
       </tr>
     </thead>
@@ -40,6 +57,14 @@
       <tr class="sortable-item">
         <td class="item-handle">
           <i class="acms-admin-icon-sort"></i>
+        </td>
+        <td>
+          <input
+            type="text"
+            name="zoho_form_unique_key[]"
+            value="{zoho_form_unique_key}"
+            class="acms-admin-form-width-full"
+          />
         </td>
         <td>
           <input
@@ -58,14 +83,6 @@
           />
         </td>
         <td>
-          <input
-            type="text"
-            name="zoho_form_unique_key[]"
-            value="{zoho_form_unique_key}"
-            class="acms-admin-form-width-full"
-          />
-        </td>
-        <td>
           <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="削除" />
           <input type="hidden" name="zoho_form_group_index[]" value="index" />
         </td>
@@ -76,13 +93,13 @@
           <i class="acms-admin-icon-sort"></i>
         </td>
         <td>
+          <input type="text" name="zoho_form_unique_key[]" value="" class="acms-admin-form-width-full" />
+        </td>
+        <td>
           <input type="text" name="zoho_form_insert_scope[]" value="" class="acms-admin-form-width-full" />
         </td>
         <td>
           <input type="text" name="zoho_form_update_scope[]" value="" class="acms-admin-form-width-full" />
-        </td>
-        <td>
-          <input type="text" name="zoho_form_unique_key[]" value="" class="acms-admin-form-width-full" />
         </td>
         <td>
           <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="削除" />
@@ -108,30 +125,30 @@
   <input type="hidden" name="mail[]" value="zoho_form_group_index" />
   <input type="hidden" name="mail[]" value="@zoho_form_group" />
 
-  <h3 class="acms-admin-admin-title2"><!--T-->Zoho カスタムフィールド<!--/T--></h3>
+  <h3 class="acms-admin-admin-title2"><!--T-->Zohoと連携するa-blog cmsフィールドの設定<!--/T--></h3>
   <table class="js-fieldgroup-sortable">
     <thead class="acms-admin-hide-sp">
       <tr>
         <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
         <th class="acms-admin-table-left">
-          <!--T-->a-blog cms側のキー<!--/T-->
-          <i
-            class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-            data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。<!--/T-->"
-          ></i>
-        </th>
-        <th class="acms-admin-table-left">
-          <!--T-->タブ<!--/T-->
+          <!--T-->タブのAPI名<!--/T-->
           <i
             class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
             data-acms-tooltip="<!--T-->Zoho側のタブを指定します。<!--/T-->"
           ></i>
         </th>
         <th class="acms-admin-table-left">
-          <!--T-->キー<!--/T-->
+          <!--T-->項目のAPI名<!--/T-->
           <i
             class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
             data-acms-tooltip="<!--T-->Zoho側のフィールド名を指定します。<!--/T-->"
+          ></i>
+        </th>
+        <th class="acms-admin-table-left">
+          <!--T-->a-blog cmsのフィールド名<!--/T-->
+          <i
+            class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+            data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。<!--/T-->"
           ></i>
         </th>
         <th class="acms-admin-table-left" style="width: 50px; text-align: center"><!--T-->Insert<!--/T--></th>
@@ -148,20 +165,17 @@
         <td>
           <input
             type="text"
-            name="zoho_field_cms_key[{i}]"
-            value="{zoho_field_cms_key}"
-            class="acms-admin-form-width-full"
-            placeholder="<!--T-->例）<!--/T-->email"
-          />
-        </td>
-        <td>
-          <input
-            type="text"
             name="zoho_field_scope[{i}]"
             value="{zoho_field_scope}"
             class="acms-admin-form-width-full"
             placeholder="<!--T-->例）<!--/T-->Leads,Contacts"
           />
+
+          <!-- BEGIN_MODULE Zoho_Module -->
+          <select name="zoho_field_scope[{i}]" id="">
+            <option value=""></option>
+          </select>
+          <!-- END_MODULE Zoho_Module -->
         </td>
         <td>
           <input
@@ -170,6 +184,15 @@
             value="{zoho_field_key}"
             class="acms-admin-form-width-full"
             placeholder="<!--T-->例）<!--/T-->Email"
+          />
+        </td>
+        <td>
+          <input
+            type="text"
+            name="zoho_field_cms_key[{i}]"
+            value="{zoho_field_cms_key}"
+            class="acms-admin-form-width-full"
+            placeholder="<!--T-->例）<!--/T-->email"
           />
         </td>
         <td style="width: 50px; text-align: center">
@@ -218,6 +241,9 @@
             class="acms-admin-form-width-full"
             placeholder="<!--T-->例）<!--/T-->email"
           />
+          <select name="zoho_field_cms_key[]" id="">
+            <option value=""></option>
+          </select>
         </td>
         <td>
           <input

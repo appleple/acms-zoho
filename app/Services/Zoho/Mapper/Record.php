@@ -12,16 +12,16 @@ use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
  */
 class Record extends Mapper
 {
-    /** @var Field */
-    private $config;
-
-    /** @var Field */
+    /** @var Field フォームのフィールド */
     private $field;
+
+    /** @var Field FormIDの拡張アプリ設定 */
+    private $config;
 
     /**
      * コンストラクタ
      *
-     * @param Field $field フォームフィールド
+     * @param Field $field　フォームのフィールド
      * @param Field $config FormIDの拡張アプリ設定
      */
     public function __construct(Field $field, Field $config)

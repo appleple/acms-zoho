@@ -4,12 +4,12 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Mapper;
 
 use Field;
 use Acms\Plugins\Zoho\Services\Zoho\Mapper;
-use Acms\Plugin\Zoho\Services\Zoho\Models\Module as ModuleModel;
+// use Acms\Plugin\Zoho\Services\Zoho\Models\Module as ModuleModel;
 use com\zoho\crm\api\modules\Modules as ZohoModules;
 
 class Module extends Mapper
 {
-    /** @var ZohoModules[] */
+    /** @var ZohoModules[] Zohoから取得したモジュールのリスト */
     public $modules;
 
     /** @var Field FormIDの拡張アプリ設定 */
@@ -46,5 +46,47 @@ class Module extends Mapper
         }
 
         return $apiName;
+    }
+
+    /**
+     * モジュールをタブ名、apiName、項目情報を配列にもつ配列に変換する
+     *
+     * @return array モジュール情報の配列
+     */
+    public function toArray()
+    {
+        if (empty($this->modules) || !is_array($this->modules)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($this->modules as $module) {
+            if (!($module instanceof ZohoModules)) {
+                continue;
+            }
+
+            $moduleData = [
+                'moduleName' => $module->getModuleName(),
+                'apiName' => $module->getAPIName(),
+                'fields' => []
+            ];
+
+            // モジュールの項目情報を取得
+            $fields = $module->getFields();
+            if (!empty($fields)) {
+                foreach ($fields as $field) {
+                    $moduleData['fields'][] = [
+                        'fieldName' => $field->getFieldName(),
+                        'apiName' => $field->getAPIName(),
+                        'dataType' => $field->getDataType(),
+                        'isRequired' => $field->getMandatory() ? true : false,
+                    ];
+                }
+            }
+
+            $result[] = $moduleData;
+        }
+
+        return $result;
     }
 }

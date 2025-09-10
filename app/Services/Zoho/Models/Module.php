@@ -1,7 +1,10 @@
 <?php
 
-namespace Acms\Plugins\Zoho\Services\Zoho\Models;
-
 class Module
 {
+    private $moduleName;
+
+    private $apiName;
+
+    private  $fields;
 }

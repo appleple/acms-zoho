@@ -75,21 +75,9 @@ class Engine
             $insertRecords = $recordMapper->getRecordsByType($records, 'insert');
 
             if (!empty($updateRecords)) {
-                // var_dump(
-                //     'updateRecords',
-                //     '<pre>',
-                //     $updateRecords,
-                //     '</pre>'
-                // );
                 $api->updateRecords($updateRecords);
             }
             if (!empty($insertRecords)) {
-                // var_dump(
-                //     'insertRecords',
-                //     '<pre>',
-                //     $insertRecords,
-                //     '</pre>'
-                // );
                 $api->insertRecords($insertRecords);
             }
 

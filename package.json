@@ -4,6 +4,10 @@
   "description": "Zoho API と連携し、お問い合わせフォームなどで送信された内容をZoho CRMに登録します。",
   "main": "deploy.js",
   "scripts": {
+    "start": "npm run dev",
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 0",
     "package": "npm run setup && npm run build:app",
     "build:app": "node ./tools/build.js",
@@ -25,10 +29,18 @@
   },
   "homepage": "https://github.com/appleple/acms-zoho#readme",
   "devDependencies": {
+    "@types/react": "^19.1.5",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.0",
     "archiver": "^2.1.1",
     "co": "^4.6.0",
     "fs-extra": "^2.1.2",
-    "node-cmd": "^3.0.0"
+    "node-cmd": "^3.0.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   },
-  "dependencies": {}
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
 }
