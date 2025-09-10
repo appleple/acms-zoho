@@ -31,49 +31,21 @@ class Check extends Zoho
                 return;
             }
 
-            // Zoho からモジュールを取得
+            // Zoho からモジュールを取得、Mapperの設定
             $api = new ZohoApi($zohoClient);
             $modules = $api->getModules();
-
             $moduleMapper = new ModuleMapper($modules, $info['data']->getChild('mail'));
 
-            $configuredInsertApiNames = $moduleMapper->config->getArray('zoho_form_insert_scope', true);
-            $configuredUpdateApiNames = $moduleMapper->config->getArray('zoho_form_update_scope', true);
-
-            $notExistIsertApiNames = [];
-            foreach($configuredInsertApiNames as $RawApiName) {
-                $explodedApiName = explode(',', $RawApiName);
-                foreach($explodedApiName as $apiName) {
-                    $isExist = $moduleMapper->isModuleExists(trim($apiName));
-                    if(is_string($isExist)) {
-                        $notExistUpdateApiNames[] = $isExist;
-                        AcmsLogger::error("【Zoho plugin】Zoho CRM にインサート可能なAPI名「{$isExist}」がありません。");
-                    }
-                }
+            //  ZohoCRM に存在しないAPI名が設定されているかチェック
+            $isScopeExist = $this->isScopeInApi($moduleMapper);
+            if (!$isScopeExist) {
+                AcmsLogger::error("【Zoho plugin】Zoho CRM と一致していないAPI名が存在します。");
             }
 
-            $notExistUpdateApiNames = [];
-            foreach($configuredUpdateApiNames as $RawApiName) {
-                $explodedApiName = explode(',', $RawApiName);
-                foreach($explodedApiName as $apiName) {
-                    $isExist = $moduleMapper->isModuleExists(trim($apiName));
-                    if(is_string($isExist)) {
-                        $notExistUpdateApiNames[] = $isExist;
-                        AcmsLogger::error("【Zoho plugin】Zoho CRM にアップデート可能なAPI名「 {$isExist}」がありません。");
-                    }
-                }
+            $isKeyExist = $this->isKeyInApi($moduleMapper);
+            if (!$isScopeExist) {
+                AcmsLogger::error("【Zoho plugin】Zoho CRM のAPIにキーが存在しない可能性があります。");
             }
-
-            if (empty($notExistInsertApiNames) || empty($notExistUpdateApiNames)) {
-                return AcmsLogger::error("【Zoho plugin】Zoho CRM と一致していないAPI名が存在します。");;
-            }
-
-            // var_dump(
-            //     '------- not exist insert -------',
-            //     $notExistIsertApiNames,
-            //     '------- not exist update -------',
-            //     $notExistUpdateApiNames,
-            // );
 
         } catch (\ZCRMException $e) {
             if ($this->isDebugMode()) {
@@ -89,7 +61,60 @@ class Check extends Zoho
         return Common::responseJson($this->Post);
     }
 
+    /**
+     * ZohoCRM に存在しないAPI名が設定されているかチェック
+     *
+     * @param ModuleMapper ＄moduleMapper
+     * @return bool 存在しないものがあればfalse
+     */
+    private function isScopeInApi(ModuleMapper &$moduleMapper) {
+        // cms から設定を取得
+        $configuredInsertApiNames = $moduleMapper->config->getArray('zoho_form_insert_scope', true);
+        $configuredUpdateApiNames = $moduleMapper->config->getArray('zoho_form_update_scope', true);
 
+        // インサート可能なAPI名が存在するかチェック
+        $notExistIsertApiNames = [];
+        foreach($configuredInsertApiNames as $RawApiName) {
+            $explodedApiName = explode(',', $RawApiName);
+            foreach($explodedApiName as $apiName) {
+                $isExist = $moduleMapper->isModuleExists(trim($apiName));
+                if(is_string($isExist)) {
+                    $notExistIsertApiNames[] = $isExist;
+                    AcmsLogger::error("【Zoho plugin】Zoho CRM にインサート可能なAPI名「{$isExist}」がありません。");
+                }
+            }
+        }
+
+        // アップデート可能なAPI名が存在するかチェック
+        $notExistUpdateApiNames = [];
+        foreach($configuredUpdateApiNames as $RawApiName) {
+            $explodedApiName = explode(',', $RawApiName);
+            foreach($explodedApiName as $apiName) {
+                $isExist = $moduleMapper->isModuleExists(trim($apiName));
+                if(is_string($isExist)) {
+                    $notExistUpdateApiNames[] = $isExist;
+                    AcmsLogger::error("【Zoho plugin】Zoho CRM にアップデート可能なAPI名「 {$isExist}」がありません。");
+                }
+            }
+        }
+
+        if (empty($notExistInsertApiNames) || empty($notExistUpdateApiNames)) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * ZohoCRM のAPIにキーが存在するかチェック
+     *
+     * @param ModuleMapper ＄moduleMapper
+     * @return bool 存在しないものがあればfalse
+     */
+    private function isKeyInApi(ModuleMapper &$moduleMapper) {
+
+    }
 
     /**
      * デバックモードかどうか

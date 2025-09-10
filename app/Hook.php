@@ -101,4 +101,21 @@ class Hook
 
         return false;
     }
+
+        /**
+     * JSが更新された場合に、以前のバージョンで作られたキャッシュを使用しないようにキャッシュバスティングを行う
+     * scriptタグでJSを読み込む際に、acmsのグローバル変数を経由する
+     *
+     * @param \Field &$globalVars
+     */
+    public function extendsGlobalVars(&$globalVars)
+    {
+        $globalVars->set(
+            'ZOHO_JS',
+            cacheBusting(
+                '/' . DIR_OFFSET . 'extension/plugins/Zoho/dist/acms-zoho.js',
+                SCRIPT_DIR . '/extension/plugins/Zoho/dist/acms-zoho.js'
+            )
+        );
+    }
 }

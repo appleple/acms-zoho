@@ -708,10 +708,10 @@ class Api
 
     /**
      * Zoho CRMからモジュール情報を取得
-     *
+     * @param bool
      * @return ZohoModules[] モジュール情報の配列
      */
-    public function getModules(): array
+    public function getModules(bool $isFields = false): array
     {
         try {
             if (is_null($this->client)) {
@@ -723,37 +723,43 @@ class Api
 
             // モジュール操作用のクラスをインスタンス化
             $moduleOperations = new ModulesOperations();
+            $parameterInstance = new ParameterMap();
+            $parameterInstance->add(new \com\zoho\crm\api\modules\ModulesOperations::GetModulesParam(), $status);
+            $parameterInstance->setParameterMap(['visible']);
             $headerInstance = new HeaderMap();
 
             // モジュール一覧を取得
-            $response = $moduleOperations->getModules(null, $headerInstance);
+            $response = $moduleOperations->getModules($parameterInstance, $headerInstance);
 
             if ($response != null && $response->isExpected()) {
                 $responseObject = $response->getObject();
 
                 if ($responseObject instanceof ResponseWrapper) {
                     $modules = $responseObject->getModules();
-                    $moduleInfoList = [];
 
-                    foreach ($modules as $module) {
-                        $moduleInfo = [
-                            // 'id' => $module->getId(),
-                            // 'apiName' => $module->getAPIName(),
-                            // 'moduleName' => $module->getModuleName(),
-                            // 'generatedType' => $module->getGeneratedType()->getValue(),
-                            // 'isVisible' => $module->getVisible(),
-                            // 'creatable' => $module->getCreatable()
-                        ];
+                    if ($isFields) {
+                        $moduleInfoList = [];
 
-                        // 各モジュールのフィールド情報を取得
-                        // $moduleInfo['fields'] = $this->getModuleFields($module->getAPIName());
+                        foreach ($modules as $module) {
+                            $moduleInfo = [
+                                'id' => $module->getId(),
+                                'apiName' => $module->getAPIName(),
+                                'moduleName' => $module->getModuleName(),
+                                'generatedType' => $module->getGeneratedType()->getValue(),
+                                'isVisible' => $module->getVisible(),
+                                'creatable' => $module->getCreatable()
+                            ];
 
-                        // $moduleInfoList[] = $moduleInfo;
+                            // 各モジュールのフィールド情報を取得
+                            $moduleInfo['fields'] = $this->getModuleFields($module->getAPIName());
+                            $moduleInfoList[] = $moduleInfo;
+                        }
 
-                        $moduleInfoList[] = $module;
+                        return $moduleInfoList;
+                    } else {
+                        return $modules;
                     }
 
-                    return $moduleInfoList;
                 }
             }
 
@@ -804,6 +810,7 @@ class Api
                         ];
 
                         $fieldInfoList[] = $fieldInfo;
+                        // $fieldInfoList[] = $field;
                     }
 
                     return $fieldInfoList;

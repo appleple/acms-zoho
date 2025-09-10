@@ -4,6 +4,7 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Models;
 
 /**
  * フォームからPOSTするときのa-blogcms のフィールド と ZohoCRM のデータマッピングを表現するレコードクラス
+ * Todo: クラス名を Command に変更する
  */
 class Record
 {
