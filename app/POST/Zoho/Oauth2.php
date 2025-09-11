@@ -18,6 +18,8 @@ class OAuth2 extends ACMS_POST
         if (
             !empty($clientId) &&
             is_string($clientId) &&
+            !empty($clientSecret) &&
+            is_string($clientSecret) &&
             !empty($redirectUrl) &&
             is_string($redirectUrl)
         ) {
@@ -38,6 +40,10 @@ class OAuth2 extends ACMS_POST
 
             header('Location: ' . $url);
             exit;
+        }
+        else {
+            AcmsLogger::error('【Zoho plugin】 OAuth2認証のためのパラメータが不足しています。');
+            return null;
         }
 
         $this->Post;

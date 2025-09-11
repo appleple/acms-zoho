@@ -1,6 +1,6 @@
 <?php
 
-namespace Acms\Plugins\GoogleCalendar\GET\Zoho;
+namespace Acms\Plugins\Zoho\GET\Zoho;
 
 use ACMS_GET;
 use DB;
@@ -8,7 +8,7 @@ use SQL;
 use AcmsLogger;
 use Acms\Services\Facades\Session;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
-use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
+// use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
 
 class Callback extends ACMS_GET
 {
@@ -30,7 +30,6 @@ class Callback extends ACMS_GET
                 $clientId,
                 $clientSecret,
                 $redirectUrl,
-                null,
                 $grantToken
             );
             // 初期化
@@ -54,6 +53,7 @@ class Callback extends ACMS_GET
             'bid' => BID,
             'admin' => 'app_zoho_index',
         ));
+
         redirect($base_uri);
     }
 }
