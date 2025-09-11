@@ -10,7 +10,7 @@ use com\zoho\crm\api\UserSignature;
 use com\zoho\crm\api\util\Constants;
 
 /**
- * v2.1.0でstr_getcsv()の第3引数escapeが必須になったため、
+ * PHP 8.1でstr_getcsv()の第3引数escapeが必須になったため、
  * それに対応するために親クラスのメソッドをオーバーライドします。
  */
 
@@ -312,7 +312,7 @@ class CustomFileStore extends FileStore
 
     /**
      * Get the store instance
-     * 
+     *
      * @return CustomFileStore
      */
     public function getStore()
@@ -322,7 +322,7 @@ class CustomFileStore extends FileStore
 
     /**
      * Find token by grant token
-     * 
+     *
      * @param string $grantToken
      * @return OAuthToken|null
      */
@@ -332,7 +332,7 @@ class CustomFileStore extends FileStore
             $csvReader = file($this->filePath, FILE_IGNORE_NEW_LINES);
             $class = new \ReflectionClass(OAuthToken::class);
             $oauthToken = $class->newInstanceWithoutConstructor();
-            
+
             for ($index = 1; $index < sizeof($csvReader); $index++) {
                 $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
                 if (sizeof($nextRecord) > 6 && $nextRecord[6] == $grantToken) {
@@ -348,7 +348,7 @@ class CustomFileStore extends FileStore
 
     /**
      * Remove token by ID
-     * 
+     *
      * @param string $id
      * @return bool
      */
@@ -364,7 +364,7 @@ class CustomFileStore extends FileStore
 
     /**
      * Remove token by refresh token
-     * 
+     *
      * @param string $refreshToken
      * @return bool
      */
@@ -373,7 +373,7 @@ class CustomFileStore extends FileStore
         try {
             $csvReader = file($this->filePath, FILE_IGNORE_NEW_LINES);
             $isRowPresent = false;
-            
+
             for ($index = 1; $index < sizeof($csvReader); $index++) {
                 $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
                 if (sizeof($nextRecord) > 4 && $nextRecord[4] == $refreshToken) {
@@ -381,7 +381,7 @@ class CustomFileStore extends FileStore
                     unset($csvReader[$index]);
                 }
             }
-            
+
             if ($isRowPresent) {
                 file_put_contents($this->filePath, implode("\n", $csvReader));
                 return true;
