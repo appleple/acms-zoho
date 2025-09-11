@@ -309,4 +309,86 @@ class CustomFileStore extends FileStore
         $data[9] = $oauthToken->getAPIDomain();
         return $data;
     }
+
+    /**
+     * Get the store instance
+     * 
+     * @return CustomFileStore
+     */
+    public function getStore()
+    {
+        return $this;
+    }
+
+    /**
+     * Find token by grant token
+     * 
+     * @param string $grantToken
+     * @return OAuthToken|null
+     */
+    public function findTokenByGrantToken($grantToken)
+    {
+        try {
+            $csvReader = file($this->filePath, FILE_IGNORE_NEW_LINES);
+            $class = new \ReflectionClass(OAuthToken::class);
+            $oauthToken = $class->newInstanceWithoutConstructor();
+            
+            for ($index = 1; $index < sizeof($csvReader); $index++) {
+                $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
+                if (sizeof($nextRecord) > 6 && $nextRecord[6] == $grantToken) {
+                    $this->setMergeData($oauthToken, $nextRecord);
+                    return $oauthToken;
+                }
+            }
+            return null;
+        } catch (\Exception $e) {
+            throw new SDKException(Constants::TOKEN_STORE, Constants::GET_TOKEN_BY_ID_FILE_ERROR, $e);
+        }
+    }
+
+    /**
+     * Remove token by ID
+     * 
+     * @param string $id
+     * @return bool
+     */
+    public function removeTokenById($id)
+    {
+        try {
+            $this->deleteToken($id);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Remove token by refresh token
+     * 
+     * @param string $refreshToken
+     * @return bool
+     */
+    public function removeTokenByRefreshToken($refreshToken)
+    {
+        try {
+            $csvReader = file($this->filePath, FILE_IGNORE_NEW_LINES);
+            $isRowPresent = false;
+            
+            for ($index = 1; $index < sizeof($csvReader); $index++) {
+                $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
+                if (sizeof($nextRecord) > 4 && $nextRecord[4] == $refreshToken) {
+                    $isRowPresent = true;
+                    unset($csvReader[$index]);
+                }
+            }
+            
+            if ($isRowPresent) {
+                file_put_contents($this->filePath, implode("\n", $csvReader));
+                return true;
+            }
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }

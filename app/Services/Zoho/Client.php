@@ -4,6 +4,7 @@ namespace Acms\Plugins\Zoho\Services\Zoho;
 
 use SQL;
 use DB;
+use AcmsLogger;
 use com\zoho\api\authenticator\OAuthBuilder;
 use com\zoho\crm\api\InitializeBuilder;
 use com\zoho\crm\api\dc\USDataCenter;
@@ -14,7 +15,8 @@ use com\zoho\crm\api\Initializer;
 // use com\zoho\crm\api\SDKConfigBuilder;
 // use com\zoho\crm\api\ProxyBuilder;
 use com\zoho\crm\api\exception\SDKException;
-use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
+// use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
+use Acms\Plugins\Zoho\Services\Zoho\Store\CustomFileStore;
 use Acms\Plugins\Zoho\Services\Zoho\Store;
 use Error;
 
@@ -32,7 +34,7 @@ class Client
 
     private $dataCenterEnv = 'production';
 
-    private $loggerFilePath;
+    private $loggerFilePath = '/php_sdk_log.log';
 
     private $loggerLevel = 'info';
 
@@ -65,6 +67,9 @@ class Client
         if ($tokenStore !== 'file' && $tokenStore !== 'database') {
             throw new \InvalidArgumentException('ZOHO_TOKEN_STORE は file または database である必要があります。');
         }
+        if (env('ZOHO_LOGGER_FILE_PATH')) {
+            $this->loggerFilePath = env('ZOHO_LOGGER_FILE_PATH');
+        }
 
         /**
          * 最新のトークン情報を取得
@@ -75,7 +80,7 @@ class Client
                 // ファイルストアのパスが未設定
                 return false;
             }
-            $this->store = new ZohoFileStore($this->tokenPresistencePath);
+            $this->store = new CustomFileStore($this->tokenPresistencePath);
         }
         $this->tokenStore = $tokenStore;
     }
@@ -120,9 +125,13 @@ class Client
      * @param string|null $grantToken
      * @return string|null アクセストークンまたはnull
      */
-    public function initialize(?string $clientId = null, ?string $clientSecret = null, ?string $redirectUrl = null, ?string $grantToken = null)
-    {
-        if ($clientId && $clientSecret && $redirectUrl) {
+    public function initialize(
+        ?string $clientId = null,
+        ?string $clientSecret = null,
+        ?string $redirectUrl = null,
+        ?string $grantToken = null
+    ){
+        if ($clientId && $clientSecret && $redirectUrl && $grantToken) {
             $this->clientId = $clientId;
             $this->clientSecret = $clientSecret;
             $this->redirectUrl = $redirectUrl;
@@ -130,13 +139,13 @@ class Client
         } else {
             $tokenId = $this->getTokenIdByBid(BID);
             if (!$tokenId) {
-                '認証されていません';
+                AcmsLogger::error('【Zoho plugin】認証されていません。');
                 return null;
             }
             $this->tokenId = $tokenId;
             $token = $this->store->findTokenById($tokenId);
             if (!$token) {
-                'トークンがストアから削除された可能性があります。再認証してください。';
+                AcmsLogger::error('【Zoho plugin】トークンがストアから削除された可能性があります。再認証してください。');
                 return null;
             }
 
@@ -155,10 +164,10 @@ class Client
 
             $logger = (new LogBuilder())
                 ->level(Levels::INFO)
-                ->filePath("/var/www/html/acms-301/php_sdk_log.log")
+                ->filePath($this->loggerFilePath)
                 ->build();
 
-            $token = $this->buildToken(!!$grantToken);
+            $token = $this->buildToken(!!$this->grantToken);
 
             /**
              * トークンの初期化
@@ -207,7 +216,7 @@ class Client
             Initializer::removeUserConfiguration($token);
 
             // FileStore からトークン削除
-            $fileStore = new ZohoFileStore(env('ZOHO_TOKEN_PERSISTENCE_PATH'));
+            $fileStore = new CustomFileStore(env('ZOHO_TOKEN_PERSISTENCE_PATH'));
             if ($this->tokenId) {
                 $fileStore->removeTokenById($this->tokenId);
             } else {
