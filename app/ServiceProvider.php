@@ -187,7 +187,7 @@ class ServiceProvider extends ACMS_App
             if (Storage::exists($configFilePath) === false) {
                 if (class_exists('AcmsLogger')) {
                     AcmsLogger::warning(
-                        "【Zoho plugin】 Zohoディレクトリに {$configFile} が見つかりませんでした。"
+                        "【Zoho plugin】Zohoディレクトリに {$configFile} が見つかりませんでした。"
                     );
                 } else {
                     userErrorLog(
@@ -200,7 +200,7 @@ class ServiceProvider extends ACMS_App
             $config = preg_replace('/{application_log_file_path}/', '', $config);
             Storage::put($configFileDestPath, $config);
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::info("【Zoho plugin】 Zohoの設定ファイルを作成しました。", [
+                AcmsLogger::info("【Zoho plugin】Zohoの設定ファイルを作成しました。", [
                     'path' => $configFileDestPath,
                 ]);
             }
@@ -209,7 +209,7 @@ class ServiceProvider extends ACMS_App
             if (Storage::exists($oauthConfigFilePath) === false) {
                 if (class_exists('AcmsLogger')) {
                     AcmsLogger::warning(
-                        "【Zoho plugin】 Zohoディレクトリに {$oauthConfigFile} が見つかりませんでした。"
+                        "【Zoho plugin】Zohoディレクトリに {$oauthConfigFile} が見つかりませんでした。"
                     );
                 } else {
                     userErrorLog(
@@ -224,7 +224,7 @@ class ServiceProvider extends ACMS_App
             $oauthConfig = preg_replace('/{token_persistence_path}/', '', $oauthConfig);
             Storage::put($oauthConfigFileDestPath, $oauthConfig);
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::info("【Zoho plugin】 ZohoのOAuth設定ファイルを作成しました。", [
+                AcmsLogger::info("【Zoho plugin】ZohoのOAuth設定ファイルを作成しました。", [
                     'path' => $oauthConfigFileDestPath,
                 ]);
             }
@@ -267,7 +267,7 @@ class ServiceProvider extends ACMS_App
         if (Storage::exists($logFilePath) === false) {
             Storage::put($logFilePath, '');
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::info("【Zoho plugin】 ZohoのOAuthログファイルを作成しました。", [
+                AcmsLogger::info("【Zoho plugin】ZohoのOAuthログファイルを作成しました。", [
                     'path' => $logFilePath,
                 ]);
             }

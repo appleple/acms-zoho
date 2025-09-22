@@ -14,8 +14,9 @@ declare global {
         }
       }
       addListener: any
+      removeListener?: any
     }
-    csrfToken: string
+    csrfToken?: string
   }
 }
 
