@@ -1,6 +1,5 @@
-import FieldApiSelect from './dispatch/dispatch-field-api-select';
+import DispatchLinkField from './dispatch/dispatch-link-field';
 
 export default function App() {
-  FieldApiSelect();
-  return null;
+  return <DispatchLinkField />;
 }

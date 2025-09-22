@@ -4,11 +4,11 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Mapper;
 
 use Field;
 use Acms\Plugins\Zoho\Services\Zoho\Mapper;
-// use Acms\Plugin\Zoho\Services\Zoho\Models\Module as ModuleModel;
 use com\zoho\crm\api\modules\Modules as ZohoModules;
 
 class Module extends Mapper
 {
+
     /** @var ZohoModules[] Zohoから取得したモジュールのリスト */
     public $modules;
 
@@ -70,19 +70,6 @@ class Module extends Mapper
                 'apiName' => $module->getAPIName(),
                 'fields' => []
             ];
-
-            // モジュールの項目情報を取得
-            $fields = $module->getFields();
-            if (!empty($fields)) {
-                foreach ($fields as $field) {
-                    $moduleData['fields'][] = [
-                        'fieldName' => $field->getFieldName(),
-                        'apiName' => $field->getAPIName(),
-                        'dataType' => $field->getDataType(),
-                        'isRequired' => $field->getMandatory() ? true : false,
-                    ];
-                }
-            }
 
             $result[] = $moduleData;
         }

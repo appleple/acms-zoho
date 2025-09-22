@@ -1,44 +1,35 @@
 <?php
 
-namespace Acms\Plugins\Zoho\GET\Zoho;
+namespace Acms\Plugins\Zoho\POST\Zoho;
 
-// use Tpl;
-use ACMS_Corrector;
 use Field;
-use Template;
-use Acms\Plugins\Zoho\GET\Zoho;
+use Common;
+use AcmsLogger;
+use Acms\Plugins\Zoho\POST\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
-use Acms\Plugins\Zoho\Services\Zoho\Mapper\Module as ModuleMapper;
+use Acms\Plugins\Zoho\Services\Zoho\Mapper\Module as ZohoModuleMapper;
 
 class Module extends Zoho
 {
-    public function get()
+    public function post()
     {
-        $Tpl = new Template($this->tpl, new ACMS_Corrector());
-
         try {
             $zohoClient = new ZohoClient();
             $zohoClient->initialize();
 
             if (is_null($zohoClient->getAccessToken())) {
-                return;
+                return null;
             }
-
             // Zoho からモジュールを取得、Mapperの設定
             $api = new ZohoApi($zohoClient);
             $modules = $api->getModules();
 
-            foreach ($modules as $module) {
-                $Tpl->add('module:loop', [
-                    'apiName' => $module['apiName'],
-                ]);
-            }
+            $moduleMapper = new ZohoModuleMapper($modules, new Field());
+
+            return Common::ResponseJson($moduleMapper->toArray());
         } catch (\Exception $e) {
+            AcmsLogger::error('【Zoho plugin】モジュール情報の取得に失敗しました: ' . $e->getMessage());
         }
-
-        // var_dump($Tpl);
-
-        return $Tpl->get();
     }
 }

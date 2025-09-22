@@ -56,7 +56,7 @@ class Engine
         try {
             if (is_null($this->zohoClient)) {
                 if (class_exists('AcmsLogger')) {
-                    AcmsLogger::error('【Zoho plugin】 Zohoクライアントの初期化に失敗しました。');
+                    AcmsLogger::error('【Zoho plugin】Zohoクライアントの初期化に失敗しました。');
                 }
                 return;
             }
@@ -82,12 +82,12 @@ class Engine
             }
 
             if (class_exists('AcmsLogger')) {
-                AcmsLogger::info('【Zoho plugin】 データの送信が完了しました。');
+                AcmsLogger::info('【Zoho plugin】データの送信が完了しました。');
             }
         } catch (\Exception $e) {
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error(
-                    '【Zoho plugin】 データの送信に失敗しました。',
+                    '【Zoho plugin】データの送信に失敗しました。',
                     Common::exceptionArray($e)
                 );
             } else {
