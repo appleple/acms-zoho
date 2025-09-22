@@ -40,7 +40,11 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "classnames": "^2.5.1",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-select": "^5.10.2",
+    "styled-components": "^6.1.19",
+    "swr": "^2.3.6"
   }
 }
