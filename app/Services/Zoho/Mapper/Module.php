@@ -4,6 +4,7 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Mapper;
 
 use Field;
 use Acms\Plugins\Zoho\Services\Zoho\Mapper;
+use Acms\Plugins\Zoho\Services\Zoho\Mapper\ModuleField as ModuleFieldMapper;
 use com\zoho\crm\api\modules\Modules as ZohoModules;
 
 class Module extends Mapper
@@ -68,6 +69,7 @@ class Module extends Mapper
             $moduleData = [
                 'moduleName' => $module->getModuleName(),
                 'apiName' => $module->getAPIName(),
+                'singularLabel' => $module->getSingularLabel(),
                 'fields' => []
             ];
 

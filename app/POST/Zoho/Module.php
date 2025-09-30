@@ -19,11 +19,12 @@ class Module extends Zoho
             $zohoClient->initialize();
 
             if (is_null($zohoClient->getAccessToken())) {
-                return null;
+                AcmsLogger::error('【Zoho plugin】認証に失敗しました。');
+                return Common::ResponseJson(['error' => 'Zoho authentication failed']);
             }
             // Zoho からモジュールを取得、Mapperの設定
             $api = new ZohoApi($zohoClient);
-            $modules = $api->getModules();
+            $modules = $api->module()->getModules();
 
             $moduleMapper = new ZohoModuleMapper($modules, new Field());
 
