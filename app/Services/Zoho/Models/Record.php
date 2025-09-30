@@ -11,8 +11,8 @@ class Record
     /** @var string|null ID */
     private $id;
 
-    /** @var string API名 */
-    private $scope;
+    /** @var string モジュールAPI名 */
+    private $moduleApiName;
 
     /**
      * Todo: 何用か調査
@@ -30,23 +30,23 @@ class Record
     private $type;
 
     /**
-     * @param string $scope API名
+     * @param string $moduleApiName モジュールAPI名
      * @param string $type insert|update
      * @param string $uniqueKey
      */
-    public function __construct(string $scope, string $type, string $uniqueKey = '')
+    public function __construct(string $moduleApiName, string $type, string $uniqueKey = '')
     {
-        $this->scope = $scope;
+        $this->moduleApiName = $moduleApiName;
         $this->type = $type;
         $this->uniqueKey = $uniqueKey;
     }
 
     /**
-     * @return string ex) Reads, Contacts
+     * @return string ex) Leads, Contacts
      */
-    public function getScope(): string
+    public function getModuleApiName(): string
     {
-        return $this->scope;
+        return $this->moduleApiName;
     }
 
     /**
@@ -153,7 +153,7 @@ class Record
     public function toArray(): array
     {
         return [
-            'scope' => $this->scope,
+            'moduleApiName' => $this->moduleApiName,
             'uniqueKey' => $this->uniqueKey,
             'type' => $this->type,
             'field' => $this->fields,
@@ -169,7 +169,8 @@ class Record
      */
     public static function fromArray(array $data): self
     {
-        $record = new self($data['scope'], $data['type'], $data['uniqueKey'] ?? '');
+        $moduleApiName = $data['moduleApiName'] ?? $data['scope'] ?? ''; // 後方互換性のためscopeも確認
+        $record = new self($moduleApiName, $data['type'], $data['uniqueKey'] ?? '');
 
         if (isset($data['field']) && is_array($data['field'])) {
             $record->addFields($data['field']);
