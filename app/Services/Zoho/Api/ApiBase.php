@@ -2,10 +2,7 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
-use Acms\Plugins\Zoho\Services\Zoho\Models\Record;
 use Acms\Plugins\Zoho\Services\Zoho\Client;
-
-use com\zoho\crm\api\record\Record as ZohoRecord;
 
 abstract class ApiBase
 {
@@ -60,37 +57,5 @@ abstract class ApiBase
         }
 
         return '';
-    }
-
-    /**
-     * Recordオブジェクトを ZohoRecord に変換
-     *
-     * @param Record $record 変換するレコード
-     * @return ZohoRecord 変換されたAPIレコード
-     */
-    protected function createZohoRecord(Record $record): ZohoRecord
-    {
-        $scope = $record->getScope();
-        $apiRecord = new ZohoRecord();
-
-        if ($record->getId()) {
-            $apiRecord->setId($record->getId());
-        }
-
-        foreach ($record->getFields() as $labelName => $value) {
-            if (empty($labelName)) {
-                continue;
-            }
-
-            $apiName = $this->getApiNameByLabelName($labelName, $scope);
-            if (empty($apiName)) {
-                continue;
-            }
-
-            $field = new \com\zoho\crm\api\record\Field($apiName);
-            $apiRecord->addFieldValue($field, $value);
-        }
-
-        return $apiRecord;
     }
 }

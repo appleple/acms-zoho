@@ -5,6 +5,7 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record;
 use AcmsLogger;
 
+use com\zoho\crm\api\record\Record as ZohoRecord;
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
 use com\zoho\crm\api\record\RecordOperations;
@@ -37,45 +38,45 @@ class RecordApi extends ApiBase
      * @param array $fields 取得するフィールド名のリスト
      * @return array|null 取得されたレコードの配列、失敗時はnull
      */
-    public function getRecords(string $moduleAPIName, array $fields = ["id", "Email"])
-    {
-        try {
-            $recordOperations = new RecordOperations();
-            $paramInstance = new ParameterMap();
-            $headerInstance = new HeaderMap();
+    // public function getRecords(string $moduleAPIName, array $fields = ["id", "Email"])
+    // {
+    //     try {
+    //         $recordOperations = new RecordOperations();
+    //         $paramInstance = new ParameterMap();
+    //         $headerInstance = new HeaderMap();
 
-            foreach ($fields as $field) {
-                $paramInstance->add(GetRecordsParam::fields(), $field);
-            }
+    //         foreach ($fields as $field) {
+    //             $paramInstance->add(GetRecordsParam::fields(), $field);
+    //         }
 
-            $response = $recordOperations->getRecords($moduleAPIName, $paramInstance, $headerInstance);
+    //         $response = $recordOperations->getRecords($moduleAPIName, $paramInstance, $headerInstance);
 
-            if ($response != null) {
-                $responseHandler = $response->getObject();
+    //         if ($response != null) {
+    //             $responseHandler = $response->getObject();
 
-                if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
-                    $records = $responseHandler->getData();
-                    $result = [];
+    //             if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
+    //                 $records = $responseHandler->getData();
+    //                 $result = [];
 
-                    foreach ($records as $record) {
-                        $recordData = [];
-                        foreach ($record->getKeyValues() as $keyName => $value) {
-                            $recordData[$keyName] = $value;
-                        }
-                        $result[] = $recordData;
-                    }
+    //                 foreach ($records as $record) {
+    //                     $recordData = [];
+    //                     foreach ($record->getKeyValues() as $keyName => $value) {
+    //                         $recordData[$keyName] = $value;
+    //                     }
+    //                     $result[] = $recordData;
+    //                 }
 
-                    return $result;
-                } else if ($responseHandler instanceof APIException) {
-                    AcmsLogger::info('Zoho API Exception in getRecords: ' . $responseHandler->getMessage());
-                }
-            }
-        } catch (\Exception $e) {
-            AcmsLogger::info('Exception in getRecords: ' . $e->getMessage());
-        }
+    //                 return $result;
+    //             } else if ($responseHandler instanceof APIException) {
+    //                 AcmsLogger::info('Zoho API Exception in getRecords: ' . $responseHandler->getMessage());
+    //             }
+    //         }
+    //     } catch (\Exception $e) {
+    //         AcmsLogger::info('Exception in getRecords: ' . $e->getMessage());
+    //     }
 
-        return null;
-    }
+    //     return null;
+    // }
 
     /**
      * レコードを検索する
@@ -84,43 +85,43 @@ class RecordApi extends ApiBase
      * @param string $criteria 検索条件
      * @return array|null 検索されたレコードの配列、失敗時はnull
      */
-    public function searchRecords(string $moduleAPIName, string $criteria)
-    {
-        try {
-            $recordOperations = new RecordOperations();
-            $paramInstance = new ParameterMap();
-            $headerInstance = new HeaderMap();
+    // public function searchRecords(string $moduleAPIName, string $criteria)
+    // {
+    //     try {
+    //         $recordOperations = new RecordOperations();
+    //         $paramInstance = new ParameterMap();
+    //         $headerInstance = new HeaderMap();
 
-            $paramInstance->add(SearchRecordsParam::criteria(), $criteria);
+    //         $paramInstance->add(SearchRecordsParam::criteria(), $criteria);
 
-            $response = $recordOperations->searchRecords($moduleAPIName, $paramInstance, $headerInstance);
+    //         $response = $recordOperations->searchRecords($moduleAPIName, $paramInstance, $headerInstance);
 
-            if ($response != null) {
-                $responseHandler = $response->getObject();
+    //         if ($response != null) {
+    //             $responseHandler = $response->getObject();
 
-                if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
-                    $records = $responseHandler->getData();
-                    $result = [];
+    //             if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
+    //                 $records = $responseHandler->getData();
+    //                 $result = [];
 
-                    foreach ($records as $record) {
-                        $recordData = [];
-                        foreach ($record->getKeyValues() as $keyName => $value) {
-                            $recordData[$keyName] = $value;
-                        }
-                        $result[] = $recordData;
-                    }
+    //                 foreach ($records as $record) {
+    //                     $recordData = [];
+    //                     foreach ($record->getKeyValues() as $keyName => $value) {
+    //                         $recordData[$keyName] = $value;
+    //                     }
+    //                     $result[] = $recordData;
+    //                 }
 
-                    return $result;
-                } else if ($responseHandler instanceof APIException) {
-                    AcmsLogger::info('Zoho API Exception in searchRecords: ' . $responseHandler->getMessage());
-                }
-            }
-        } catch (\Exception $e) {
-            AcmsLogger::info('Exception in searchRecords: ' . $e->getMessage());
-        }
+    //                 return $result;
+    //             } else if ($responseHandler instanceof APIException) {
+    //                 AcmsLogger::info('Zoho API Exception in searchRecords: ' . $responseHandler->getMessage());
+    //             }
+    //         }
+    //     } catch (\Exception $e) {
+    //         AcmsLogger::info('Exception in searchRecords: ' . $e->getMessage());
+    //     }
 
-        return null;
-    }
+    //     return null;
+    // }
 
     /**
      * レコードを挿入する
@@ -148,12 +149,13 @@ class RecordApi extends ApiBase
         }
 
         try {
-            $recordOperations = new RecordOperations();
+            $moduleApiName = $records[0]->getModuleApiName();
+            $recordOperations = new RecordOperations($moduleApiName);
             $request = new BodyWrapper();
             $request->setData($recordsList);
 
             $headerInstance = new HeaderMap();
-            $response = $recordOperations->createRecords($records[0]->getScope(), $request, $headerInstance);
+            $response = $recordOperations->createRecords($request, $headerInstance);
 
             if ($response != null) {
                 $responseHandler = $response->getObject();
@@ -215,12 +217,13 @@ class RecordApi extends ApiBase
         }
 
         try {
-            $recordOperations = new RecordOperations();
+            $moduleApiName = $records[0]->getModuleApiName();
+            $recordOperations = new RecordOperations($moduleApiName);
             $request = new BodyWrapper();
             $request->setData($recordsList);
 
             $headerInstance = new HeaderMap();
-            $response = $recordOperations->updateRecords($records[0]->getScope(), $request, $headerInstance);
+            $response = $recordOperations->updateRecords($request, $headerInstance);
 
             if ($response != null) {
                 $responseHandler = $response->getObject();
@@ -257,7 +260,7 @@ class RecordApi extends ApiBase
      */
     private function setIdByUniqueKey(Record $record, string $uniqueKey)
     {
-        $scope = $record->getScope();
+        $scope = $record->getModuleApiName();
         $fields = $record->getFields();
 
         if (!isset($fields[$uniqueKey]) || empty($fields[$uniqueKey])) {
@@ -273,13 +276,14 @@ class RecordApi extends ApiBase
 
         try {
             $criteria = "(" . $apiName . ":equals:" . $uniqueValue . ")";
-            $searchResults = $this->searchRecords($scope, $criteria);
+            // TODO: searchRecordsメソッドを実装する必要があります
+            // $searchResults = $this->searchRecords($scope, $criteria);
 
-            if ($searchResults && count($searchResults) > 0) {
-                $entityId = $searchResults[0]['id'];
-                $record->setId($entityId);
-                return true;
-            }
+            // if ($searchResults && count($searchResults) > 0) {
+            //     $entityId = $searchResults[0]['id'];
+            //     $record->setId($entityId);
+            //     return true;
+            // }
         } catch (\Exception $e) {
             // 検索に失敗した場合は何もしない
         }
@@ -293,37 +297,37 @@ class RecordApi extends ApiBase
      * @param array $relatedScopes 関連スコープの配列
      * @return bool 成功した場合はtrue
      */
-    public function updateRelatedRecords(array $relatedScopes)
-    {
-        $records = $this->getProcessedRecords();
+    // public function updateRelatedRecords(array $relatedScopes)
+    // {
+    //     $records = $this->getProcessedRecords();
 
-        foreach ($relatedScopes as $relatedScope) {
-            $targetScope = $relatedScope['target'];
+    //     foreach ($relatedScopes as $relatedScope) {
+    //         $targetScope = $relatedScope['target'];
 
-            $targets = array_filter($records, function ($item) use ($targetScope) {
-                return $item->getScope() === $targetScope;
-            });
+    //         $targets = array_filter($records, function ($item) use ($targetScope) {
+    //             return $item->getScope() === $targetScope;
+    //         });
 
-            $items = array_filter($records, function ($item) use ($relatedScope) {
-                return $item->getScope() === $relatedScope['scope'];
-            });
+    //         $items = array_filter($records, function ($item) use ($relatedScope) {
+    //             return $item->getScope() === $relatedScope['scope'];
+    //         });
 
-            foreach ($targets as $target) {
-                foreach ($items as $item) {
-                    if ($this->updateLookupField(
-                        $item,
-                        $relatedScope['field'],
-                        $target,
-                        $relatedScope['targetField']
-                    )) {
-                        $this->updateRecords([$item]);
-                    }
-                }
-            }
-        }
+    //         foreach ($targets as $target) {
+    //             foreach ($items as $item) {
+    //                 if ($this->updateLookupField(
+    //                     $item,
+    //                     $relatedScope['field'],
+    //                     $target,
+    //                     $relatedScope['targetField']
+    //                 )) {
+    //                     $this->updateRecords([$item]);
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     /**
      * ルックアップフィールドを更新する
@@ -334,21 +338,53 @@ class RecordApi extends ApiBase
      * @param string $relatedField 関連フィールド名
      * @return bool 成功した場合はtrue
      */
-    private function updateLookupField(
-        Record $record,
-        string $lookupField,
-        Record $relatedRecord,
-        string $relatedField
-    ) {
-        $relatedFields = $relatedRecord->getFields();
+    // private function updateLookupField(
+    //     Record $record,
+    //     string $lookupField,
+    //     Record $relatedRecord,
+    //     string $relatedField
+    // ) {
+    //     $relatedFields = $relatedRecord->getFields();
 
-        if (!isset($relatedFields[$relatedField])) {
-            return false;
+    //     if (!isset($relatedFields[$relatedField])) {
+    //         return false;
+    //     }
+
+    //     $relatedValue = $relatedFields[$relatedField];
+    //     $record->addField($lookupField, $relatedValue);
+
+    //     return true;
+    // }
+
+        /**
+     * Recordオブジェクトを ZohoRecord に変換
+     *
+     * @param Record $record 変換するレコード
+     * @return ZohoRecord 変換されたAPIレコード
+     */
+    private function createZohoRecord(Record $record): ZohoRecord
+    {
+        $scope = $record->getModuleApiName();
+        $apiRecord = new ZohoRecord();
+
+        if ($record->getId()) {
+            $apiRecord->setId($record->getId());
         }
 
-        $relatedValue = $relatedFields[$relatedField];
-        $record->addField($lookupField, $relatedValue);
+        foreach ($record->getFields() as $labelName => $value) {
+            if (empty($labelName)) {
+                continue;
+            }
 
-        return true;
+            $apiName = $this->getApiNameByLabelName($labelName, $scope);
+            if (empty($apiName)) {
+                continue;
+            }
+
+            $field = new \com\zoho\crm\api\record\Field($apiName);
+            $apiRecord->addFieldValue($field, $value);
+        }
+
+        return $apiRecord;
     }
 }
