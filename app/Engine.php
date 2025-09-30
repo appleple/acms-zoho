@@ -53,6 +53,8 @@ class Engine
      */
     public function send()
     {
+        AcmsLogger::info('【Zoho plugin】Zohoへ送信準備中です。');
+
         try {
             if (is_null($this->zohoClient)) {
                 if (class_exists('AcmsLogger')) {
@@ -66,7 +68,7 @@ class Engine
             // Zoho APIクライアントの作成
             $api = new ZohoApi($this->zohoClient);
 
-            // レコードの作成と処理
+            // レコードの構造体作成と、送信されたフィールドデータを作成した構造体に追加
             $records = $recordMapper->makeRecords();
             $records = $recordMapper->addFieldsToRecords($records);
 
@@ -74,11 +76,11 @@ class Engine
             $updateRecords = $recordMapper->getRecordsByType($records, 'update');
             $insertRecords = $recordMapper->getRecordsByType($records, 'insert');
 
-            if (!empty($updateRecords)) {
-                $api->updateRecords($updateRecords);
-            }
+            // if (!empty($updateRecords)) {
+            //     $api->record()->updateRecords($updateRecords);
+            // }
             if (!empty($insertRecords)) {
-                $api->insertRecords($insertRecords);
+                $api->record()->insertRecords($insertRecords);
             }
 
             if (class_exists('AcmsLogger')) {

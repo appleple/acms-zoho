@@ -13,10 +13,13 @@ use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
 class Record extends Mapper
 {
     /** @var Field フォームのフィールド */
-    private $field;
+    public $field;
 
     /** @var Field FormIDの拡張アプリ設定 */
-    private $config;
+    public $config;
+
+    /** @var RecordModel[] レコード */
+    public $records;
 
     /**
      * コンストラクタ
@@ -31,7 +34,7 @@ class Record extends Mapper
     }
 
     /**
-     * フォーム設定からZohoレコード構造を作成
+     * フォーム設定から、InsertとUpdateを割り振ったZohoレコード構造体を作成
      *
      * @return RecordModel[]
      */
@@ -96,7 +99,7 @@ class Record extends Mapper
 
                 // 新しいレコードを作成してフィールドをコピー
                 $newRecord = new RecordModel(
-                    $record->getScope(),
+                    $record->getModuleApiName(),
                     $record->getType(),
                     $record->getUniqueKey()
                 );
@@ -124,16 +127,16 @@ class Record extends Mapper
      */
     private function mapFields(RecordModel $record, ?array $groupArr, int $index)
     {
-        $scope = $record->getScope();
+        $scope = $record->getModuleApiName();
         $type = $record->getType();
-        $fieldKeys = $this->config->getArray('zoho_field_key');
+        $fieldKeys = $this->config->getArray('zoho_link_field_module_field');
         $item = [];
 
         foreach ($fieldKeys as $i => $fieldKey) {
-            $key = $this->config->get('zoho_field_cms_key', '', $i);
-            $scopes = explode(',', $this->config->get('zoho_field_scope', '', $i));
-            $canInsert = $this->config->get('zoho_field_insert', '', $i);
-            $canUpdate = $this->config->get('zoho_field_update', '', $i);
+            $key = $this->config->get('zoho_link_field_cms_field', '', $i);
+            $scopes = explode(',', $this->config->get('zoho_link_field_module', '', $i));
+            $canInsert = $this->config->get('zoho_link_field_insert', '', $i);
+            $canUpdate = $this->config->get('zoho_link_field_update', '', $i);
 
             foreach ($scopes as $currentScope) {
                 if ($scope === $currentScope) {
@@ -189,7 +192,7 @@ class Record extends Mapper
      */
     public function getGroupArray(RecordModel $record)
     {
-        $zohoScope = $record->getScope();
+        $zohoScope = $record->getModuleApiName();
         $type = $record->getType();
         $keys = $this->config->getArray('zoho_field_cms_key');
 
