@@ -13,7 +13,7 @@ if (!targetElement) {
     targetElement = document.createElement('div');
     targetElement.id = 'js-acms-zoho-container';
     targetElement.style.display = 'none'; // 非表示にする（dispatch処理のみ）
-    table.parentNode?.insertBefore(targetElement, table);
+    table.parentNode && table.parentNode.insertBefore(targetElement, table);
   }
 }
 

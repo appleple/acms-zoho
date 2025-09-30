@@ -1,49 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { createRoot, Root } from 'react-dom/client';
-import { ModuleSelect } from '../features/link-field/module-select';
-import { ModuleFieldSelect } from '../features/link-field/module-field-select';
+import { useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import { LinkFieldRow } from '../features/link-field/link-field-row';
 
-const linkFieldId = '#js-acms-zoho-link-field';
+const linkFieldContainerSelector = '#js-acms-zoho-link-field';
+const linkFieldRowSelector = '.js-acms-zoho-link-field-row';
 
-const renderModuleSelect = (props: {
-  name: string;
-  value: string;
-  relationItemId: string | null;
-  onModuleChange: (moduleApiName: string) => void;
-}) => <ModuleSelect {...props} />;
 
-const renderItemSelect = (props: {
-  name: string;
-  value: string;
-  moduleApiName: string | null;
-}) => <ModuleFieldSelect {...props} />;
+// マウント済み要素を追跡
+const mountedElements = new WeakSet<Element>();
 
 export default function DispatchLinkField() {
-  const [roots, setRoots] = useState<Map<Element, Root>>(new Map());
-  const rootsRef = React.useRef<Map<Element, Root>>(new Map());
-
-  /**
-   * React Rootを取得または作成する共通ロジック
-   */
-  const getOrCreateRoot = (element: HTMLElement): Root | null => {
-    let root = rootsRef.current.get(element);
-
-    if (!root) {
-      try {
-        root = createRoot(element);
-        rootsRef.current.set(element, root);
-        setRoots(prev => new Map(prev.set(element, root)));
-      } catch (error) {
-        console.error('Error creating React root:', error);
-        return null;
-      }
-    }
-
-    return root;
-  };
-
   useEffect(() => {
-    const linkFieldContainer = document.querySelector(linkFieldId);
+    const linkFieldContainer = document.querySelector(linkFieldContainerSelector);
 
     if (!linkFieldContainer) {
       return;
@@ -55,9 +23,11 @@ export default function DispatchLinkField() {
     // 新しい行が追加されたときのイベントリスナー
     const handleAddRow = (event: CustomEvent) => {
       const newRow = event.detail?.item;
-      if (newRow && newRow.closest(linkFieldId)) {
-        mountLinkFieldRow(newRow);
-        // setFieldRows(prev => [...prev, newRow]); // 削除: 未定義の関数
+      if (newRow && newRow.closest(linkFieldContainerSelector)) {
+        const linkFieldRow = newRow.querySelector(linkFieldRowSelector) || newRow.closest(linkFieldRowSelector);
+        if (linkFieldRow) {
+          mountLinkFieldRow(linkFieldRow);
+        }
       }
     };
 
@@ -70,7 +40,6 @@ export default function DispatchLinkField() {
     document.addEventListener('acmsAddCustomFieldGroup', handleAddRow as EventListener);
 
     return () => {
-      rootsRef.current.forEach(root => root.unmount());
       if (window.ACMS && window.ACMS.removeListener) {
         window.ACMS.removeListener('acmsAddCustomFieldGroup', handleAddRow);
       }
@@ -82,71 +51,61 @@ export default function DispatchLinkField() {
    * 既存の行をマウント
    */
   const mountExistingRows = () => {
-    const linkFieldContainer = document.querySelector(linkFieldId);
+    const linkFieldContainer = document.querySelector(linkFieldContainerSelector);
     if (!linkFieldContainer) return;
 
-    const rows = linkFieldContainer.querySelectorAll('tbody tr:not(.item-template)');
-    rows.forEach(mountLinkFieldRow);
+    const linkFieldRows = linkFieldContainer.querySelectorAll(linkFieldRowSelector);
+    linkFieldRows.forEach(mountLinkFieldRow);
   };
 
   /**
    * 単一行のReactコンポーネントをマウント
    */
-  const mountLinkFieldRow = (row: Element) => {
-    const moduleDiv = row.querySelector('div[data-acms-zoho-link-field-module]') as HTMLElement;
-    const itemDiv = row.querySelector('div[data-acms-zoho-link-field-item]') as HTMLElement;
+  const mountLinkFieldRow = (linkFieldRow: Element) => {
+    const moduleInput = linkFieldRow.querySelector('[data-acms-zoho-link-field-module]') as HTMLInputElement;
+    const moduleFieldInput = linkFieldRow.querySelector('[data-acms-zoho-link-field-module-field]') as HTMLInputElement;
+    const rootElement = linkFieldRow.querySelector('[data-acms-zoho-link-field-root]') as HTMLElement;
 
-    if (moduleDiv) mountModuleSelect(moduleDiv);
-    if (itemDiv) mountModuleFieldSelect(itemDiv);
+    if (moduleInput && moduleFieldInput && rootElement) {
+      mountUnifiedLinkFieldRow(linkFieldRow, moduleInput, moduleFieldInput, rootElement);
+    }
   };
 
   /**
-   * ModuleSelectコンポーネントをマウント
+   * 統合されたLinkFieldRowコンポーネントをマウント
    */
-  const mountModuleSelect = (moduleDiv: HTMLElement) => {
-    const name = moduleDiv.getAttribute('name') || '';
-    const value = moduleDiv.getAttribute('value') || '';
-    const row = moduleDiv.closest('tr');
-    const itemDiv = row?.querySelector('div[data-acms-zoho-link-field-item]') as HTMLElement;
+  const mountUnifiedLinkFieldRow = (linkFieldRow: Element, moduleInput: HTMLInputElement, moduleFieldInput: HTMLInputElement, rootElement: HTMLElement) => {
+    // 既にマウント済みの行はスキップ
+    if (mountedElements.has(linkFieldRow)) {
+      return;
+    }
 
-    const root = getOrCreateRoot(moduleDiv);
+    const moduleName = moduleInput.getAttribute('name') || '';
+    const moduleValue = moduleInput.value || moduleInput.getAttribute('value') || '';
+    const moduleFieldName = moduleFieldInput.getAttribute('name') || '';
+    const moduleFieldValue = moduleFieldInput.value || moduleFieldInput.getAttribute('value') || '';
+
+    // data-acms-zoho-link-field-root要素にマウント
+    const root = createRoot(rootElement);
     if (!root) return;
 
-    root.render(
-      renderModuleSelect({
-        name,
-        value,
-        relationItemId: null,
-        onModuleChange: (moduleApiName) => handleModuleChange(moduleApiName, itemDiv)
-      })
-    );
-  };
+    try {
+      root.render(
+        <LinkFieldRow
+          moduleInputRef={moduleInput}
+          moduleFieldInputRef={moduleFieldInput}
+          moduleName={moduleName}
+          moduleValue={moduleValue}
+          moduleFieldName={moduleFieldName}
+          moduleFieldValue={moduleFieldValue}
+        />
+      );
 
-  /**
-   * ModuleFieldSelectコンポーネントをマウント
-   */
-  const mountModuleFieldSelect = (itemDiv: HTMLElement, moduleApiName: string | null = null) => {
-    const name = itemDiv.getAttribute('name') || '';
-    const value = itemDiv.getAttribute('value') || '';
-
-    const root = getOrCreateRoot(itemDiv);
-    if (!root) return;
-
-    root.render(
-      renderItemSelect({
-        name,
-        value,
-        moduleApiName
-      })
-    );
-  };
-
-  /**
-   * モジュール変更時にModuleFieldSelectを更新
-   */
-  const handleModuleChange = (moduleApiName: string, itemDiv: HTMLElement | null) => {
-    if (!itemDiv) return;
-    mountModuleFieldSelect(itemDiv, moduleApiName);
+      // マウント完了後に行を追跡リストに追加
+      mountedElements.add(linkFieldRow);
+    } catch (error) {
+      console.error('Error rendering LinkFieldRow:', error);
+    }
   };
 
   return null; // このコンポーネント自体は何もレンダリングしない
