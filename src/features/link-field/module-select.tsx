@@ -1,51 +1,80 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { SelectInstance } from 'react-select';
+import RichSelect from '../../components/rich-select/rich-select';
 import { useModulesSWR } from '../../hooks/use-modules-swr';
+import { ModuleData } from '../../types';
+import { parseApiNames, stringifyApiNames } from '../../utils';
 
-interface Props {
-  name: string;
-  value: string;
-  relationItemId: string | null;
-  onModuleChange?: (moduleApiName: string) => void;
+interface ModuleSelectProps
+  extends Partial<
+    Pick<
+      React.ComponentPropsWithoutRef<typeof RichSelect>,
+      'id' | 'inputId' | 'isDisabled' | 'form' | 'name' | 'menuPortalTarget'
+    >
+  > {
+  defaultValue?: string;
+  onChange?: (value: ModuleData[]) => void;
+  originalInputRef?: HTMLInputElement; // 元のinput要素への参照
 }
 
-export const ModuleSelect = ({ name, value, relationItemId, onModuleChange }: Props) => {
-  const { modules, isLoading: isModulesLoading } = useModulesSWR();
-  const [selectedModule, setSelectedModule] = useState<string>(value || '');
+export const ModuleSelect = ({
+  onChange,
+  defaultValue: defaultValueProp = '',
+  originalInputRef,
+  ...props
+}: ModuleSelectProps) => {
+  const { modules, isLoading } = useModulesSWR();
+
+  const [value, setValue] = useState<ModuleData[]>([]);
+  const [currentName, setCurrentName] = useState<string>(props.name || '');
+
+  const handleChange = useCallback(
+    (newValue: readonly ModuleData[]) => {
+      setValue([...newValue]);
+      onChange?.([...newValue]);
+
+      // 元のinput要素のvalueを更新
+      if (originalInputRef) {
+        const newApiValue = stringifyApiNames(newValue.map(module => module.apiName));
+        originalInputRef.value = newApiValue;
+      }
+    },
+    [onChange, originalInputRef]
+  );
 
   useEffect(() => {
-    console.log(modules);
-  }, [modules]);
-
-  useEffect(() => {
-    // 初期値を設定
-    setSelectedModule(value || '');
-  }, [value]);
-
-  const handleModuleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValue = e.target.value;
-    setSelectedModule(selectedValue);
-
-    if (onModuleChange) {
-      onModuleChange(selectedValue);
+    if (modules && modules.length > 0 && defaultValueProp && value.length === 0) {
+      // カンマ区切りの文字列をapiName配列に変換
+      const apiNames = parseApiNames(defaultValueProp);
+      const initialValue = modules.filter((module) => apiNames.includes(module.apiName));
+      setValue(initialValue);
     }
-  };
+  }, [modules, defaultValueProp, value.length, originalInputRef]);
+
+  // name属性の動的監視（無限ループを防ぐため）
+  useEffect(() => {
+    if (props.name && props.name !== currentName) {
+      setCurrentName(props.name);
+    }
+  }, [props.name, currentName]);
+
+  const ref = useRef<SelectInstance<ModuleData, true>>(null);
 
   return (
-    <select
-      name={name}
-      className="acms-admin-form-width-full"
-      value={selectedModule}
-      onChange={handleModuleChange}
-      disabled={isModulesLoading}
-    >
-      <option value="">
-        {isModulesLoading ? 'モジュールを読み込み中...' : 'モジュールを選択'}
-      </option>
-      {modules.map((module) => (
-        <option key={module.apiName} value={module.apiName}>
-          {module.moduleName}
-        </option>
-      ))}
-    </select>
+    <RichSelect<ModuleData, true>
+      ref={ref}
+      isClearable
+      value={value}
+      onChange={handleChange}
+      options={modules}
+      isLoading={isLoading}
+      getOptionLabel={(option) => option.singularLabel}
+      getOptionValue={(option) => option.apiName}
+      isMulti
+      closeMenuOnSelect={false}
+      placeholder="モジュールを選択"
+      noOptionsMessage={() => "選択可能なモジュールがありません"}
+      name={currentName} // acmsでnameに[{i}]が付与されるため、動的に更新されるようにする
+    />
   );
 };

@@ -20,7 +20,9 @@ export default defineConfig({
         //   }
         //   return '[name].[ext]';
         // },
-      }
+        globals: {}
+      },
+      external: [],
     }
   },
   server: {

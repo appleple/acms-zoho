@@ -3,31 +3,6 @@ import { ModuleData } from '../types';
 
 
 const fetcher = async (url: string): Promise<ModuleData[]> => {
-  // ダミーデータを返す
-  // await new Promise(resolve => setTimeout(resolve, 500)); // ローディング状態をシミュレート
-  // return [
-  //   {
-  //     moduleName: 'リード',
-  //     apiName: 'Leads',
-  //     fields: null,
-  //   },
-  //   {
-  //     moduleName: '連絡先',
-  //     apiName: 'Contacts',
-  //     fields: null,
-  //   },
-  //   {
-  //     moduleName: '取引先',
-  //     apiName: 'Accounts',
-  //     fields: null,
-  //   },
-  //   {
-  //     moduleName: '商談',
-  //     apiName: 'Deals',
-  //     fields: null,
-  //   },
-  // ];
-
   const formData =  new FormData();
   formData.append('ACMS_POST_Zoho_Module', 'exec');
   formData.append('formToken', window.csrfToken || '');
@@ -49,14 +24,16 @@ const fetcher = async (url: string): Promise<ModuleData[]> => {
 };
 
 export const useModulesSWR = () => {
+  const rootUrl = (window as any).ACMS?.Config?.root || '/';
+
   const { data, error, isLoading, mutate } = useSWR<ModuleData[]>(
-    window.ACMS.Config.root,
+    rootUrl,
     fetcher,
-    // {
-    //   revalidateOnFocus: false,
-    //   revalidateOnReconnect: false,
-    //   shouldRetryOnError: false,
-    // }
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      shouldRetryOnError: false,
+    }
   );
 
   return {

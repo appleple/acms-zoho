@@ -1,46 +1,53 @@
 import useSWR from 'swr';
 import { ModuleField } from '../types';
 
-const fetcher = async (moduleApiName: string): Promise<ModuleField[]> => {
-  // ダミーデータを返す
-  await new Promise(resolve => setTimeout(resolve, 300)); // ローディング状態をシミュレート
+const fetcher = async (moduleApiNames: string[]): Promise<{ data: ModuleField[] }[]> => {
+  console.log('複数モジュールのfetcher実行:', moduleApiNames);
 
-  const fieldsByModule: Record<string, ModuleField[]> = {
-    Leads: [
-      { fieldName: 'メール', apiName: 'Email' },
-      { fieldName: '名', apiName: 'First_Name' },
-      { fieldName: '姓', apiName: 'Last_Name' },
-      { fieldName: '電話番号', apiName: 'Phone' },
-      { fieldName: '会社', apiName: 'Company' },
-    ],
-    Contacts: [
-      { fieldName: 'メール', apiName: 'Email' },
-      { fieldName: '名', apiName: 'First_Name' },
-      { fieldName: '姓', apiName: 'Last_Name' },
-      { fieldName: 'モバイル', apiName: 'Mobile' },
-      { fieldName: '部門', apiName: 'Department' },
-    ],
-    Accounts: [
-      { fieldName: '取引先名', apiName: 'Account_Name' },
-      { fieldName: '電話番号', apiName: 'Phone' },
-      { fieldName: 'ウェブサイト', apiName: 'Website' },
-      { fieldName: '業界', apiName: 'Industry' },
-    ],
-    Deals: [
-      { fieldName: '商談名', apiName: 'Deal_Name' },
-      { fieldName: '金額', apiName: 'Amount' },
-      { fieldName: 'ステージ', apiName: 'Stage' },
-      { fieldName: '確度', apiName: 'Probability' },
-    ],
-  };
+  if (moduleApiNames.length === 0) {
+    return [];
+  }
 
-  return fieldsByModule[moduleApiName] || [];
+  const promises = moduleApiNames.map(async (moduleApiName) => {
+    try {
+      console.log('API呼び出し: ', moduleApiName);
+      // 実際のAPI呼び出し
+      const formData = new FormData();
+      formData.append('ACMS_POST_Zoho_ModuleField', 'exec');
+      formData.append('moduleApiName', moduleApiName);
+      formData.append('formToken', window.csrfToken || '');
+
+      const options: RequestInit = {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json'
+        },
+        body: formData,
+      };
+
+      const rootUrl = (window as any).ACMS?.Config?.root || '/';
+      const response = await fetch(rootUrl, options);
+      const json = await response.json();
+
+      return { data: json };
+    } catch (error) {
+      console.error(`Error fetching fields for module ${moduleApiName}:`, error);
+      return { data: [] };
+    }
+  });
+
+  return Promise.all(promises);
 };
 
-export const useModuleFieldsSWR = (moduleApiName: string | null) => {
-  const { data, error, isLoading, mutate } = useSWR<ModuleField[]>(
-    moduleApiName ? `module-fields-${moduleApiName}` : null,
-    () => moduleApiName ? fetcher(moduleApiName) : Promise.resolve([]),
+export const useModuleFieldsSWR = (moduleApiNames: string[]) => {
+  console.log('useModuleFieldsSWR呼び出し', moduleApiNames);
+
+  // moduleApiNamesの文字列をキーとして使用（配列の順序を保持）
+  const cacheKey = moduleApiNames.length > 0 ? `module-fields-${moduleApiNames.join(',')}` : null;
+
+  const { data: fieldsResults, isLoading, error, mutate } = useSWR<{ data: ModuleField[] }[]>(
+    cacheKey,
+    () => fetcher(moduleApiNames),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -49,7 +56,7 @@ export const useModuleFieldsSWR = (moduleApiName: string | null) => {
   );
 
   return {
-    fields: data || [],
+    fieldsResults: fieldsResults || [],
     isLoading,
     error,
     mutate,

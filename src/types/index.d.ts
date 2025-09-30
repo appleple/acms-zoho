@@ -1,12 +1,13 @@
 export interface ModuleField {
-  fieldName: string;
   apiName: string;
+  fieldName: string;
 }
 
 export interface ModuleData {
-  moduleName: string;
   apiName: string;
-  fields: ModuleField[] | null;
+  moduleName: string | '';
+  singularLabel: string;
+  fields?: ModuleField[];
 }
 
 export interface LinkFieldState {
