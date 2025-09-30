@@ -8,42 +8,37 @@ use AcmsLogger;
 use Acms\Plugins\Zoho\POST\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
-use Acms\Plugins\Zoho\Services\Zoho\Mapper\Module as ZohoModuleMapper;
+use Acms\Plugins\Zoho\Services\Zoho\Mapper\ModuleField as ZohoModuleFieldMapper;
 
 class ModuleField extends Zoho
 {
     public function post()
     {
-
-        if (isset($_GET['moduleApiName'])) {
-
-            return null;
+        $moduleApiName = $this->Post->get('moduleApiName', '');
+        if (!isset($moduleApiName) || empty($moduleApiName)) {
+            AcmsLogger::error('【Zoho plugin】モジュールのAPI名が必要です。');
+            return Common::ResponseJson(['error' => 'moduleApiName is required']);
         }
-
-        // リクエストにjsonパラメータが含まれている場合は、全モジュール情報をJSONで返す
-        // if (isset($_GET['json'])) {
-        //     $this->returnModulesAsJson();
-        //     return null;
-        // }
 
         try {
             $zohoClient = new ZohoClient();
             $zohoClient->initialize();
 
             if (is_null($zohoClient->getAccessToken())) {
-                return null;
+                AcmsLogger::error('【Zoho plugin】認証に失敗しました。');
+                return Common::ResponseJson(['error' => 'Zoho authentication failed']);
             }
-            // Zoho からモジュールを取得、Mapperの設定
+
+            // Zoho からモジュールフィールドを取得
             $api = new ZohoApi($zohoClient);
-            $modules = $api->getModules();
+            $moduleFields = $api->field()->getModuleFields($moduleApiName);
 
-            $moduleMapper = new ZohoModuleMapper($modules, new Field());
+            $moduleFieldMapper = new ZohoModuleFieldMapper($moduleFields, new Field());
 
-            var_dump($moduleMapper->toArray());
-            return Common::ResponseJson($moduleMapper->toArray());
+            return Common::ResponseJson($moduleFieldMapper->toArray());
         } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】モジュール情報の取得に失敗しました: ' . $e->getMessage());
+            AcmsLogger::error('【Zoho plugin】モジュールフィールド情報の取得に失敗しました: ' . $e->getMessage());
+            return Common::ResponseJson(['error' => 'Failed to fetch module fields']);
         }
-
     }
 }
