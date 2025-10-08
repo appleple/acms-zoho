@@ -1,0 +1,100 @@
+<h2 class="acms-admin-admin-title2">
+  タブのユニークキー設定
+  <i
+    class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+    data-acms-tooltip="<!--T-->v2までのフォーム権限設定。ユニークキーを設定してフォームの権限を作成します。<!--/T-->"
+  ></i>
+</h2>
+<table class="js-fieldgroup-sortable">
+  <thead class="acms-admin-hide-sp">
+    <tr>
+      <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
+      <th class="acms-admin-table-left">
+        ユニークキーにする項目のAPI名
+        <i
+        class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+        data-acms-tooltip="<!--T-->InsertまたはUpdateを許可するタブのZohoCRMの項目のラベルを設定します。<!--/T-->"
+      ></i>
+
+      </th>
+      <th class="acms-admin-table-left">
+        Insertを許可するタブのAPI名
+      </th>
+      <th class="acms-admin-table-left">
+        Updateを許可するタブのAPI名
+      </th>
+      <th class="acms-admin-table-left acms-admin-admin-config-table-action">削除</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- BEGIN zoho_form_group:loop -->
+    <tr class="sortable-item">
+      <td class="item-handle">
+        <i class="acms-admin-icon-sort"></i>
+      </td>
+      <td>
+        <input
+          type="text"
+          name="zoho_form_unique_key[]"
+          value="{zoho_form_unique_key}"
+          class="acms-admin-form-width-full"
+        />
+      </td>
+      <td>
+        <input
+          type="text"
+          name="zoho_form_insert_scope[]"
+          value="{zoho_form_insert_scope}"
+          class="acms-admin-form-width-full"
+        />
+      </td>
+      <td>
+        <input
+          type="text"
+          name="zoho_form_update_scope[]"
+          value="{zoho_form_update_scope}"
+          class="acms-admin-form-width-full"
+        />
+      </td>
+      <td>
+        <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="削除" />
+        <input type="hidden" name="zoho_form_group_index[]" value="index" />
+      </td>
+    </tr>
+    <!-- END zoho_form_group:loop -->
+    <tr class="sortable-item item-template">
+      <td class="item-handle">
+        <i class="acms-admin-icon-sort"></i>
+      </td>
+      <td>
+        <input type="text" name="zoho_form_unique_key[]" value="" class="acms-admin-form-width-full" />
+      </td>
+      <td>
+        <input type="text" name="zoho_form_insert_scope[]" value="" class="acms-admin-form-width-full" />
+      </td>
+      <td>
+        <input type="text" name="zoho_form_update_scope[]" value="" class="acms-admin-form-width-full" />
+      </td>
+      <td>
+        <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="削除" />
+        <input type="hidden" name="zoho_form_group_index[]" value="index" />
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="5">
+        <input type="button" class="item-insert acms-admin-btn-admin" value="追加" />
+      </td>
+    </tr>
+  </tfoot>
+</table>
+<input type="hidden" name="@zoho_form_group[]" value="zoho_form_insert_scope" />
+<input type="hidden" name="mail[]" value="zoho_form_insert_scope" />
+<input type="hidden" name="@zoho_form_group[]" value="zoho_form_update_scope" />
+<input type="hidden" name="mail[]" value="zoho_form_update_scope" />
+<input type="hidden" name="@zoho_form_group[]" value="zoho_form_unique_key" />
+<input type="hidden" name="mail[]" value="zoho_form_unique_key" />
+<input type="hidden" name="@zoho_form_group[]" value="zoho_form_group_index" />
+<input type="hidden" name="mail[]" value="zoho_form_group_index" />
+<input type="hidden" name="mail[]" value="@zoho_form_group" />

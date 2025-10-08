@@ -35,10 +35,22 @@ class FieldApi extends ApiBase
                     $result = [];
 
                     foreach ($fields as $field) {
+                        $dataType = $field->getDataType();
+
+                        // dataTypeの値を取得（オブジェクトまたは文字列の可能性がある）
+                        $dataTypeValue = null;
+                        if ($dataType) {
+                            if (is_object($dataType) && method_exists($dataType, 'getValue')) {
+                                $dataTypeValue = $dataType->getValue();
+                            } else if (is_string($dataType)) {
+                                $dataTypeValue = $dataType;
+                            }
+                        }
+
                         $fieldData = [
                             'api_name' => $field->getAPIName(),
                             'field_label' => $field->getFieldLabel(),
-                            // 'data_type' => $field->getDataType(),
+                            'data_type' => $dataTypeValue,
                             // 'length' => $field->getLength(),
                             // 'required' => $field->getRequired(),
                             // 'unique' => $field->getUnique(),

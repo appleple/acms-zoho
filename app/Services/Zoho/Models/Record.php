@@ -2,9 +2,18 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Models;
 
+use com\zoho\crm\api\record\Record as ZohoRecord;
+
 /**
- * フォームからPOSTするときのa-blogcms のフィールド と ZohoCRM のデータマッピングを表現するレコードクラス
- * Todo: クラス名を Command に変更する
+ * Zoho CRMへ送信する1レコード分のデータを表現するモデルクラス
+ *
+ * - モジュール名（Leads, Contacts等）
+ * - 操作タイプ（insert/update）
+ * - フィールドデータ
+ * - ユニークキー（upsert判定用）
+ * を保持する
+ *
+ * 実際のマッピング処理は Mapper\Record クラスで行われる
  */
 class Record
 {
@@ -15,23 +24,41 @@ class Record
     private $moduleApiName;
 
     /**
-     * Todo: 何用か調査
+     * Upsert時の重複チェックに使用するフィールド名
+     * 例: "Email" など
+     * 空の場合は単純なinsert/updateとして扱われる
+     *
      * @var string
      */
     private $uniqueKey;
 
     /**
-     * a-blog cms のフィールド
-     * @var array
+     * Zohoのレコードモデル形式で配列で管理
+     * @var ZohoRecord[]
      */
     private $fields = [];
 
-    /** @var string insert|update */
+    /**
+     * @var string insert|update|pending
+     * zoho_form_insert_scopeまたはzoho_form_update_scopeで判断
+     * */
     private $type;
+
+    /** @var int|null フォームグループのインデックス（優先順位処理用） */
+    public $groupIndex;
+
+    /** @var mixed 比較フィールドの値（リレーション処理用） */
+    public $compareFieldValue;
+
+    /** @var array ルックアップフィールドのリスト [フィールド名 => true] */
+    private $lookupFields = [];
+
+    /** @var array ピックリストフィールドのリスト [フィールド名 => true] */
+    private $picklistFields = [];
 
     /**
      * @param string $moduleApiName モジュールAPI名
-     * @param string $type insert|update
+     * @param string $type insert|update|pending
      * @param string $uniqueKey
      */
     public function __construct(string $moduleApiName, string $type, string $uniqueKey = '')
@@ -143,6 +170,64 @@ class Record
     public function getField(string $key, $default = null)
     {
         return $this->hasField($key) ? $this->fields[$key] : $default;
+    }
+
+    /**
+     * 指定したフィールドを削除
+     *
+     * @param string $key フィールド名
+     * @return self
+     */
+    public function removeField(string $key)
+    {
+        unset($this->fields[$key]);
+        return $this;
+    }
+
+    /**
+     * フィールドをルックアップとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsLookupField(string $fieldName)
+    {
+        $this->lookupFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドがルックアップかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isLookupField(string $fieldName): bool
+    {
+        return isset($this->lookupFields[$fieldName]);
+    }
+
+    /**
+     * フィールドをピックリストとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsPicklistField(string $fieldName)
+    {
+        $this->picklistFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドがピックリストかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isPicklistField(string $fieldName): bool
+    {
+        return isset($this->picklistFields[$fieldName]);
     }
 
     /**
