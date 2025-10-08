@@ -1,6 +1,7 @@
 export interface ModuleField {
   apiName: string;
   fieldName: string;
+  dataType?: string;
 }
 
 export interface ModuleData {

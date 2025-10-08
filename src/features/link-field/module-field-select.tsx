@@ -17,7 +17,19 @@ export const ModuleFieldSelect = ({
   originalInputRef,
   onChange
 }: Props) => {
-  console.log('ModuleFieldSelectコンポーネント');
+  // valueがJSON形式の場合はapiNameを取得
+  const getApiNameFromValue = (val: string): string => {
+    if (!val) return '';
+    try {
+      const parsed = JSON.parse(val);
+      return parsed.apiName || val;
+    } catch {
+      // JSON parse失敗時は元の値を返す（後方互換性）
+      return val;
+    }
+  };
+
+  const apiNameValue = getApiNameFromValue(value);
 
   const { fieldsResults, isLoading } = useModuleFieldsSWR(moduleApiNames);
 
@@ -57,15 +69,34 @@ export const ModuleFieldSelect = ({
     ? '項目を読み込み中...'
     : '項目を選択';
 
+  const handleFieldChange = (selectedApiName: string) => {
+    // 選択されたフィールドの情報を取得
+    const selectedField = displayFields.find(field => field.apiName === selectedApiName);
+
+    if (selectedField && originalInputRef) {
+      // JSONオブジェクトとして保存
+      const fieldData = {
+        apiName: selectedField.apiName,
+        dataType: selectedField.dataType || null
+      };
+      originalInputRef.value = JSON.stringify(fieldData);
+    }
+
+    // onChangeコールバックを実行
+    if (onChange) {
+      onChange(selectedApiName);
+    }
+  };
+
   return (
     <SimpleSelect
       name={name}
       className="acms-admin-form-width-full"
-      defaultValue={value}
+      defaultValue={apiNameValue}
       originalInputRef={originalInputRef}
       options={options}
       placeholder={placeholder}
-      onChange={onChange}
+      onChange={handleFieldChange}
     />
   );
 };
