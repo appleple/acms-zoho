@@ -24,76 +24,97 @@
   <div class="js-acms_fix_marker acms_fix_bg">
     <div class="acms-admin-form-group acms_fix_bg_index">
       <!-- BEGIN_MODULE Zoho_Admin -->
-      <!-- BEGIN_IF [{authorized}/eq/true] -->
-      <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
-        <table>
+      <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-form">
+        <h2 class="acms-admin-admin-title2"><!--T-->Zoho 認証設定<!--/T--></h2>
+
+        <table class="acms-admin-table-admin-edit">
           <tbody>
             <tr>
-              <th>id</th>
+              <th>
+                <span>id</span>
+                <i
+                  class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+                  data-acms-tooltip="CMS上で管理されているIDです。"
+                ></i>
+              </th>
               <td>
+                <!-- BEGIN_IF [{authorized}/eq/true] -->
                 <span>{tokenId}</span>
+                <!-- ELSE -->
+                <span>認証してください</span>
+                <!-- END_IF -->
                 <input type="hidden" name="zoho_token_id" value="{tokenId}">
               </td>
             </tr>
 
             <tr>
-              <th>クライアントID</th>
+              <th>
+                <span>クライアントID</span>
+                <i
+                  class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+                  data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行された Client ID を入力してください。<!--/T-->"
+                ></i>
+              </th>
               <td>
                 <input type="text" name="zoho_client_id" value="{clientId}" readonly>
               </td>
             </tr>
 
             <tr>
-              <th>シークレットID</th>
+              <th>
+                <span>シークレットID</span>
+                <i
+                  class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+                  data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行された Client Secret を入力してください。<!--/T-->"
+                ></i>
+              </th>
               <td>
                 <input type="text" name="zoho_client_secret" value="{secretId}" readonly>
               </td>
             </tr>
+
+            <tr>
+              <th>
+                <span>リダイレクトURL</span>
+                <i
+                  class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+                  data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行する際にご使用ください。<!--/T-->"
+                ></i>
+              </th>
+              <td>
+                <span>%{BASE_URL}admin/app_zoho_callback/</span>
+                <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/">
+              </td>
+            </tr>
           </tbody>
           <tfoot>
-            <tr></tr>
-            <td>
-              <button
-                type="submit"
-                class="acms-admin-btn-admin"
-                value="認証解除"
-                name="ACMS_POST_Zoho_Deauthorize"
-              >
-                <!-- T -->認証解除<!-- /T -->
-              </button>
-            </td>
+            <tr>
+              <th class="acms-admin-hide-visually">認証ボタン</th>
+              <td>
+                <!-- BEGIN_IF [{authorized}/eq/true] -->
+                <button
+                  type="submit"
+                  class="acms-admin-btn-admin"
+                  value="認証解除"
+                  name="ACMS_POST_Zoho_Deauthorize"
+                >
+                  <!-- T -->認証解除<!-- /T -->
+                </button>
+                <!-- ELSE -->
+                <button
+                  type="submit"
+                  class="acms-admin-btn-admin"
+                  value="認証"
+                  name="ACMS_POST_Zoho_OAuth2"
+                >
+                  <!-- T -->認証<!-- /T -->
+                </button>
+                <!-- END_IF -->
+              </td>
+            </tr>
           </tfoot>
         </table>
       </form>
-      <!-- ELSE -->
-      <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-inline">
-        <table>
-          <tr>
-            <th>クライアントID</th>
-            <td><input type="text" name="zoho_client_id" value=""></td>
-          </tr>
-          <tr>
-            <th>シークレットID</th>
-            <td><input type="text" name="zoho_client_secret" value=""></td>
-          </tr>
-          <tr>
-            <th>リダイレクトURL</th>
-            <td>
-              <span>%{BASE_URL}admin/app_zoho_callback/</span>
-              <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/">
-            </td>
-          </tr>
-        </table>
-        <button
-          type="submit"
-          class="acms-admin-btn-admin"
-          value="認証"
-          name="ACMS_POST_Zoho_OAuth2"
-        >
-          <!-- T -->認証<!-- /T -->
-        </button>
-      </form>
-      <!-- END_IF -->
       <!-- END_MODULE Zoho_Admin -->
     </div>
   </div>
