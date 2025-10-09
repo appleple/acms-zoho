@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e2adf6db462ccb299abc70bf7285f2c2",
+    "content-hash": "a29c61c1f677f5e4e65df54c0d36a201",
     "packages": [
         {
             "name": "zohocrm/php-sdk-8.0",
-            "version": "2.1.0",
+            "version": "4.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zoho/zohocrm-php-sdk-8.0.git",
-                "reference": "49dada6cba6e1e2c620d735ea81d588f342828b0"
+                "reference": "368bbfa2f0b89d4e1ed9984beb73dc262c991e1d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zoho/zohocrm-php-sdk-8.0/zipball/49dada6cba6e1e2c620d735ea81d588f342828b0",
-                "reference": "49dada6cba6e1e2c620d735ea81d588f342828b0",
+                "url": "https://api.github.com/repos/zoho/zohocrm-php-sdk-8.0/zipball/368bbfa2f0b89d4e1ed9984beb73dc262c991e1d",
+                "reference": "368bbfa2f0b89d4e1ed9984beb73dc262c991e1d",
                 "shasum": ""
             },
             "require": {
@@ -49,9 +49,9 @@
             "description": "Zoho CRM API SDK for PHP",
             "homepage": "https://github.com/zoho/zohocrm-php-sdk-8.0",
             "support": {
-                "source": "https://github.com/zoho/zohocrm-php-sdk-8.0/tree/2.1.0"
+                "source": "https://github.com/zoho/zohocrm-php-sdk-8.0/tree/4.0.0"
             },
-            "time": "2025-06-16T08:13:12+00:00"
+            "time": "2025-10-01T06:25:32+00:00"
         }
     ],
     "packages-dev": [],
@@ -63,7 +63,7 @@
     "platform": {},
     "platform-dev": {},
     "platform-overrides": {
-        "php": "8.1"
+        "php": "8.4"
     },
     "plugin-api-version": "2.6.0"
 }
