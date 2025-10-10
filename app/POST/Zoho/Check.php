@@ -10,6 +10,7 @@ use Acms\Plugins\Zoho\POST\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Mapper\Module as ModuleMapper;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
+use Acms\Plugins\Zoho\Services\Zoho\Models\ModuleScope;
 
 class Check extends Zoho
 {
@@ -75,9 +76,9 @@ class Check extends Zoho
         // インサート可能なAPI名が存在するかチェック
         $notExistIsertApiNames = [];
         foreach($configuredInsertApiNames as $RawApiName) {
-            $explodedApiName = explode(',', $RawApiName);
-            foreach($explodedApiName as $apiName) {
-                $isExist = $moduleMapper->isModuleExists(trim($apiName));
+            $moduleScopes = ModuleScope::parseJsonArray($RawApiName);
+            foreach($moduleScopes as $moduleScope) {
+                $isExist = $moduleMapper->isModuleExists(trim($moduleScope->apiName));
                 if(is_string($isExist)) {
                     $notExistIsertApiNames[] = $isExist;
                     AcmsLogger::error("【Zoho plugin】Zoho CRM にインサート可能なAPI名「{$isExist}」がありません。");
@@ -88,9 +89,9 @@ class Check extends Zoho
         // アップデート可能なAPI名が存在するかチェック
         $notExistUpdateApiNames = [];
         foreach($configuredUpdateApiNames as $RawApiName) {
-            $explodedApiName = explode(',', $RawApiName);
-            foreach($explodedApiName as $apiName) {
-                $isExist = $moduleMapper->isModuleExists(trim($apiName));
+            $moduleScopes = ModuleScope::parseJsonArray($RawApiName);
+            foreach($moduleScopes as $moduleScope) {
+                $isExist = $moduleMapper->isModuleExists(trim($moduleScope->apiName));
                 if(is_string($isExist)) {
                     $notExistUpdateApiNames[] = $isExist;
                     AcmsLogger::error("【Zoho plugin】Zoho CRM にアップデート可能なAPI名「 {$isExist}」がありません。");

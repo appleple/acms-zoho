@@ -4,13 +4,16 @@ export interface ModuleField {
   dataType?: string;
 }
 
-export interface ModuleData {
+export interface Module {
   apiName: string;
   moduleName: string | '';
   singularLabel: string;
+}
+
+export interface ModuleWithFields extends Module {
   fields?: ModuleField[];
 }
 
 export interface LinkFieldState {
-  modules: ModuleData[];
+  modules: ModuleWithFields[];
 }

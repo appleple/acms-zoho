@@ -2,8 +2,7 @@ import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { SelectInstance } from 'react-select';
 import RichSelect from '../../components/rich-select/rich-select';
 import { useModulesSWR } from '../../hooks/use-modules-swr';
-import { ModuleData } from '../../types';
-import { parseApiNames, stringifyApiNames } from '../../utils';
+import { Module, ModuleWithFields } from '../../types';
 
 interface ModuleSelectProps
   extends Partial<
@@ -13,7 +12,7 @@ interface ModuleSelectProps
     >
   > {
   defaultValue?: string;
-  onChange?: (value: ModuleData[]) => void;
+  onChange?: (value: ModuleWithFields[]) => void;
   originalInputRef?: HTMLInputElement; // 元のinput要素への参照
 }
 
@@ -25,18 +24,22 @@ export const ModuleSelect = ({
 }: ModuleSelectProps) => {
   const { modules, isLoading } = useModulesSWR();
 
-  const [value, setValue] = useState<ModuleData[]>([]);
+  const [value, setValue] = useState<ModuleWithFields[]>([]);
   const [currentName, setCurrentName] = useState<string>(props.name || '');
 
   const handleChange = useCallback(
-    (newValue: readonly ModuleData[]) => {
+    (newValue: readonly ModuleWithFields[]) => {
       setValue([...newValue]);
       onChange?.([...newValue]);
 
       // 元のinput要素のvalueを更新
       if (originalInputRef) {
-        const newApiValue = stringifyApiNames(newValue.map(module => module.apiName));
-        originalInputRef.value = newApiValue;
+        const modules: Module[] = newValue.map(module => ({
+          apiName: module.apiName,
+          moduleName: module.moduleName,
+          singularLabel: module.singularLabel,
+        }));
+        originalInputRef.value = JSON.stringify(modules);
       }
     },
     [onChange, originalInputRef]
@@ -44,10 +47,15 @@ export const ModuleSelect = ({
 
   useEffect(() => {
     if (modules && modules.length > 0 && defaultValueProp && value.length === 0) {
-      // カンマ区切りの文字列をapiName配列に変換
-      const apiNames = parseApiNames(defaultValueProp);
-      const initialValue = modules.filter((module) => apiNames.includes(module.apiName));
-      setValue(initialValue);
+      // JSON配列文字列をModule配列に変換
+      try {
+        const parsedModules: Module[] = JSON.parse(defaultValueProp);
+        const apiNames = parsedModules.map(m => m.apiName);
+        const initialValue = modules.filter((module) => apiNames.includes(module.apiName));
+        setValue(initialValue);
+      } catch {
+        // パースエラーの場合は空配列として扱う
+      }
     }
   }, [modules, defaultValueProp, value.length, originalInputRef]);
 
@@ -58,10 +66,10 @@ export const ModuleSelect = ({
     }
   }, [props.name, currentName]);
 
-  const ref = useRef<SelectInstance<ModuleData, true>>(null);
+  const ref = useRef<SelectInstance<ModuleWithFields, true>>(null);
 
   return (
-    <RichSelect<ModuleData, true>
+    <RichSelect<ModuleWithFields, true>
       ref={ref}
       isClearable
       value={value}

@@ -1,8 +1,8 @@
 import useSWR from 'swr';
-import { ModuleData } from '../types';
+import { ModuleWithFields } from '../types';
 
 
-const fetcher = async (url: string): Promise<ModuleData[]> => {
+const fetcher = async (url: string): Promise<ModuleWithFields[]> => {
   const formData =  new FormData();
   formData.append('ACMS_POST_Zoho_Module', 'exec');
   formData.append('formToken', window.csrfToken || '');
@@ -26,7 +26,7 @@ const fetcher = async (url: string): Promise<ModuleData[]> => {
 export const useModulesSWR = () => {
   const rootUrl = (window as any).ACMS?.Config?.root || '/';
 
-  const { data, error, isLoading, mutate } = useSWR<ModuleData[]>(
+  const { data, error, isLoading, mutate } = useSWR<ModuleWithFields[]>(
     rootUrl,
     fetcher,
     {

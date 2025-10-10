@@ -1,7 +1,6 @@
 import { useState, CSSProperties, useEffect } from 'react';
-import { ModuleSelect } from './module-select';
-import { ModuleFieldSelect } from './module-field-select';
-import { parseApiNames } from '../../utils';
+import { ModuleSelect } from '../components/module-select';
+import { ModuleFieldSelect } from '../components/module-field-select';
 
 interface Props {
   moduleInputRef: HTMLInputElement;
@@ -25,8 +24,13 @@ export const LinkFieldRow = ({
   // moduleValueが変更された時に、selectedModuleApiNamesを更新
   useEffect(() => {
     if (moduleValue) {
-      const apiNames = parseApiNames(moduleValue);
-      setSelectedModuleApiNames(apiNames);
+      try {
+        const modules = JSON.parse(moduleValue);
+        const apiNames = Array.isArray(modules) ? modules.map(m => m.apiName) : [];
+        setSelectedModuleApiNames(apiNames);
+      } catch {
+        setSelectedModuleApiNames([]);
+      }
     }
   }, [moduleValue]);
 

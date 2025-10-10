@@ -4,14 +4,12 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
 use Acms\Plugins\Zoho\Services\Zoho\Client;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record;
-use Acms\Plugins\Zoho\Services\Zoho\Builder\ProcessedRecordsCollection;
 use AcmsLogger;
 
 use com\zoho\crm\api\record\Record as ZohoRecord;
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
 use com\zoho\crm\api\record\RecordOperations;
-use com\zoho\crm\api\record\GetRecordsParam;
 use com\zoho\crm\api\record\SearchRecordsParam;
 use com\zoho\crm\api\record\ActionWrapper;
 use com\zoho\crm\api\record\APIException;
@@ -21,74 +19,6 @@ use com\zoho\crm\api\util\Choice;
 
 class RecordApi extends ApiBase
 {
-    /** @var ProcessedRecordsCollection 処理済みレコードのコレクション */
-    private $processedRecords;
-
-    /**
-     * コンストラクタ
-     */
-    public function __construct(Client $client)
-    {
-        parent::__construct($client);
-        $this->processedRecords = new ProcessedRecordsCollection();
-    }
-
-    /**
-     * 処理済みレコードのコレクションを取得
-     *
-     * @return ProcessedRecordsCollection
-     */
-    public function getProcessedRecords()
-    {
-        return $this->processedRecords;
-    }
-
-    /**
-     * レコードを取得する
-     *
-     * @param string $moduleAPIName モジュールAPI名
-     * @param array $fields 取得するフィールド名のリスト
-     * @return array|null 取得されたレコードの配列、失敗時はnull
-     */
-    // public function getRecords(string $moduleAPIName, array $fields = ["id", "Email"])
-    // {
-    //     try {
-    //         $recordOperations = new RecordOperations();
-    //         $paramInstance = new ParameterMap();
-    //         $headerInstance = new HeaderMap();
-
-    //         foreach ($fields as $field) {
-    //             $paramInstance->add(GetRecordsParam::fields(), $field);
-    //         }
-
-    //         $response = $recordOperations->getRecords($moduleAPIName, $paramInstance, $headerInstance);
-
-    //         if ($response != null) {
-    //             $responseHandler = $response->getObject();
-
-    //             if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
-    //                 $records = $responseHandler->getData();
-    //                 $result = [];
-
-    //                 foreach ($records as $record) {
-    //                     $recordData = [];
-    //                     foreach ($record->getKeyValues() as $keyName => $value) {
-    //                         $recordData[$keyName] = $value;
-    //                     }
-    //                     $result[] = $recordData;
-    //                 }
-
-    //                 return $result;
-    //             } else if ($responseHandler instanceof APIException) {
-    //                 AcmsLogger::info('Zoho API Exception in getRecords: ' . $responseHandler->getMessage());
-    //             }
-    //         }
-    //     } catch (\Exception $e) {
-    //         AcmsLogger::info('Exception in getRecords: ' . $e->getMessage());
-    //     }
-
-    //     return null;
-    // }
 
     /**
      * ユニークキーでレコードを検索
@@ -104,15 +34,7 @@ class RecordApi extends ApiBase
             // フィールドのAPI名を取得
             $apiName = $this->getApiNameByLabelName($fieldName, $moduleApiName);
 
-            // AcmsLogger::info('【Zoho Debug】searchByUniqueKey開始', [
-            //     'moduleApiName' => $moduleApiName,
-            //     'fieldName' => $fieldName,
-            //     'apiName' => $apiName,
-            //     'value' => $value
-            // ]);
-
             if (empty($apiName)) {
-                AcmsLogger::info('【Zoho Debug】API名が取得できませんでした');
                 return null;
             }
 
@@ -128,27 +50,10 @@ class RecordApi extends ApiBase
             $response = $recordOperations->searchRecords($paramInstance, $headerInstance);
 
             if ($response != null) {
-                // AcmsLogger::info('【Zoho Debug】Response details', [
-                //     'moduleApiName' => $moduleApiName,
-                //     'statusCode' => $response->getStatusCode(),
-                //     'isExpected' => $response->isExpected()
-                // ]);
-
                 $responseHandler = $response->getObject();
 
-                if ($responseHandler === null) {
-                    AcmsLogger::info('【Zoho Debug】ResponseHandler is null', [
-                        'moduleApiName' => $moduleApiName,
-                        'responseStatusCode' => $response->getStatusCode(),
-                        'responseHeaders' => $response->getHeaders()
-                    ]);
-                } else if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
+                if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
                     $records = $responseHandler->getData();
-
-                    AcmsLogger::info('【Zoho Debug】検索結果', [
-                        'moduleApiName' => $moduleApiName,
-                        'recordCount' => $records ? count($records) : 0
-                    ]);
 
                     if (!empty($records) && count($records) > 0) {
                         $record = $records[0]; // 最初のレコードを返す
@@ -162,27 +67,15 @@ class RecordApi extends ApiBase
                     if ($message instanceof Choice) {
                         $message = $message->getValue();
                     }
-                    AcmsLogger::info('【Zoho Debug】API Exception in searchByUniqueKey', [
-                        'moduleApiName' => $moduleApiName,
+                    AcmsLogger::error('【Zoho plugin】レコード検索でエラーが発生しました。', [
                         'message' => $message,
-                        'code' => $responseHandler->getCode(),
-                        'status' => $responseHandler->getStatus()
-                    ]);
-                } else {
-                    AcmsLogger::info('【Zoho Debug】Unexpected response type', [
-                        'moduleApiName' => $moduleApiName,
-                        'type' => get_class($responseHandler)
+                        'code' => $responseHandler->getCode()
                     ]);
                 }
-            } else {
-                AcmsLogger::info('【Zoho Debug】Response is null', [
-                    'moduleApiName' => $moduleApiName
-                ]);
             }
         } catch (\Exception $e) {
-            AcmsLogger::info('【Zoho Debug】Exception in searchByUniqueKey', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            AcmsLogger::error('【Zoho plugin】レコード検索で例外が発生しました。', [
+                'message' => $e->getMessage()
             ]);
         }
 
@@ -190,60 +83,17 @@ class RecordApi extends ApiBase
     }
 
     /**
-     * レコードを検索する
-     *
-     * @param string $moduleAPIName モジュールAPI名
-     * @param string $criteria 検索条件
-     * @return array|null 検索されたレコードの配列、失敗時はnull
-     */
-    // public function searchRecords(string $moduleAPIName, string $criteria)
-    // {
-    //     try {
-    //         $recordOperations = new RecordOperations();
-    //         $paramInstance = new ParameterMap();
-    //         $headerInstance = new HeaderMap();
-
-    //         $paramInstance->add(SearchRecordsParam::criteria(), $criteria);
-
-    //         $response = $recordOperations->searchRecords($moduleAPIName, $paramInstance, $headerInstance);
-
-    //         if ($response != null) {
-    //             $responseHandler = $response->getObject();
-
-    //             if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
-    //                 $records = $responseHandler->getData();
-    //                 $result = [];
-
-    //                 foreach ($records as $record) {
-    //                     $recordData = [];
-    //                     foreach ($record->getKeyValues() as $keyName => $value) {
-    //                         $recordData[$keyName] = $value;
-    //                     }
-    //                     $result[] = $recordData;
-    //                 }
-
-    //                 return $result;
-    //             } else if ($responseHandler instanceof APIException) {
-    //                 AcmsLogger::info('Zoho API Exception in searchRecords: ' . $responseHandler->getMessage());
-    //             }
-    //         }
-    //     } catch (\Exception $e) {
-    //         AcmsLogger::info('Exception in searchRecords: ' . $e->getMessage());
-    //     }
-
-    //     return null;
-    // }
-
-    /**
      * レコードを挿入する
      *
      * @param Record[] $records 挿入するRecordModelの配列
-     * @return bool 成功した場合はtrue
+     * @return array ['success' => int, 'failures' => array] 成功数と失敗情報の配列
      */
     public function insertRecords(array $records)
     {
+        $result = ['success' => 0, 'failures' => []];
+
         if (empty($records)) {
-            return false;
+            return $result;
         }
 
         $recordsList = [];
@@ -262,15 +112,10 @@ class RecordApi extends ApiBase
         }
 
         if (empty($recordsList) || $moduleApiName === null) {
-            return false;
+            return $result;
         }
 
         try {
-            AcmsLogger::info('【Zoho Debug】insertRecords実行前', [
-                'moduleApiName' => $moduleApiName,
-                'recordsCount' => count($recordsList)
-            ]);
-
             $recordOperations = new RecordOperations($moduleApiName);
             $request = new BodyWrapper();
             $request->setData($recordsList);
@@ -293,68 +138,64 @@ class RecordApi extends ApiBase
                             } elseif (is_object($details) && method_exists($details, 'get')) {
                                 $createdRecordId = $details->get('id');
                             } else {
-                                AcmsLogger::info('【Zoho Debug】IDの取得に失敗', [
-                                    'detailsType' => gettype($details),
-                                    'details' => $details
-                                ]);
                                 continue;
                             }
                             $records[$index]->setId($createdRecordId);
-
-                            // コレクションに追加
-                            $this->processedRecords->add($records[$index]);
+                            $result['success']++;
                         } else if ($actionResponse instanceof APIException) {
                             $message = $actionResponse->getMessage();
-                            $details = $actionResponse->getDetails();
 
                             // メッセージがChoiceオブジェクトの場合は値を取得
                             if ($message instanceof Choice) {
                                 $message = $message->getValue();
                             }
 
-                            // 詳細情報も含めてログ出力
-                            $errorInfo = [
+                            $result['failures'][] = [
+                                'module' => $moduleApiName,
+                                'type' => 'create',
+                                'fields' => $records[$index]->getFields(),
                                 'message' => $message,
-                                'code' => $actionResponse->getCode(),
-                                'status' => $actionResponse->getStatus(),
-                                'details' => $details,
+                                'code' => $actionResponse->getCode()
                             ];
-
-                            AcmsLogger::info('Zoho API Exception in insertRecords', $errorInfo);
                         }
                     }
 
-                    return !$this->processedRecords->isEmpty();
+                    return $result;
                 } else if ($responseHandler instanceof APIException) {
                     $message = $responseHandler->getMessage();
                     if ($message instanceof Choice) {
                         $message = $message->getValue();
                     }
-                    AcmsLogger::info('Zoho API Exception in insertRecords: ' . $message);
+                    $result['failures'][] = [
+                        'module' => $moduleApiName,
+                        'type' => 'create',
+                        'message' => $message
+                    ];
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::info('Exception in insertRecords', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            $result['failures'][] = [
+                'module' => $moduleApiName,
+                'type' => 'create',
+                'message' => $e->getMessage()
+            ];
         }
 
-        return false;
+        return $result;
     }
 
     /**
      * レコードを更新する
      *
      * @param Record[] $records 更新するRecordModelの配列
-     * @return bool 成功した場合はtrue
+     * @return array ['success' => int, 'failures' => array] 成功数と失敗情報の配列
      */
     public function updateRecords(array $records)
     {
+        $result = ['success' => 0, 'failures' => []];
+
         if (empty($records)) {
-            return false;
+            return $result;
         }
 
         $recordsList = [];
@@ -381,7 +222,7 @@ class RecordApi extends ApiBase
         }
 
         if (empty($recordsList) || $moduleApiName === null) {
-            return false;
+            return $result;
         }
 
         try {
@@ -398,14 +239,8 @@ class RecordApi extends ApiBase
 
                 // HTTP 204 (No Content) は更新成功だがレスポンスボディが空
                 if ($statusCode === 204) {
-                    foreach ($records as $record) {
-                        $this->processedRecords->add($record);
-                    }
-                    AcmsLogger::info('【Zoho Success】レコードの更新が成功しました (HTTP 204)', [
-                        'moduleApiName' => $moduleApiName,
-                        'recordsCount' => count($records)
-                    ]);
-                    return true;
+                    $result['success'] = count($records);
+                    return $result;
                 }
 
                 if ($responseHandler instanceof ActionWrapper) {
@@ -413,57 +248,48 @@ class RecordApi extends ApiBase
 
                     foreach ($actionResponses as $index => $actionResponse) {
                         if ($actionResponse instanceof SuccessResponse) {
-                            // コレクションに追加
-                            $this->processedRecords->add($records[$index]);
+                            $result['success']++;
                         } else if ($actionResponse instanceof APIException) {
                             $message = $actionResponse->getMessage();
-                            $details = $actionResponse->getDetails();
 
                             // メッセージがChoiceオブジェクトの場合は値を取得
                             if ($message instanceof Choice) {
                                 $message = $message->getValue();
                             }
 
-                            // 詳細情報も含めてログ出力
-                            $errorInfo = [
+                            $result['failures'][] = [
+                                'module' => $moduleApiName,
+                                'type' => 'update',
+                                'id' => $records[$index]->getId(),
+                                'fields' => $records[$index]->getFields(),
                                 'message' => $message,
-                                'code' => $actionResponse->getCode(),
-                                'status' => $actionResponse->getStatus(),
-                                'details' => $details,
+                                'code' => $actionResponse->getCode()
                             ];
-
-                            AcmsLogger::info('Zoho API Exception in updateRecords', $errorInfo);
                         }
                     }
 
-                    return !$this->processedRecords->isEmpty();
+                    return $result;
                 } else if ($responseHandler instanceof APIException) {
                     $message = $responseHandler->getMessage();
                     if ($message instanceof Choice) {
                         $message = $message->getValue();
                     }
-                    AcmsLogger::info('Zoho API Exception in updateRecords: ' . $message);
+                    $result['failures'][] = [
+                        'module' => $moduleApiName,
+                        'type' => 'update',
+                        'message' => $message
+                    ];
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::error('Exception in updateRecords', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'moduleApiName' => $moduleApiName ?? 'unknown',
-                'recordsCount' => count($records),
-                'records' => array_map(function($r) {
-                    return [
-                        'module' => $r->getModuleApiName(),
-                        'id' => $r->getId(),
-                        'fields' => $r->getFields()
-                    ];
-                }, $records),
-                'trace' => $e->getTraceAsString()
-            ]);
+            $result['failures'][] = [
+                'module' => $moduleApiName,
+                'type' => 'update',
+                'message' => $e->getMessage()
+            ];
         }
 
-        return false;
+        return $result;
     }
 
     /**
@@ -489,87 +315,8 @@ class RecordApi extends ApiBase
             return false;
         }
 
-        try {
-            $criteria = "(" . $apiName . ":equals:" . $uniqueValue . ")";
-            // TODO: searchRecordsメソッドを実装する必要があります
-            // $searchResults = $this->searchRecords($scope, $criteria);
-
-            // if ($searchResults && count($searchResults) > 0) {
-            //     $entityId = $searchResults[0]['id'];
-            //     $record->setId($entityId);
-            //     return true;
-            // }
-        } catch (\Exception $e) {
-            // 検索に失敗した場合は何もしない
-        }
-
         return false;
     }
-
-    /**
-     * 関連レコードを更新する
-     *
-     * @param array $relatedScopes 関連スコープの配列
-     * @return bool 成功した場合はtrue
-     */
-    // public function updateRelatedRecords(array $relatedScopes)
-    // {
-    //     $records = $this->getProcessedRecords();
-
-    //     foreach ($relatedScopes as $relatedScope) {
-    //         $targetScope = $relatedScope['target'];
-
-    //         $targets = array_filter($records, function ($item) use ($targetScope) {
-    //             return $item->getScope() === $targetScope;
-    //         });
-
-    //         $items = array_filter($records, function ($item) use ($relatedScope) {
-    //             return $item->getScope() === $relatedScope['scope'];
-    //         });
-
-    //         foreach ($targets as $target) {
-    //             foreach ($items as $item) {
-    //                 if ($this->updateLookupField(
-    //                     $item,
-    //                     $relatedScope['field'],
-    //                     $target,
-    //                     $relatedScope['targetField']
-    //                 )) {
-    //                     $this->updateRecords([$item]);
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     return true;
-    // }
-
-    /**
-     * ルックアップフィールドを更新する
-     *
-     * @param Record $record 更新するレコード
-     * @param string $lookupField ルックアップフィールド名
-     * @param Record $relatedRecord 関連レコード
-     * @param string $relatedField 関連フィールド名
-     * @return bool 成功した場合はtrue
-     */
-    // private function updateLookupField(
-    //     Record $record,
-    //     string $lookupField,
-    //     Record $relatedRecord,
-    //     string $relatedField
-    // ) {
-    //     $relatedFields = $relatedRecord->getFields();
-
-    //     if (!isset($relatedFields[$relatedField])) {
-    //         return false;
-    //     }
-
-    //     $relatedValue = $relatedFields[$relatedField];
-    //     $record->addField($lookupField, $relatedValue);
-
-    //     return true;
-    // }
 
     /**
      * Recordオブジェクトを ZohoRecord に変換
@@ -581,13 +328,6 @@ class RecordApi extends ApiBase
     {
         $scope = $record->getModuleApiName();
 
-        AcmsLogger::info('【Zoho Debug】createZohoRecord開始', [
-            'scope' => $scope,
-            'recordId' => $record->getId(),
-            'fieldsCount' => count($record->getFields()),
-            'fields' => $record->getFields()
-        ]);
-
         $apiRecord = new ZohoRecord();
 
         if ($record->getId()) {
@@ -597,7 +337,6 @@ class RecordApi extends ApiBase
         // フィールドのキーは既にAPI名なので、変換不要
         foreach ($record->getFields() as $apiName => $value) {
             if (empty($apiName)) {
-                AcmsLogger::info('【Zoho Debug】空のAPI名をスキップ');
                 continue;
             }
 
@@ -605,13 +344,6 @@ class RecordApi extends ApiBase
             if ($value === '') {
                 continue;
             }
-
-            // AcmsLogger::info('【Zoho Debug】フィールド追加', [
-            //     'apiName' => $apiName,
-            //     'value' => $value,
-            //     'valueType' => gettype($value),
-            //     'isLookup' => $record->isLookupField($apiName)
-            // ]);
 
             // ルックアップフィールドの場合、ZohoRecordオブジェクトに変換
             if ($record->isLookupField($apiName)) {
@@ -630,10 +362,7 @@ class RecordApi extends ApiBase
                 $apiRecord->addFieldValue($field, $fieldValue);
             } catch (\Exception $e) {
                 // フィールドがモジュールに存在しない場合などのエラーをログに記録してスキップ
-                AcmsLogger::warning('【Zoho Warning】フィールドの追加に失敗しました（スキップします）', [
-                    'module' => $scope,
-                    'field' => $apiName,
-                    'value' => $value,
+                AcmsLogger::error('【Zoho plugin】フィールドの追加に失敗しました。', [
                     'error' => $e->getMessage()
                 ]);
                 continue;

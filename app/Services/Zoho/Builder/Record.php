@@ -7,6 +7,7 @@ use AcmsLogger;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 use Acms\Plugins\Zoho\Services\Zoho\Builder;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
+use Acms\Plugins\Zoho\Services\Zoho\Models\ModuleScope;
 use Acms\Plugins\Zoho\Services\Zoho\Builder\ProcessedRecordsCollection;
 
 /**
@@ -252,7 +253,9 @@ class Record extends Builder
 
         foreach ($fieldKeys as $i => $fieldKey) {
             $key = $this->config->get('zoho_link_field_cms_field', '', $i);
-            $scopes = explode(',', $this->config->get('zoho_link_field_module', '', $i));
+            $scopesJson = $this->config->get('zoho_link_field_module', '', $i);
+            $moduleScopes = ModuleScope::parseJsonArray($scopesJson);
+            $scopes = ModuleScope::toApiNames($moduleScopes);
             $canInsert = $this->config->get('zoho_link_field_insert', '', $i);
             $canUpdate = $this->config->get('zoho_link_field_update', '', $i);
 
@@ -361,7 +364,8 @@ class Record extends Builder
     private function getInsertScopes(int $groupIndex)
     {
         $scopeString = $this->config->get('zoho_form_insert_scope', '', $groupIndex);
-        return $scopeString ? explode(',', $scopeString) : [];
+        $moduleScopes = ModuleScope::parseJsonArray($scopeString);
+        return ModuleScope::toApiNames($moduleScopes);
     }
 
     /**
@@ -373,7 +377,8 @@ class Record extends Builder
     private function getUpdateScopes(int $groupIndex)
     {
         $scopeString = $this->config->get('zoho_form_update_scope', '', $groupIndex);
-        return $scopeString ? explode(',', $scopeString) : [];
+        $moduleScopes = ModuleScope::parseJsonArray($scopeString);
+        return ModuleScope::toApiNames($moduleScopes);
     }
 
     /**
@@ -568,19 +573,9 @@ class Record extends Builder
             // 最優先の候補を設定
             $selected = $lookupCandidates[0];
             $record->addFields([$selected['lookupId'] => $selected['recordId']]);
-
-            AcmsLogger::info('【Zoho Success】ルックアップフィールドを解決', [
-                'module' => $record->getModuleApiName(),
-                'lookupId' => $selected['lookupId'],
-                'targetScope' => $selected['targetScope'],
-                'resolvedId' => $selected['recordId']
-            ]);
         } else {
             // 全ての候補で見つからなかった場合
-            AcmsLogger::warning('【Zoho Warning】ルックアップ先が見つからず、全てのルックアップフィールドを削除', [
-                'module' => $record->getModuleApiName(),
-                'lookupFields' => array_map(function($c) { return $c['lookupId']; }, $lookupConfigs)
-            ]);
+            AcmsLogger::debug('【Zoho plugin】ルックアップ先が見つからず、全てのルックアップフィールドを削除しました。');
         }
     }
 
