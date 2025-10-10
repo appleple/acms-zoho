@@ -12,13 +12,9 @@ use com\zoho\api\logger\LogBuilder;
 use com\zoho\api\logger\Levels;
 use com\zoho\api\authenticator\Token;
 use com\zoho\crm\api\Initializer;
-// use com\zoho\crm\api\SDKConfigBuilder;
-// use com\zoho\crm\api\ProxyBuilder;
 use com\zoho\crm\api\exception\SDKException;
-// use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
 use Acms\Plugins\Zoho\Services\Zoho\Store\CustomFileStore;
 use Acms\Plugins\Zoho\Services\Zoho\Store;
-use Error;
 
 class Client
 {
@@ -65,7 +61,7 @@ class Client
             $tokenStore = env('ZOHO_TOKEN_STORE');
         }
         if ($tokenStore !== 'file' && $tokenStore !== 'database') {
-            throw new \InvalidArgumentException('ZOHO_TOKEN_STORE は file または database である必要があります。');
+            throw new \InvalidArgumentException('ZOHO_TOKEN_STORE はfileである必要があります。');
         }
         if (env('ZOHO_LOGGER_FILE_PATH')) {
             $this->loggerFilePath = env('ZOHO_LOGGER_FILE_PATH');
@@ -105,6 +101,11 @@ class Client
         return $this->tokenId;
     }
 
+    public function setTokenId(int $tokenId)
+    {
+        $this->tokenId = $tokenId;
+    }
+
     public function getRefreshToken()
     {
         return $this->refreshToken;
@@ -137,7 +138,8 @@ class Client
             $this->redirectUrl = $redirectUrl;
             $this->grantToken = $grantToken;
         } else {
-            $tokenId = $this->getTokenIdByBid(BID);
+            // tokenIdが既にセットされている場合はそれを使用、なければBIDから取得
+            $tokenId = $this->tokenId ?? $this->getTokenIdByBid(BID);
             if (!$tokenId) {
                 AcmsLogger::error('【Zoho plugin】認証されていません。');
                 return null;
@@ -197,7 +199,6 @@ class Client
             return $this->accessToken;
         } catch (SDKException $e) {
             throw new \RuntimeException("Zoho SDK Error: " . $e->getMessage(), $e->getCode(), $e);
-            return null;
         }
     }
 
@@ -271,29 +272,4 @@ class Client
         }
         return null;
     }
-
-    // private function getCurrentUserEmail(string $accessToken): string
-    // {
-    //     $url = 'https://accounts.zoho.com/oauth/user/info';
-    //     $headers = [
-    //         'Authorization: Bearer ' . $accessToken,
-    //         'Content-Type: application/json'
-    //     ];
-
-    //     $ch = curl_init();
-    //     curl_setopt($ch, CURLOPT_URL, $url);
-    //     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    //     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    //     $response = curl_exec($ch);
-    //     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    //     curl_close($ch);
-
-    //     if ($httpCode !== 200) {
-    //         throw new \Exception('ユーザー情報の取得に失敗しました。');
-    //     }
-
-    //     $userData = json_decode($response, true);
-    //     return $userData['Email'] ?? '';
-    // }
 }

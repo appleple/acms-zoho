@@ -5,7 +5,7 @@
     data-acms-tooltip="<!--T-->v2までのフォーム権限設定。ユニークキーを設定してフォームの権限を作成します。<!--/T-->"
   ></i>
 </h2>
-<table class="js-fieldgroup-sortable">
+<table class="js-fieldgroup-sortable" id="js-acms-zoho-unique-key">
   <thead class="acms-admin-hide-sp">
     <tr>
       <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
@@ -40,20 +40,22 @@
           class="acms-admin-form-width-full"
         />
       </td>
-      <td>
+      <td class="js-acms-zoho-unique-key-row">
+        <div data-acms-zoho-unique-key-insert-root></div>
         <input
-          type="text"
-          name="zoho_form_insert_scope[]"
+          type="hidden"
+          name="zoho_form_insert_scope[{i}]"
           value="{zoho_form_insert_scope}"
-          class="acms-admin-form-width-full"
+          data-acms-zoho-unique-key-insert-scope
         />
       </td>
-      <td>
+      <td class="js-acms-zoho-unique-key-row">
+        <div data-acms-zoho-unique-key-update-root></div>
         <input
-          type="text"
-          name="zoho_form_update_scope[]"
+          type="hidden"
+          name="zoho_form_update_scope[{i}]"
           value="{zoho_form_update_scope}"
-          class="acms-admin-form-width-full"
+          data-acms-zoho-unique-key-update-scope
         />
       </td>
       <td>
@@ -69,11 +71,23 @@
       <td>
         <input type="text" name="zoho_form_unique_key[]" value="" class="acms-admin-form-width-full" />
       </td>
-      <td>
-        <input type="text" name="zoho_form_insert_scope[]" value="" class="acms-admin-form-width-full" />
+      <td class="js-acms-zoho-unique-key-row">
+        <div data-acms-zoho-unique-key-insert-root></div>
+        <input
+          type="hidden"
+          name="zoho_form_insert_scope[]"
+          value=""
+          data-acms-zoho-unique-key-insert-scope
+        />
       </td>
-      <td>
-        <input type="text" name="zoho_form_update_scope[]" value="" class="acms-admin-form-width-full" />
+      <td class="js-acms-zoho-unique-key-row">
+        <div data-acms-zoho-unique-key-update-root></div>
+        <input
+          type="hidden"
+          name="zoho_form_update_scope[]"
+          value=""
+          data-acms-zoho-unique-key-update-scope
+        />
       </td>
       <td>
         <input type="button" class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger" value="削除" />

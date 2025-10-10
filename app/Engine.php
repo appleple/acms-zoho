@@ -8,6 +8,7 @@ use AcmsLogger;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Builder\Record as RecordBuilder;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
+use Acms\Plugins\Zoho\Services\Zoho\Collections\RecordDependencyLevel;
 
 /**
  * Zoho拡張アプリの実行クラス
@@ -53,13 +54,9 @@ class Engine
      */
     public function send()
     {
-        AcmsLogger::info('【Zoho plugin】=============== Zohoへ一括送信準備中です。===============');
-
         try {
             if (is_null($this->zohoClient)) {
-                if (class_exists('AcmsLogger')) {
-                    AcmsLogger::error('【Zoho plugin】Zohoクライアントの初期化に失敗しました。');
-                }
+                AcmsLogger::error('【Zoho plugin】Zohoクライアントの初期化に失敗しました。');
                 return;
             }
 
@@ -78,12 +75,18 @@ class Engine
             // 処理済みレコードを格納する配列
             $processedRecords = [];
 
-            // 依存関係レベルを計算してグループ化
-            $levelGroups = $this->groupRecordsByDependencyLevel($records, $recordBuilder);
+            // 成功・失敗の集計
+            $createdCount = 0;
+            $updatedCount = 0;
+            $allFailures = [];
 
-            // レベルごとに処理
-            foreach ($levelGroups as $levelRecords) {
-                // このレベル内でLookupフィールドを解決
+            // 依存関係レベルごとにグループ化
+            $dependencyLevels = $this->groupRecordsByDependencyLevel($recordBuilder, $records);
+
+            // 依存先から順に、レベルごとの処理
+            foreach ($dependencyLevels as $level) {
+                $levelRecords = $level->getRecords();
+                // このレベルのレコードのLookupフィールドを解決
                 foreach ($levelRecords as $record) {
                     if (empty($record->getFields())) {
                         continue;
@@ -119,13 +122,17 @@ class Engine
                     $type = $group['type'];
                     $groupRecords = $group['records'];
 
-                    // 一括送信（最大100件ずつ）
+                    // ZohoAPIの上限である最大100件ずつ一括送信
                     $chunks = array_chunk($groupRecords, 100);
                     foreach ($chunks as $chunk) {
                         if ($type === 'update') {
-                            $recordApi->updateRecords($chunk);
+                            $result = $recordApi->updateRecords($chunk);
+                            $updatedCount += $result['success'];
+                            $allFailures = array_merge($allFailures, $result['failures']);
                         } else {
-                            $recordApi->insertRecords($chunk);
+                            $result = $recordApi->insertRecords($chunk);
+                            $createdCount += $result['success'];
+                            $allFailures = array_merge($allFailures, $result['failures']);
                         }
 
                         // 処理済みレコードに追加
@@ -136,140 +143,50 @@ class Engine
                 }
             }
 
-            if (class_exists('AcmsLogger')) {
+            // 件数が多いほどログが増えてしまう為まとめて出力
+            $messages = [];
+            if ($createdCount > 0) {
+                $messages[] = "レコードを{$createdCount}件作成";
+            }
+            if ($updatedCount > 0) {
+                $messages[] = "レコードを{$updatedCount}件更新";
+            }
+
+            if (!empty($messages)) {
+                $summary = implode('、', $messages) . 'しました。';
+                AcmsLogger::info('【Zoho plugin】データの一括送信が完了しました。' . $summary);
+            } else {
                 AcmsLogger::info('【Zoho plugin】データの一括送信が完了しました。');
             }
-        } catch (\Exception $e) {
-            if (class_exists('AcmsLogger')) {
-                AcmsLogger::error(
-                    '【Zoho plugin】データの一括送信に失敗しました。',
-                    Common::exceptionArray($e)
-                );
-            } else {
-                AcmsLogger::error(
-                    '【Zoho plugin】',
-                    $e->getMessage()
-                );
+
+            // 失敗のログ
+            if (!empty($allFailures)) {
+                AcmsLogger::error('【Zoho plugin】レコードの送信に失敗しました。', [
+                    'failures' => $allFailures
+                ]);
             }
+        } catch (\Exception $e) {
+            AcmsLogger::error(
+                '【Zoho plugin】データの一括送信に失敗しました。',
+                Common::exceptionArray($e)
+            );
         }
     }
-
-    // /**
-    //  * Zoho CRMにデータを送信（1件ずつ処理版 - 旧実装）
-    //  *
-    //  * 注意: この実装は1件ずつAPIを呼び出すため、パフォーマンスに影響します。
-    //  * 現在は一括処理版のsend()を使用しています。
-    //  */
-    // public function sendOld()
-    // {
-    //     AcmsLogger::info('【Zoho plugin】=============== Zohoへ送信準備中です。===============');
-    //
-    //     try {
-    //         if (is_null($this->zohoClient)) {
-    //             if (class_exists('AcmsLogger')) {
-    //                 AcmsLogger::error('【Zoho plugin】Zohoクライアントの初期化に失敗しました。');
-    //             }
-    //             return;
-    //         }
-    //
-    //         // Zoho APIクライアントの作成
-    //         $api = new ZohoApi($this->zohoClient);
-    //         $recordApi = $api->record();
-    //
-    //         $recordBuilder = new RecordBuilder($this->field, $this->config);
-    //
-    //         // ステップ1: フォームから送信されたデータを確認
-    //         AcmsLogger::debug('【ステップ1】フォーム送信データ', [
-    //             'company' => $this->field->get('company'),
-    //             'tel' => $this->field->get('tel')
-    //         ]);
-    //
-    //         // 設定を確認
-    //         AcmsLogger::debug('【設定確認】フォーム設定', [
-    //             'zoho_form_group_index' => $this->config->getArray('zoho_form_group_index'),
-    //             'zoho_form_insert_scope_0' => $this->config->get('zoho_form_insert_scope', '', 0),
-    //             'zoho_form_insert_scope_1' => $this->config->get('zoho_form_insert_scope', '', 1),
-    //             'zoho_form_update_scope_0' => $this->config->get('zoho_form_update_scope', '', 0),
-    //             'zoho_form_update_scope_1' => $this->config->get('zoho_form_update_scope', '', 1)
-    //         ]);
-    //
-    //         // レコードの構造体作成（優先順位設定がある場合は内部でモジュール確定も実行）
-    //         $records = $recordBuilder->buildRecords($recordApi);
-    //
-    //         // 依存関係順に並び替え（ルックアップの参照先が先に処理されるように）
-    //         $records = $recordBuilder->sortRecordsByDependency($records);
-    //
-    //         // ステップ2: レコード生成後のフィールドを確認
-    //         AcmsLogger::debug('【ステップ2】レコード生成後（依存順序ソート済み）', [
-    //             'recordsCount' => count($records),
-    //             'recordsOrder' => array_map(function($r) {
-    //                 return $r->getModuleApiName() . ' (' . $r->getType() . ')';
-    //             }, $records)
-    //         ]);
-    //
-    //         // 処理済みレコードを格納する配列
-    //         $processedRecords = [];
-    //
-    //         // 依存順序に従って1件ずつ処理
-    //         foreach ($records as $record) {
-    //             // 空のレコードをスキップ
-    //             if (empty($record->getFields())) {
-    //                 continue;
-    //             }
-    //
-    //             // ルックアップフィールドの値をIDに変換
-    //             $recordBuilder->resolveLookupFields($record, $processedRecords, $recordApi);
-    //
-    //             // ステップ3: 送信前のレコード確認
-    //             AcmsLogger::debug('【ステップ3】送信前のレコード', [
-    //                 'module' => $record->getModuleApiName(),
-    //                 'type' => $record->getType(),
-    //                 'fields' => $record->getFields()
-    //             ]);
-    //
-    //             // レコードを送信
-    //             if ($record->getType() === 'update') {
-    //                 $recordApi->updateRecords([$record]);
-    //             } else {
-    //                 $recordApi->insertRecords([$record]);
-    //             }
-    //
-    //             // 処理済みレコードに追加
-    //             $processedRecords[] = $record;
-    //         }
-    //
-    //         if (class_exists('AcmsLogger')) {
-    //             AcmsLogger::debug('【Zoho plugin】データの送信が完了しました。');
-    //         }
-    //     } catch (\Exception $e) {
-    //         if (class_exists('AcmsLogger')) {
-    //             AcmsLogger::error(
-    //                 '【Zoho plugin】データの送信に失敗しました。',
-    //                 Common::exceptionArray($e)
-    //             );
-    //         } else {
-    //             AcmsLogger::error(
-    //                 '【Zoho plugin】',
-    //                 $e->getMessage()
-    //             );
-    //         }
-    //     }
-    // }
 
     /**
      * レコードを依存関係のレベルごとにグループ化
      *
-     * @param array $records ソート済みのレコード配列
      * @param RecordBuilder $recordBuilder
-     * @return array レベルごとにグループ化されたレコード配列
+     * @param array $records ソート済みのレコード配列
+     * @return RecordDependencyLevel[] レベルごとにグループ化されたレコード配列（レベル順）
      */
-    private function groupRecordsByDependencyLevel(array $records, RecordBuilder $recordBuilder): array
+    private function groupRecordsByDependencyLevel(RecordBuilder $recordBuilder, array $records): array
     {
         $dependencies = $recordBuilder->getDependencyMap();
-        $levelGroups = [];
+        $levels = [];
         $moduleLevels = [];
 
-        // 各モジュールの依存レベルを計算
+        // 各モジュールの依存レベルを計算してレベルごとに追加
         foreach ($records as $record) {
             $module = $record->getModuleApiName();
 
@@ -277,19 +194,18 @@ class Engine
                 $moduleLevels[$module] = $this->calculateModuleLevel($module, $dependencies);
             }
 
-            $level = $moduleLevels[$module];
+            $levelNumber = $moduleLevels[$module];
 
-            if (!isset($levelGroups[$level])) {
-                $levelGroups[$level] = [];
+            if (!isset($levels[$levelNumber])) {
+                $levels[$levelNumber] = new RecordDependencyLevel($levelNumber);
             }
 
-            $levelGroups[$level][] = $record;
+            $levels[$levelNumber]->addRecord($record);
         }
 
         // レベル順にソート
-        ksort($levelGroups);
-
-        return $levelGroups;
+        ksort($levels);
+        return array_values($levels);
     }
 
     /**
@@ -322,46 +238,5 @@ class Engine
         }
 
         return $maxLevel;
-    }
-
-    /**
-     * リレーショナル設定に基づいてレコードをソート
-     *
-     * 関連先（参照される側）が先、関連元（参照する側）が後になるようにソートする
-     *
-     * @param array $records
-     * @return array
-     */
-    private function sortRecordsByRelation(array $records)
-    {
-        $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
-
-        if (empty($zohoRelatedScopes)) {
-            return $records;
-        }
-
-        // 関連元モジュールのリストを作成
-        $relatedSourceModules = [];
-        foreach ($zohoRelatedScopes as $i => $relatedScope) {
-            $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
-            // ルックアップIDが設定されている場合のみ（ジャンクションは除外）
-            if ($lookupId) {
-                $relatedSourceModules[] = $relatedScope;
-            }
-        }
-
-        // 関連元モジュールを後ろに、それ以外を前に配置
-        usort($records, function($a, $b) use ($relatedSourceModules) {
-            $aIsSource = in_array($a->getModuleApiName(), $relatedSourceModules);
-            $bIsSource = in_array($b->getModuleApiName(), $relatedSourceModules);
-
-            if ($aIsSource === $bIsSource) {
-                return 0;
-            }
-
-            return $aIsSource ? 1 : -1;
-        });
-
-        return $records;
     }
 }
