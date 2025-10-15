@@ -683,6 +683,54 @@ class Record extends Builder
         if ($id) {
             $record->setId($id);
         }
+
+        // モジュールが確定したので、このモジュールに不要なフィールドを削除
+        $this->cleanupFieldsForModule($record, $moduleApiName, $type);
+    }
+
+    /**
+     * モジュールに不要なフィールドを削除
+     *
+     * @param RecordModel $record レコード
+     * @param string $moduleApiName モジュールAPI名
+     * @param string $type insert or update
+     * @return void
+     */
+    private function cleanupFieldsForModule(RecordModel $record, string $moduleApiName, string $type)
+    {
+        $fieldKeys = $this->config->getArray('zoho_link_field_module_field');
+        $currentFields = $record->getFields();
+
+        foreach ($fieldKeys as $i => $fieldKey) {
+            // fieldKeyがJSON形式の場合はデコード
+            $fieldApiName = $fieldKey;
+            if ($this->isJson($fieldKey)) {
+                $fieldData = json_decode($fieldKey, true);
+                $fieldApiName = $fieldData['apiName'] ?? $fieldKey;
+            }
+
+            // このフィールドが対象モジュールに送信されるべきか確認
+            $scopesJson = $this->config->get('zoho_link_field_module', '', $i);
+            $moduleScopes = ModuleScope::parseJsonArray($scopesJson);
+            $scopes = ModuleScope::toApiNames($moduleScopes);
+
+            $canInsert = $this->config->get('zoho_link_field_insert', '', $i);
+            $canUpdate = $this->config->get('zoho_link_field_update', '', $i);
+
+            // スコープが一致しない場合、このフィールドを削除
+            if (!in_array($moduleApiName, $scopes)) {
+                if ($record->hasField($fieldApiName)) {
+                    $record->removeField($fieldApiName);
+                }
+                continue;
+            }
+
+            // 操作タイプに応じた権限チェック
+            $isAllowed = ($type === 'insert' && $canInsert) || ($type === 'update' && $canUpdate);
+            if (!$isAllowed && $record->hasField($fieldApiName)) {
+                $record->removeField($fieldApiName);
+            }
+        }
     }
 
     // ================================================================================
