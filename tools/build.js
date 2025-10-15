@@ -8,29 +8,6 @@ const { zipPromise } = require('./lib/system.js');
 
 const { version } = require('../package.json');
 
-const ignores = [
-  '.git',
-  '.gitignore',
-  '.gitattributes',
-  'node_modules',
-  '.editorconfig',
-  '.eslintrc.js',
-  '.node-version',
-  '.husky',
-  'build',
-  '.prettierrc.js',
-  'composer.json',
-  'composer.lock',
-  'package-lock.json',
-  'package.json',
-  'phpcs.xml',
-  'phpmd.xml',
-  '.phplint-cache',
-  'phpmd.log',
-  'tools',
-  'fix',
-];
-
 const renames = [
   {
     from: 'gitignore.txt',
@@ -43,24 +20,16 @@ co(function* () {
     /**
      * ready plugins files
      */
-    const copyFiles = fs.readdirSync('.');
+    const copyFiles = fs.readdirSync('./app');
     fs.mkdirsSync('Zoho');
     fs.mkdirsSync(`build/v${version}`);
 
     /**
-     * copy plugins files
+     * copy app directory files only
      */
+    console.log('Copy app directory files.');
     copyFiles.forEach((file) => {
-      fs.copySync(`./${file}`, `Zoho/${file}`);
-    });
-
-    /**
-     * Ignore files
-     */
-    console.log('Remove unused files.');
-    console.log(ignores);
-    ignores.forEach((path) => {
-      fs.removeSync(`Zoho/${path}`);
+      fs.copySync(`./app/${file}`, `Zoho/${file}`);
     });
 
     /**
@@ -69,7 +38,9 @@ co(function* () {
     console.log('Rename files.');
     console.log(renames);
     renames.forEach(({ from, to }) => {
-      fs.moveSync(`Zoho/${from}`, `Zoho/${to}`);
+      if (fs.existsSync(`Zoho/${from}`)) {
+        fs.moveSync(`Zoho/${from}`, `Zoho/${to}`);
+      }
     });
 
     yield zipPromise('Zoho', `./build/v${version}/Zoho.zip`);
