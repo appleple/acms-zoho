@@ -23,8 +23,6 @@ export default function DispatchCacheClear() {
 
         // マウント完了後に要素を追跡リストに追加
         mountedElements.add(container);
-
-        console.log('CacheClearButton mounted to:', container);
       } catch (error) {
         console.error('Error mounting CacheClearButton:', error);
       }

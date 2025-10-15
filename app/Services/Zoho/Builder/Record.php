@@ -307,6 +307,11 @@ class Record extends Builder
                 $record->markAsPicklistField($fieldApiName);
             }
 
+            // 複数行テキストフィールドの判定と登録
+            if ($fieldType === 'textarea') {
+                $record->markAsTextareaField($fieldApiName);
+            }
+
             $item[$fieldApiName] = $normalizedValue;
         }
 

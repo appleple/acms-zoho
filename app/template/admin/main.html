@@ -56,7 +56,11 @@
                 ></i>
               </th>
               <td>
-                <input type="text" name="zoho_client_id" value="{clientId}" readonly>
+                <input
+                  type="text"
+                  name="zoho_client_id"
+                  value="{clientId}"
+                  <!-- BEGIN_IF [{authorized}/eq/true] -->readonly<!-- END_IF -->>
               </td>
             </tr>
 
@@ -69,7 +73,11 @@
                 ></i>
               </th>
               <td>
-                <input type="text" name="zoho_client_secret" value="{secretId}" readonly>
+                <input
+                  type="text"
+                  name="zoho_client_secret"
+                  value="{secretId}"
+                  <!-- BEGIN_IF [{authorized}/eq/true] -->readonly<!-- END_IF -->>
               </td>
             </tr>
 

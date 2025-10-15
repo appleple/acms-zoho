@@ -38,7 +38,11 @@ class OAuth2 extends ACMS_POST
                 'prompt' => 'consent' // ユーザーに毎回同意画面を出す（オプション）
             ]);
 
-            header('Location: ' . $url);
+            // バッファをクリアしてリダイレクト
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            header('Location: ' . $url, true, 302);
             exit;
         }
         else {

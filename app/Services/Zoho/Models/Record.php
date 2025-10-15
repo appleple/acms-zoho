@@ -56,6 +56,9 @@ class Record
     /** @var array ピックリストフィールドのリスト [フィールド名 => true] */
     private $picklistFields = [];
 
+    /** @var array 複数行テキストフィールドのリスト [フィールド名 => true] */
+    private $textareaFields = [];
+
     /**
      * @param string $moduleApiName モジュールAPI名
      * @param string $type insert|update|pending
@@ -228,6 +231,29 @@ class Record
     public function isPicklistField(string $fieldName): bool
     {
         return isset($this->picklistFields[$fieldName]);
+    }
+
+    /**
+     * フィールドを複数行テキストとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsTextareaField(string $fieldName)
+    {
+        $this->textareaFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドが複数行テキストかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isTextareaField(string $fieldName): bool
+    {
+        return isset($this->textareaFields[$fieldName]);
     }
 
     /**

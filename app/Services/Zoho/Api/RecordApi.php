@@ -19,6 +19,8 @@ use com\zoho\crm\api\util\Choice;
 
 class RecordApi extends ApiBase
 {
+    /** @var array モジュールごとのフィールドメタデータキャッシュ */
+    private $fieldMetadataCache = [];
 
     /**
      * ユニークキーでレコードを検索
@@ -90,98 +92,7 @@ class RecordApi extends ApiBase
      */
     public function insertRecords(array $records)
     {
-        $result = ['success' => 0, 'failures' => []];
-
-        if (empty($records)) {
-            return $result;
-        }
-
-        $recordsList = [];
-        $moduleApiName = null;
-
-        foreach ($records as $record) {
-            if (!($record instanceof Record)) {
-                continue;
-            }
-
-            if ($moduleApiName === null) {
-                $moduleApiName = $record->getModuleApiName();
-            }
-
-            $recordsList[] = $this->createZohoRecord($record);
-        }
-
-        if (empty($recordsList) || $moduleApiName === null) {
-            return $result;
-        }
-
-        try {
-            $recordOperations = new RecordOperations($moduleApiName);
-            $request = new BodyWrapper();
-            $request->setData($recordsList);
-
-            $headerInstance = new HeaderMap();
-            $response = $recordOperations->createRecords($request, $headerInstance);
-
-            if ($response != null) {
-                $responseHandler = $response->getObject();
-
-                if ($responseHandler instanceof ActionWrapper) {
-                    $actionResponses = $responseHandler->getData();
-
-                    foreach ($actionResponses as $index => $actionResponse) {
-                        if ($actionResponse instanceof SuccessResponse) {
-                            // 作成されたレコードのIDを設定
-                            $details = $actionResponse->getDetails();
-                            if (is_array($details) && isset($details['id'])) {
-                                $createdRecordId = $details['id'];
-                            } elseif (is_object($details) && method_exists($details, 'get')) {
-                                $createdRecordId = $details->get('id');
-                            } else {
-                                continue;
-                            }
-                            $records[$index]->setId($createdRecordId);
-                            $result['success']++;
-                        } else if ($actionResponse instanceof APIException) {
-                            $message = $actionResponse->getMessage();
-
-                            // メッセージがChoiceオブジェクトの場合は値を取得
-                            if ($message instanceof Choice) {
-                                $message = $message->getValue();
-                            }
-
-                            $result['failures'][] = [
-                                'module' => $moduleApiName,
-                                'type' => 'create',
-                                'fields' => $records[$index]->getFields(),
-                                'message' => $message,
-                                'code' => $actionResponse->getCode()
-                            ];
-                        }
-                    }
-
-                    return $result;
-                } else if ($responseHandler instanceof APIException) {
-                    $message = $responseHandler->getMessage();
-                    if ($message instanceof Choice) {
-                        $message = $message->getValue();
-                    }
-                    $result['failures'][] = [
-                        'module' => $moduleApiName,
-                        'type' => 'create',
-                        'message' => $message
-                    ];
-                }
-            }
-        } catch (\Exception $e) {
-            $result['failures'][] = [
-                'module' => $moduleApiName,
-                'type' => 'create',
-                'message' => $e->getMessage()
-            ];
-        }
-
-        return $result;
+        return $this->processRecords($records, 'create');
     }
 
     /**
@@ -191,6 +102,18 @@ class RecordApi extends ApiBase
      * @return array ['success' => int, 'failures' => array] 成功数と失敗情報の配列
      */
     public function updateRecords(array $records)
+    {
+        return $this->processRecords($records, 'update');
+    }
+
+    /**
+     * レコードの作成または更新を処理する共通メソッド
+     *
+     * @param Record[] $records 処理するRecordModelの配列
+     * @param string $operationType 操作タイプ ('create' または 'update')
+     * @return array ['success' => int, 'failures' => array] 成功数と失敗情報の配列
+     */
+    private function processRecords(array $records, string $operationType)
     {
         $result = ['success' => 0, 'failures' => []];
 
@@ -206,12 +129,15 @@ class RecordApi extends ApiBase
                 continue;
             }
 
-            if (!$record->getId()) {
-                $this->setIdByUniqueKey($record, 'Email');
-            }
+            // updateの場合のみ、IDの設定を確認
+            if ($operationType === 'update') {
+                if (!$record->getId()) {
+                    $this->setIdByUniqueKey($record, 'Email');
+                }
 
-            if (!$record->getId()) {
-                continue;
+                if (!$record->getId()) {
+                    continue;
+                }
             }
 
             if ($moduleApiName === null) {
@@ -231,7 +157,13 @@ class RecordApi extends ApiBase
             $request->setData($recordsList);
 
             $headerInstance = new HeaderMap();
-            $response = $recordOperations->updateRecords($request, $headerInstance);
+
+            // 操作タイプに応じてAPIメソッドを切り替え
+            if ($operationType === 'create') {
+                $response = $recordOperations->createRecords($request, $headerInstance);
+            } else {
+                $response = $recordOperations->updateRecords($request, $headerInstance);
+            }
 
             if ($response != null) {
                 $statusCode = $response->getStatusCode();
@@ -244,52 +176,144 @@ class RecordApi extends ApiBase
                 }
 
                 if ($responseHandler instanceof ActionWrapper) {
-                    $actionResponses = $responseHandler->getData();
-
-                    foreach ($actionResponses as $index => $actionResponse) {
-                        if ($actionResponse instanceof SuccessResponse) {
-                            $result['success']++;
-                        } else if ($actionResponse instanceof APIException) {
-                            $message = $actionResponse->getMessage();
-
-                            // メッセージがChoiceオブジェクトの場合は値を取得
-                            if ($message instanceof Choice) {
-                                $message = $message->getValue();
-                            }
-
-                            $result['failures'][] = [
-                                'module' => $moduleApiName,
-                                'type' => 'update',
-                                'id' => $records[$index]->getId(),
-                                'fields' => $records[$index]->getFields(),
-                                'message' => $message,
-                                'code' => $actionResponse->getCode()
-                            ];
-                        }
-                    }
-
+                    $result = $this->handleActionResponses(
+                        $responseHandler->getData(),
+                        $records,
+                        $moduleApiName,
+                        $operationType,
+                        $result
+                    );
                     return $result;
                 } else if ($responseHandler instanceof APIException) {
-                    $message = $responseHandler->getMessage();
-                    if ($message instanceof Choice) {
-                        $message = $message->getValue();
-                    }
-                    $result['failures'][] = [
-                        'module' => $moduleApiName,
-                        'type' => 'update',
-                        'message' => $message
-                    ];
+                    $failure = $this->createFailureFromAPIException(
+                        $responseHandler,
+                        $moduleApiName,
+                        $operationType
+                    );
+                    $result['failures'][] = $failure;
                 }
             }
         } catch (\Exception $e) {
             $result['failures'][] = [
                 'module' => $moduleApiName,
-                'type' => 'update',
-                'message' => $e->getMessage()
+                'type' => $operationType,
+                'message' => $e->getMessage() ?: 'エラーメッセージが取得できませんでした',
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString()
             ];
         }
 
         return $result;
+    }
+
+    /**
+     * ActionResponsesを処理する
+     *
+     * @param array $actionResponses アクションレスポンスの配列
+     * @param Record[] $records 処理したレコードの配列
+     * @param string $moduleApiName モジュールAPI名
+     * @param string $operationType 操作タイプ
+     * @param array $result 結果配列
+     * @return array 更新された結果配列
+     */
+    private function handleActionResponses(
+        array $actionResponses,
+        array $records,
+        string $moduleApiName,
+        string $operationType,
+        array $result
+    ) {
+        foreach ($actionResponses as $index => $actionResponse) {
+            if ($actionResponse instanceof SuccessResponse) {
+                // createの場合のみ、作成されたレコードのIDを設定
+                if ($operationType === 'create') {
+                    $details = $actionResponse->getDetails();
+                    $createdRecordId = $this->extractRecordId($details);
+                    if ($createdRecordId) {
+                        $records[$index]->setId($createdRecordId);
+                    }
+                }
+                $result['success']++;
+            } else if ($actionResponse instanceof APIException) {
+                $message = $this->extractChoiceValue($actionResponse->getMessage());
+
+                $failure = [
+                    'module' => $moduleApiName,
+                    'type' => $operationType,
+                    'message' => $message,
+                    'code' => $actionResponse->getCode()
+                ];
+
+                // updateの場合はIDを含める
+                if ($operationType === 'update') {
+                    $failure['id'] = $records[$index]->getId();
+                }
+
+                // createの場合はfieldsを含める
+                if ($operationType === 'create') {
+                    $failure['fields'] = $records[$index]->getFields();
+                }
+
+                $result['failures'][] = $failure;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * APIExceptionから失敗情報を作成する
+     *
+     * @param APIException $exception API例外
+     * @param string $moduleApiName モジュールAPI名
+     * @param string $operationType 操作タイプ
+     * @return array 失敗情報
+     */
+    private function createFailureFromAPIException(
+        APIException $exception,
+        string $moduleApiName,
+        string $operationType
+    ) {
+        $message = $this->extractChoiceValue($exception->getMessage());
+        $code = $this->extractChoiceValue($exception->getCode());
+
+        return [
+            'module' => $moduleApiName,
+            'type' => $operationType,
+            'message' => $message ?: 'エラーメッセージが取得できませんでした',
+            'code' => $code,
+            'details' => $exception->getDetails()
+        ];
+    }
+
+    /**
+     * Choiceオブジェクトから値を取得する
+     *
+     * @param mixed $value Choiceオブジェクトまたは文字列
+     * @return mixed 抽出された値
+     */
+    private function extractChoiceValue($value)
+    {
+        if ($value instanceof Choice) {
+            return $value->getValue();
+        }
+        return $value;
+    }
+
+    /**
+     * レコードIDを抽出する
+     *
+     * @param mixed $details レスポンスの詳細
+     * @return string|null レコードID
+     */
+    private function extractRecordId($details)
+    {
+        if (is_array($details) && isset($details['id'])) {
+            return $details['id'];
+        } elseif (is_object($details) && method_exists($details, 'get')) {
+            return $details->get('id');
+        }
+        return null;
     }
 
     /**
@@ -319,6 +343,49 @@ class RecordApi extends ApiBase
     }
 
     /**
+     * モジュールのフィールドメタデータを取得（キャッシュ付き）
+     *
+     * @param string $moduleApiName モジュールAPI名
+     * @return array フィールドメタデータの配列 [apiName => dataType]
+     */
+    private function getFieldMetadata(string $moduleApiName): array
+    {
+        if (isset($this->fieldMetadataCache[$moduleApiName])) {
+            return $this->fieldMetadataCache[$moduleApiName];
+        }
+
+        // FieldApiを使ってフィールド情報を取得
+        $fieldApi = new \Acms\Plugins\Zoho\Services\Zoho\Api\FieldApi($this->client);
+        $fields = $fieldApi->getModuleFields($moduleApiName);
+
+        $metadata = [];
+        foreach ($fields as $field) {
+            $apiName = $field['api_name'] ?? null;
+            $dataType = $field['data_type'] ?? null;
+
+            if ($apiName && $dataType) {
+                $metadata[$apiName] = $dataType;
+            }
+        }
+
+        $this->fieldMetadataCache[$moduleApiName] = $metadata;
+        return $metadata;
+    }
+
+    /**
+     * フィールドのデータタイプを取得
+     *
+     * @param string $moduleApiName モジュールAPI名
+     * @param string $fieldApiName フィールドAPI名
+     * @return string|null データタイプ
+     */
+    private function getFieldDataType(string $moduleApiName, string $fieldApiName): ?string
+    {
+        $metadata = $this->getFieldMetadata($moduleApiName);
+        return $metadata[$fieldApiName] ?? null;
+    }
+
+    /**
      * Recordオブジェクトを ZohoRecord に変換
      *
      * @param Record $record 変換するレコード
@@ -340,19 +407,43 @@ class RecordApi extends ApiBase
                 continue;
             }
 
+            // フィールドのデータタイプを取得（メタデータから動的に判定）
+            $dataType = $this->getFieldDataType($scope, $apiName);
+
+            // 複数行テキストフィールドの判定（メタデータから取得した情報も考慮）
+            $isTextarea = $record->isTextareaField($apiName) || $dataType === 'textarea';
+
             // 空文字列の値はスキップ（Zoho SDKの検証エラーを回避）
-            if ($value === '') {
+            // ただし、複数行テキストフィールドの場合は空文字列でもスキップしない
+            if ($value === '' && !$isTextarea) {
                 continue;
             }
 
+            // ルックアップフィールドの判定（メタデータから取得した情報も考慮）
+            $isLookup = $record->isLookupField($apiName) || $dataType === 'lookup';
+
             // ルックアップフィールドの場合、ZohoRecordオブジェクトに変換
-            if ($record->isLookupField($apiName)) {
+            if ($isLookup) {
+                // 値がレコードIDの形式（数値）かチェック
+                if (!is_numeric($value) && !empty($value)) {
+                    AcmsLogger::warning('【Zoho plugin】ルックアップフィールドの値がレコードIDではありません。フィールドをスキップします。', [
+                        'module' => $scope,
+                        'apiName' => $apiName,
+                        'value' => $value,
+                        'message' => 'ルックアップフィールドにはレコードIDが必要です。resolveLookupFieldsが正しく実行されているか確認してください。'
+                    ]);
+                    continue;
+                }
                 $lookupRecord = new ZohoRecord();
                 $lookupRecord->setId($value);
                 $fieldValue = $lookupRecord;
-            } elseif ($record->isPicklistField($apiName)) {
+            } elseif ($record->isPicklistField($apiName) || $dataType === 'picklist' || $dataType === 'multiselectpicklist') {
                 // ピックリストフィールドはChoiceオブジェクトとして設定
                 $fieldValue = new Choice($value);
+            } elseif ($isTextarea) {
+                // 複数行テキストフィールドは文字列として設定（改行を保持）
+                // nullまたは空文字列の場合は空文字列にする
+                $fieldValue = $value !== null ? (string)$value : '';
             } else {
                 $fieldValue = $value;
             }
@@ -363,7 +454,17 @@ class RecordApi extends ApiBase
             } catch (\Exception $e) {
                 // フィールドがモジュールに存在しない場合などのエラーをログに記録してスキップ
                 AcmsLogger::error('【Zoho plugin】フィールドの追加に失敗しました。', [
-                    'error' => $e->getMessage()
+                    'module' => $scope,
+                    'apiName' => $apiName,
+                    'value' => is_string($value) && mb_strlen($value) > 100 ? mb_substr($value, 0, 100) . '...' : $value,
+                    'valueType' => gettype($value),
+                    'dataType' => $dataType,
+                    'isTextarea' => $isTextarea,
+                    'isPicklist' => $record->isPicklistField($apiName),
+                    'isLookup' => $isLookup,
+                    'fieldValueType' => is_object($fieldValue) ? get_class($fieldValue) : gettype($fieldValue),
+                    'error' => $e->getMessage(),
+                    'exceptionClass' => get_class($e)
                 ]);
                 continue;
             }
