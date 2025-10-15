@@ -18,8 +18,6 @@ const fetcher = async (url: string): Promise<ModuleWithFields[]> => {
   const response = await fetch(url, options);
   const json = await response.json();
 
-  console.log('Fetched modules:', json);
-
   return json;
 };
 

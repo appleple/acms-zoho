@@ -2,15 +2,12 @@ import useSWR from 'swr';
 import { ModuleField } from '../types';
 
 const fetcher = async (moduleApiNames: string[]): Promise<{ data: ModuleField[] }[]> => {
-  console.log('複数モジュールのfetcher実行:', moduleApiNames);
-
   if (moduleApiNames.length === 0) {
     return [];
   }
 
   const promises = moduleApiNames.map(async (moduleApiName) => {
     try {
-      console.log('API呼び出し: ', moduleApiName);
       // 実際のAPI呼び出し
       const formData = new FormData();
       formData.append('ACMS_POST_Zoho_ModuleField', 'exec');
@@ -40,8 +37,6 @@ const fetcher = async (moduleApiNames: string[]): Promise<{ data: ModuleField[] 
 };
 
 export const useModuleFieldsSWR = (moduleApiNames: string[]) => {
-  console.log('useModuleFieldsSWR呼び出し', moduleApiNames);
-
   // moduleApiNamesの文字列をキーとして使用（配列の順序を保持）
   const cacheKey = moduleApiNames.length > 0 ? `module-fields-${moduleApiNames.join(',')}` : null;
 
