@@ -46,10 +46,10 @@ class Hook
             return;
         }
 
-        // if (HOOK_ENABLE) {
-        //     $hook = ACMS_Hook::singleton();
-        //     $hook->call('beforeZohoRequest', [$thisModule]);
-        // }
+        if (HOOK_ENABLE) {
+            $hook = ACMS_Hook::singleton();
+            $hook->call('beforeZohoRequest', [$thisModule]);
+        }
 
         try {
             if (class_exists('AcmsLogger')) {
@@ -61,15 +61,15 @@ class Hook
                 AcmsLogger::debug('【Zoho plugin】Zoho CRM へのデータ登録処理が終了しました。');
             }
 
-            // if (HOOK_ENABLE) {
-            //     $hook = ACMS_Hook::singleton();
-            //     $hook->call('afterZohoRequestSuccess', [$thisModule]);
-            // }
+            if (HOOK_ENABLE) {
+                $hook = ACMS_Hook::singleton();
+                $hook->call('afterZohoRequestSuccess', [$thisModule]);
+            }
         } catch (\ZCRMException $e) {
-            // if (HOOK_ENABLE) {
-            //     $hook = ACMS_Hook::singleton();
-            //     $hook->call('afterZohoRequestError', [$thisModule, $e]);
-            // }
+            if (HOOK_ENABLE) {
+                $hook = ACMS_Hook::singleton();
+                $hook->call('afterZohoRequestError', [$thisModule, $e]);
+            }
 
             if ($this->isDebugMode()) {
                 throw $e;
@@ -86,10 +86,10 @@ class Hook
                 userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
         } catch (\Exception $e) {
-            // if (HOOK_ENABLE) {
-            //     $hook = ACMS_Hook::singleton();
-            //     $hook->call('afterZohoRequestError', [$thisModule, $e]);
-            // }
+            if (HOOK_ENABLE) {
+                $hook = ACMS_Hook::singleton();
+                $hook->call('afterZohoRequestError', [$thisModule, $e]);
+            }
 
             if ($this->isDebugMode()) {
                 throw $e;
@@ -101,10 +101,10 @@ class Hook
             }
         }
 
-        // if (HOOK_ENABLE) {
-        //     $hook = ACMS_Hook::singleton();
-        //     $hook->call('afterZohoRequest', [$thisModule]);
-        // }
+        if (HOOK_ENABLE) {
+            $hook = ACMS_Hook::singleton();
+            $hook->call('afterZohoRequest', [$thisModule]);
+        }
     }
 
     public function zohoFormUpdate($thisModule)
