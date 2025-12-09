@@ -83,7 +83,7 @@ class Hook
                     ]),
                 );
             } else {
-                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+                AcmsLogger::error('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
         } catch (\Exception $e) {
             if (HOOK_ENABLE) {
@@ -97,7 +97,7 @@ class Hook
             if (class_exists('AcmsLogger')) {
                 AcmsLogger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
             } else {
-                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
+                AcmsLogger::error('ACMS Error: Zoho plugin, ' . $e->getMessage());
             }
         }
 
