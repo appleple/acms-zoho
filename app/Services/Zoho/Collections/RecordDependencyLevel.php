@@ -27,16 +27,6 @@ class RecordDependencyLevel
     }
 
     /**
-     * 依存レベルを取得
-     *
-     * @return int
-     */
-    public function getLevel(): int
-    {
-        return $this->level;
-    }
-
-    /**
      * レコードを追加
      *
      * @param Record $record
@@ -56,25 +46,5 @@ class RecordDependencyLevel
     public function getRecords(): array
     {
         return $this->records;
-    }
-
-    /**
-     * レコード数を取得
-     *
-     * @return int
-     */
-    public function count(): int
-    {
-        return count($this->records);
-    }
-
-    /**
-     * 空かどうか確認
-     *
-     * @return bool
-     */
-    public function isEmpty(): bool
-    {
-        return empty($this->records);
     }
 }

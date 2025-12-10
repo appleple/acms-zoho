@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useModuleFieldsSWR } from '../../hooks/use-module-fields-swr';
-import { SimpleSelect } from '../../components/simple-select/simple-select';
+import { SimpleSelect } from '../simple-select/simple-select';
 
 interface Props {
   name: string;

@@ -4,7 +4,7 @@ namespace Acms\Plugins\Zoho;
 
 use AcmsLogger;
 use Acms\Services\Facades\Common;
-// use Acms\Services\Common\HookFactory as ACMS_Hook;
+use Acms\Services\Common\HookFactory as ACMS_Hook;
 use ACMS_POST_Form_Submit;
 use ACMS_POST_Form_Update;
 

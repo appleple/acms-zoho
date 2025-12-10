@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { SelectInstance } from 'react-select';
-import RichSelect from '../../components/rich-select/rich-select';
+import RichSelect from '../rich-select/rich-select';
 import { useModulesSWR } from '../../hooks/use-modules-swr';
 import { Module, ModuleWithFields } from '../../types';
 

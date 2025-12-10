@@ -1,4 +1,4 @@
-import { ModuleSelect } from '../components/module-select';
+import { ModuleSelect } from '../../components/module-select/module-select';
 
 interface ModuleScopeSelectProps {
   inputRef: HTMLInputElement;
