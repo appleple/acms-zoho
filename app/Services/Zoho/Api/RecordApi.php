@@ -2,10 +2,9 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
-use Acms\Plugins\Zoho\Services\Zoho\Client;
+use Acms\Plugins\Zoho\Services\Zoho\Api\FieldApi;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record;
 use AcmsLogger;
-
 use com\zoho\crm\api\record\Record as ZohoRecord;
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
@@ -64,7 +63,7 @@ class RecordApi extends ApiBase
                             'fields' => $record->getKeyValues()
                         ];
                     }
-                } else if ($responseHandler instanceof APIException) {
+                } elseif ($responseHandler instanceof APIException) {
                     $message = $responseHandler->getMessage();
                     if ($message instanceof Choice) {
                         $message = $message->getValue();
@@ -184,7 +183,7 @@ class RecordApi extends ApiBase
                         $result
                     );
                     return $result;
-                } else if ($responseHandler instanceof APIException) {
+                } elseif ($responseHandler instanceof APIException) {
                     $failure = $this->createFailureFromAPIException(
                         $responseHandler,
                         $moduleApiName,
@@ -234,7 +233,7 @@ class RecordApi extends ApiBase
                     }
                 }
                 $result['success']++;
-            } else if ($actionResponse instanceof APIException) {
+            } elseif ($actionResponse instanceof APIException) {
                 $message = $this->extractChoiceValue($actionResponse->getMessage());
 
                 $failure = [
@@ -333,10 +332,13 @@ class RecordApi extends ApiBase
         }
 
         $uniqueValue = $fields[$uniqueKey];
-        $apiName = $this->getApiNameByLabelName($uniqueKey, $scope);
 
-        if (empty($apiName)) {
-            return false;
+        // searchByUniqueKeyメソッドを使って既存レコードを検索
+        $existingRecord = $this->searchByUniqueKey($scope, $uniqueKey, $uniqueValue);
+
+        if ($existingRecord && isset($existingRecord['id'])) {
+            $record->setId($existingRecord['id']);
+            return true;
         }
 
         return false;
@@ -355,7 +357,7 @@ class RecordApi extends ApiBase
         }
 
         // FieldApiを使ってフィールド情報を取得
-        $fieldApi = new \Acms\Plugins\Zoho\Services\Zoho\Api\FieldApi($this->client);
+        $fieldApi = new FieldApi($this->client);
         $fields = $fieldApi->getModuleFields($moduleApiName);
 
         $metadata = [];

@@ -8,7 +8,6 @@ use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 use Acms\Plugins\Zoho\Services\Zoho\Builder;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
 use Acms\Plugins\Zoho\Services\Zoho\Models\ModuleScope;
-use Acms\Plugins\Zoho\Services\Zoho\Builder\ProcessedRecordsCollection;
 
 /**
  * Zoho CRM送信用のRecordModelを組み立てるBuilderクラス
@@ -45,10 +44,6 @@ class Record extends Builder
         $this->field = $field;
         $this->config = $config;
     }
-
-    // ================================================================================
-    // パブリックメソッド - レコード生成
-    // ================================================================================
 
     /**
      * フォーム設定から、insert/update用のRecordModelオブジェクトを生成
@@ -143,10 +138,6 @@ class Record extends Builder
         }
     }
 
-    // ================================================================================
-    // プライベートメソッド - レコード生成処理
-    // ================================================================================
-
     /**
      * フォームデータから設定に基づいてRecordModelを生成
      *
@@ -229,10 +220,6 @@ class Record extends Builder
         return $records;
     }
 
-    // ================================================================================
-    // プライベートメソッド - フィールドマッピング
-    // ================================================================================
-
     /**
      * フォームフィールドをZohoフィールドにマッピング
      *
@@ -294,12 +281,6 @@ class Record extends Builder
             $isLookup = $fieldType === 'lookup' || $this->isLookupField($fieldApiName, $scope);
             if ($isLookup) {
                 $record->markAsLookupField($fieldApiName);
-                AcmsLogger::debug('【Zoho Debug】ルックアップフィールドとしてマーク', [
-                    'module' => $scope,
-                    'fieldApiName' => $fieldApiName,
-                    'fieldType' => $fieldType,
-                    'fieldKey' => $fieldKey
-                ]);
             }
 
             // ピックリストフィールドの判定と登録
@@ -313,6 +294,38 @@ class Record extends Builder
             }
 
             $item[$fieldApiName] = $normalizedValue;
+        }
+
+        // Zoho リレーショナル設定からルックアップフィールドを追加
+        // zoho_link_field_*の設定がなくても、リレーショナル設定があれば送信できるようにする
+        if ($scope !== '__PENDING__') {
+            $lookupConfigs = $this->getLookupFieldsConfig($scope);
+
+            foreach ($lookupConfigs as $config) {
+                $lookupId = $config['lookupId'];
+                $compareField = $config['compareField'];
+                $cmsField = $config['cmsField'];
+
+                // 既にフィールドが設定されている場合はスキップ
+                if (isset($item[$lookupId])) {
+                    continue;
+                }
+
+                // a-blog cmsのフィールド名が設定されていない場合はスキップ
+                if (empty($cmsField)) {
+                    continue;
+                }
+
+                // a-blog cmsのフィールドから値を取得
+                $compareValue = $this->getFieldValue($cmsField, $groupArr, $index);
+                $normalizedCompareValue = $this->normalizeValue($compareValue);
+
+                // 値が空でない場合のみ追加
+                if (!empty($normalizedCompareValue)) {
+                    $item[$lookupId] = $normalizedCompareValue;
+                    $record->markAsLookupField($lookupId);
+                }
+            }
         }
 
         return $item;
@@ -355,10 +368,6 @@ class Record extends Builder
         }
         return $value;
     }
-
-    // ================================================================================
-    // プライベートメソッド - 設定取得ヘルパー
-    // ================================================================================
 
     /**
      * insertScopeを取得
@@ -434,7 +443,7 @@ class Record extends Builder
      * 指定モジュールのルックアップフィールド設定を取得
      *
      * @param string $moduleName モジュール名
-     * @return array ルックアップ設定の配列 [['lookupId' => '', 'targetScope' => '', 'compareField' => ''], ...]
+     * @return array ルックアップ設定の配列 [['lookupId' => '', 'targetScope' => '', 'compareField' => '', 'cmsField' => ''], ...]
      */
     private function getLookupFieldsConfig(string $moduleName): array
     {
@@ -449,7 +458,8 @@ class Record extends Builder
             $configs[] = [
                 'lookupId' => $this->config->get('zoho_related_lookup_id', '', $i),
                 'targetScope' => $this->config->get('zoho_related_target_scope', '', $i),
-                'compareField' => $this->config->get('zoho_related_compare_field', '', $i)
+                'compareField' => $this->config->get('zoho_related_compare_field', '', $i),
+                'cmsField' => $this->config->get('zoho_related_cms_field', '', $i)
             ];
         }
 
@@ -571,7 +581,7 @@ class Record extends Builder
         // 見つかった候補がある場合、優先順位の高いものを設定
         if (!empty($lookupCandidates)) {
             // 優先順位でソート
-            usort($lookupCandidates, function($a, $b) {
+            usort($lookupCandidates, function ($a, $b) {
                 return $b['priority'] - $a['priority'];
             });
 
@@ -732,377 +742,6 @@ class Record extends Builder
             }
         }
     }
-
-    // ================================================================================
-    // 未使用メソッド（コメントアウト）
-    // ================================================================================
-
-    /**
-     * RecordModelにフィールドデータをマッピングして追加
-     *
-     * グループフィールド（繰り返しフィールド）が存在する場合、
-     * その最大件数分のレコードを生成する
-     * 例: 商品名が3件入力されていれば、3つのRecordModelを生成
-     *
-     * @param RecordModel[] $records フィールドを追加する前のレコード
-     * @return RecordModel[] フィールドが追加された新しいレコード配列
-     */
-    // public function attachFieldsToRecords(array $records)
-    // {
-    //     $attachedRecords = [];
-
-    //     foreach ($records as $record) {
-    //         $groupArr = $this->getGroupArray($record);
-    //         $length = $groupArr ? $this->getMaxCount($groupArr) : 1;
-
-    //         for ($cnt = 0; $cnt < $length; $cnt++) {
-    //             $mappedFields = $this->mapFields($record, $groupArr, $cnt);
-
-    //             // 新しいレコードを作成してフィールドをコピー
-    //             $newRecord = new RecordModel(
-    //                 $record->getModuleApiName(),
-    //                 $record->getType(),
-    //                 $record->getUniqueKey()
-    //             );
-
-    //             $newRecord->addFields($mappedFields);
-
-    //             if ($record->getId()) {
-    //                 $newRecord->setId($record->getId());
-    //             }
-
-    //             // groupIndexをコピー
-    //             if (isset($record->groupIndex)) {
-    //                 $newRecord->groupIndex = $record->groupIndex;
-    //             }
-
-    //             // 比較フィールドの値を保存（リレーション処理用）
-    //             $compareFieldValue = $this->getCompareFieldValue($record, $groupArr, $cnt);
-    //             if ($compareFieldValue !== null) {
-    //                 $newRecord->compareFieldValue = $compareFieldValue;
-    //             }
-
-    //             $attachedRecords[] = $newRecord;
-    //         }
-    //     }
-
-    //     return $attachedRecords;
-    // }
-
-    /**
-     * フォームフィールドをZohoフィールドにマッピング
-     *
-     * zoho_link_field_* の設定に基づき、対象モジュール・操作タイプに応じて
-     * a-blog cms のフィールド値をZohoフィールド名でマッピングする
-     *
-     * @param RecordModel $record マッピング対象のレコード
-     * @param array|null $groupArr グループフィールドのキー配列
-     * @param int $index グループフィールドのインデックス
-     * @return array マッピングされたフィールド配列 ['Zohoフィールド名' => '値']
-     */
-
-    /**
-     * グループフィールド（繰り返しフィールド）のキー配列を取得
-     *
-     * zoho_field_cms_key が "@" で始まるフィールドを探し、
-     * 対象モジュール・操作タイプに一致するものを返す
-     *
-     * @param RecordModel $record 対象レコード
-     * @return array|null グループフィールドのキー配列、存在しない場合はnull
-     */
-    // private function getGroupArray(RecordModel $record)
-    // {
-    //     $zohoScope = $record->getModuleApiName();
-    //     $type = $record->getType();
-    //     $keys = $this->config->getArray('zoho_field_cms_key');
-
-    //     foreach ($keys as $i => $key) {
-    //         $scopes = $this->config->get('zoho_field_scope', '', $i);
-    //         $insert = $this->config->get('zoho_field_insert', '', $i);
-    //         $update = $this->config->get('zoho_field_update', '', $i);
-
-    //         if ($type === 'insert' && !$insert) {
-    //             continue;
-    //         }
-    //         if ($type === 'update' && !$update) {
-    //             continue;
-    //         }
-
-    //         $scopes = explode(',', $scopes);
-    //         foreach ($scopes as $scope) {
-    //             if ($scope === $zohoScope) {
-    //                 if (isset($key) && isset($key[0]) && $key[0] === '@') {
-    //                     return $this->field->getArray($key);
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     return null;
-    // }
-
-    /**
-     * グループフィールド内で最も要素数が多いフィールドの件数を取得
-     *
-     * @param array $keys グループフィールドのキー配列
-     * @return int 最大件数
-     */
-    // private function getMaxCount(array $keys)
-    // {
-    //     $max = 1;
-    //     foreach ($keys as $key) {
-    //         $arr = $this->field->getArray($key);
-    //         $cnt = count($arr);
-    //         if ($cnt > $max) {
-    //             $max = $cnt;
-    //         }
-    //     }
-    //     return $max;
-    // }
-
-    /**
-     * タイプでレコードをフィルタリング
-     *
-     * @param RecordModel[] $records
-     * @param string $type insert or update
-     * @return RecordModel[]
-     */
-    public function filterRecordsByType(array $records, string $type)
-    {
-        return array_values(array_filter($records, function (RecordModel $record) use ($type) {
-            return $record->getType() === $type;
-        }));
-    }
-
-    /**
-     * 優先順位に基づいてレコードにモジュールとIDを割り当てる
-     *
-     * Contacts/Leadsの優先処理:
-     * - ContactsにuniqueKeyで検索 → 存在すればContactsでupdate
-     * - 存在しなければLeadsにuniqueKeyで検索 → 存在すればLeadsでupdate
-     * - 両方に存在しなければ、Leadsでinsert
-     *
-     * その他のモジュール（Samples等）:
-     * - insertScopeとupdateScopeの通常処理
-     *
-     * @param RecordModel[] $records
-     * @param mixed $apiRecordHandler RecordApiのインスタンス
-     * @return RecordModel[]
-     */
-    // public function assignModuleByPriority(array $records, $apiRecordHandler)
-    // {
-    //     $modulePriority = $this->modulePriority; // ['Contacts', 'Leads']
-
-    //     // 優先順位設定がない場合はそのまま返す
-    //     if (empty($modulePriority)) {
-    //         return $records;
-    //     }
-
-    //     $processedRecords = [];
-
-    //     foreach ($records as $record) {
-    //         $assigned = false;
-
-    //         // グループインデックスを取得（プロパティに保存されている）
-    //         $groupIndex = isset($record->groupIndex) ? $record->groupIndex : 0;
-
-    //         $insertScopes = $this->getInsertScopes($groupIndex);
-    //         $updateScopes = $this->getUpdateScopes($groupIndex);
-    //         $uniqueKey = $this->getUniqueKey($groupIndex);
-
-    //         // Contacts/Leadsの優先処理
-    //         // ContactsまたはLeadsがinsert/updateScopeに含まれている場合のみ優先処理を実行
-    //         $hasContactsOrLeads =
-    //             in_array('Contacts', array_merge($insertScopes, $updateScopes)) ||
-    //             in_array('Leads', array_merge($insertScopes, $updateScopes));
-
-    //         if ($hasContactsOrLeads) {
-    //             $uniqueValue = $record->getField($uniqueKey);
-
-    //             if (!empty($uniqueValue)) {
-    //                 // 1. Contactsに存在するか確認（updateScopeに含まれている場合のみ）
-    //                 if (in_array('Contacts', $updateScopes)) {
-    //                     $existingRecord = $apiRecordHandler->searchByUniqueKey('Contacts', $uniqueKey, $uniqueValue);
-
-    //                     if ($existingRecord) {
-    //                         // Contactsに存在 → Contactsでupdate
-    //                         $newRecord = new RecordModel('Contacts', 'update', '');
-    //                         $newRecord->addFields($record->getFields());
-    //                         $newRecord->setId($existingRecord['id']);
-    //                         $processedRecords[] = $newRecord;
-    //                         $assigned = true;
-    //                     }
-    //                 }
-
-    //                 // 2. Contactsに見つからなかった場合、Leadsを確認
-    //                 if (!$assigned && (in_array('Leads', $updateScopes) || in_array('Leads', $insertScopes))) {
-    //                     $existingLeadRecord = null;
-
-    //                     if (in_array('Leads', $updateScopes)) {
-    //                         $existingLeadRecord = $apiRecordHandler->searchByUniqueKey('Leads', $uniqueKey, $uniqueValue);
-    //                     }
-
-    //                     if ($existingLeadRecord) {
-    //                         // Leadsに存在 → Leadsでupdate
-    //                         $newRecord = new RecordModel('Leads', 'update', '');
-    //                         $newRecord->addFields($record->getFields());
-    //                         $newRecord->setId($existingLeadRecord['id']);
-    //                         $processedRecords[] = $newRecord;
-    //                         $assigned = true;
-    //                     } elseif (in_array('Leads', $insertScopes)) {
-    //                         // Leadsにも存在しない → Leadsでinsert
-    //                         $newRecord = new RecordModel('Leads', 'insert', '');
-    //                         $newRecord->addFields($record->getFields());
-    //                         $processedRecords[] = $newRecord;
-    //                         $assigned = true;
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         // 優先処理で割り当てられなかった場合、その他のモジュールを通常処理
-    //         if (!$assigned) {
-    //             $uniqueValue = $record->getField($uniqueKey);
-
-    //             // insertScopeとupdateScopeの両方に含まれるモジュールを処理
-    //             foreach ($insertScopes as $insertScope) {
-    //                 if (in_array($insertScope, $modulePriority)) {
-    //                     continue; // Contacts/Leadsはスキップ
-    //                 }
-
-    //                 // updateScopeにも含まれている場合、既存レコードを検索
-    //                 if (in_array($insertScope, $updateScopes) && !empty($uniqueValue)) {
-    //                     $existingRecord = $apiRecordHandler->searchByUniqueKey($insertScope, $uniqueKey, $uniqueValue);
-
-    //                     if ($existingRecord) {
-    //                         // 既存レコードあり → update
-    //                         $newRecord = new RecordModel($insertScope, 'update', '');
-    //                         $newRecord->addFields($record->getFields());
-    //                         $newRecord->setId($existingRecord['id']);
-    //                         $processedRecords[] = $newRecord;
-    //                     } else {
-    //                         // 既存レコードなし → insert
-    //                         $newRecord = new RecordModel($insertScope, 'insert', '');
-    //                         $newRecord->addFields($record->getFields());
-    //                         $processedRecords[] = $newRecord;
-    //                     }
-    //                 } else {
-    //                     // insertScopeのみ → insert
-    //                     $newRecord = new RecordModel($insertScope, 'insert', '');
-    //                     $newRecord->addFields($record->getFields());
-    //                     $processedRecords[] = $newRecord;
-    //                 }
-    //             }
-
-    //             // updateScopeのみに含まれるモジュールを処理（insertScopeに含まれない）
-    //             foreach ($updateScopes as $updateScope) {
-    //                 if (in_array($updateScope, $insertScopes) || in_array($updateScope, $modulePriority)) {
-    //                     continue; // 既に処理済み、またはContacts/Leads
-    //                 }
-
-    //                 $newRecord = new RecordModel($updateScope, 'update', '');
-    //                 $newRecord->addFields($record->getFields());
-
-    //                 // uniqueKeyで既存レコードを検索してIDを設定
-    //                 if (!empty($uniqueValue)) {
-    //                     $existingRecord = $apiRecordHandler->searchByUniqueKey($updateScope, $uniqueKey, $uniqueValue);
-
-    //                     if ($existingRecord) {
-    //                         $newRecord->setId($existingRecord['id']);
-    //                     }
-    //                 }
-
-    //                 $processedRecords[] = $newRecord;
-    //             }
-    //         }
-    //     }
-
-    //     return $processedRecords;
-    // }
-
-    /**
-     * 比較フィールドの値を取得
-     *
-     * リレーショナル設定で比較に使うフィールドの値を取得する
-     *
-     * @param RecordModel $record 対象レコード
-     * @param array|null $groupArr グループフィールドのキー配列
-     * @param int $index グループフィールドのインデックス
-     * @return mixed|null 比較フィールドの値、設定がない場合はnull
-     */
-    // private function getCompareFieldValue(RecordModel $record, ?array $groupArr, int $index)
-    // {
-    //     $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
-    //     $moduleApiName = $record->getModuleApiName();
-
-    //     foreach ($zohoRelatedScopes as $i => $relatedScope) {
-    //         $targetScope = $this->config->get('zoho_related_target_scope', '', $i);
-
-    //         // このレコードが関連元または関連先に該当するか確認
-    //         if ($relatedScope === $moduleApiName || $targetScope === $moduleApiName) {
-    //             $compareField = $this->config->get('zoho_related_compare_field', '', $i);
-
-    //             if ($compareField) {
-    //                 return $this->getFieldValue($compareField, $groupArr, $index);
-    //             }
-    //         }
-    //     }
-
-    //     return null;
-    // }
-
-    /**
-     * ルックアップフィールドを処理してレコードに追加
-     *
-     * リレーショナル設定に基づき、比較フィールドの値が一致する
-     * 関連先レコードのIDをルックアップフィールドにセットする
-     *
-     * @param RecordModel[] $records 処理対象のレコード配列
-     * @param ProcessedRecordsCollection $processedRecords 処理済みレコードのコレクション
-     * @return RecordModel[] ルックアップフィールドが追加されたレコード配列
-     */
-    // public function attachLookupFields(array $records, ProcessedRecordsCollection $processedRecords)
-    // {
-    //     $zohoRelatedScopes = $this->config->getArray('zoho_related_scope');
-
-    //     foreach ($records as $record) {
-    //         $moduleApiName = $record->getModuleApiName();
-
-    //         // このモジュールのリレーショナル設定を探す
-    //         foreach ($zohoRelatedScopes as $i => $relatedScope) {
-    //             // 関連元モジュールでない場合はスキップ
-    //             if ($relatedScope !== $moduleApiName) {
-    //                 continue;
-    //             }
-
-    //             $targetScope = $this->config->get('zoho_related_target_scope', '', $i);
-    //             $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
-    //             $compareField = $this->config->get('zoho_related_compare_field', '', $i);
-
-    //             // ルックアップIDが設定されていない場合はスキップ（ジャンクションレコード）
-    //             if (!$lookupId) {
-    //                 continue;
-    //             }
-
-    //             // 比較フィールドの値を取得
-    //             $compareValue = $record->compareFieldValue ?? null;
-    //             if (!$compareValue) {
-    //                 continue;
-    //             }
-
-    //             // 関連先レコードのIDを取得
-    //             $targetRecordId = $processedRecords->getIdByCompareValue($targetScope, $compareValue);
-    //             if ($targetRecordId) {
-    //                 // ルックアップフィールドにIDをセット
-    //                 $record->addField($lookupId, $targetRecordId);
-    //                 // ルックアップフィールドとしてマーク
-    //                 $record->markAsLookupField($lookupId);
-    //             }
-    //         }
-    //     }
-
-    //     return $records;
-    // }
 
     /**
      * 文字列がJSON形式かどうかを判定

@@ -7,6 +7,7 @@ export default function App() {
   return (
     <>
       <SWRConfig value={{ provider: () => new Map() }}>
+        {/* Zohoと連携するa-blog cmsフィールドの設定 */}
         <DispatchCacheClear />
         <DispatchLinkField />
         <DispatchUniqueKey />

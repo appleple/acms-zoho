@@ -62,7 +62,7 @@ class Api
     }
 
     /**
-     * RecordApiインスタンスを取得（遅延初期化）
+     * RecordApiインスタンスを取得
      *
      * @return RecordApi
      */
@@ -76,7 +76,7 @@ class Api
     }
 
     /**
-     * ModuleApiインスタンスを取得（遅延初期化）
+     * ModuleApiインスタンスを取得
      *
      * @return ModuleApi
      */
@@ -90,7 +90,7 @@ class Api
     }
 
     /**
-     * FieldApiインスタンスを取得（遅延初期化）
+     * FieldApiインスタンスを取得
      *
      * @return FieldApi
      */

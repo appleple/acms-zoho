@@ -1,8 +1,9 @@
 <h3 class="acms-admin-admin-title2"><!--T-->Zoho リレーショナル設定<!--/T--></h3>
-<table class="js-fieldgroup-sortable adminTable">
+<table class="js-fieldgroup-sortable adminTable" id="js-acms-zoho-related">
   <thead class="acms-admin-hide-sp">
     <tr>
       <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
+      <th class="acms-admin-table-left"><!--T-->a-blog cmsのフィールド名<!--/T--></th>
       <th class="acms-admin-table-left"><!--T-->関連元タブ<!--/T--></th>
       <th class="acms-admin-table-left">
         <!--T-->ルックアップID<!--/T-->
@@ -21,6 +22,14 @@
     <tr class="sortable-item">
       <td class="item-handle">
         <i class="acms-admin-icon-sort"></i>
+      </td>
+      <td>
+        <input
+          type="text"
+          name="zoho_related_cms_field[{i}]"
+          value="{zoho_related_cms_field}"
+          class="acms-admin-form-width-full"
+        />
       </td>
       <td>
         <input
@@ -68,6 +77,9 @@
         <i class="acms-admin-icon-sort"></i>
       </td>
       <td>
+        <input type="text" name="zoho_related_cms_field[]" value="" class="acms-admin-form-width-full" />
+      </td>
+      <td>
         <input type="text" name="zoho_related_scope[]" value="" class="acms-admin-form-width-full" />
       </td>
       <td>
@@ -96,6 +108,8 @@
     </tr>
   </tfoot>
 </table>
+<input type="hidden" name="@zoho_related_group[]" value="zoho_related_cms_field" />
+<input type="hidden" name="mail[]" value="zoho_related_cms_field" />
 <input type="hidden" name="@zoho_related_group[]" value="zoho_related_scope" />
 <input type="hidden" name="mail[]" value="zoho_related_scope" />
 <input type="hidden" name="@zoho_related_group[]" value="zoho_related_target_scope" />

@@ -257,22 +257,6 @@ class Record
     }
 
     /**
-     * レコードを配列形式に変換
-     *
-     * @return array
-     */
-    public function toArray(): array
-    {
-        return [
-            'moduleApiName' => $this->moduleApiName,
-            'uniqueKey' => $this->uniqueKey,
-            'type' => $this->type,
-            'field' => $this->fields,
-            'id' => $this->id
-        ];
-    }
-
-    /**
      * 配列からレコードオブジェクトを生成
      *
      * @param array $data

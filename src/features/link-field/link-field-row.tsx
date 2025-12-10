@@ -1,6 +1,6 @@
 import { useState, CSSProperties, useEffect } from 'react';
-import { ModuleSelect } from '../components/module-select';
-import { ModuleFieldSelect } from '../components/module-field-select';
+import { ModuleSelect } from '../../components/module-select/module-select';
+import { ModuleFieldSelect } from '../../components/module-select/module-field-select';
 
 interface Props {
   moduleInputRef: HTMLInputElement;

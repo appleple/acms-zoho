@@ -108,5 +108,5 @@ export default function DispatchLinkField() {
     }
   };
 
-  return null; // このコンポーネント自体は何もレンダリングしない
+  return null;
 }
