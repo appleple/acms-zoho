@@ -96,10 +96,11 @@ class Record extends Builder
         // トポロジカルソート
         $sorted = [];
         $visited = [];
+        $visiting = [];
         $modules = array_keys($grouped);
 
         foreach ($modules as $module) {
-            $this->topologicalSortVisit($module, $dependencies, $grouped, $visited, $sorted);
+            $this->topologicalSortVisit($module, $dependencies, $grouped, $visited, $visiting, $sorted);
         }
 
         return $sorted;
@@ -111,26 +112,38 @@ class Record extends Builder
      * @param string $module モジュール名
      * @param array $dependencies 依存関係マップ
      * @param array $grouped モジュールごとにグループ化されたレコード
-     * @param array $visited 訪問済みフラグ
+     * @param array $visited 訪問完了フラグ
+     * @param array $visiting 訪問中フラグ（循環依存検出用）
      * @param array $sorted ソート結果（参照渡し）
      */
-    private function topologicalSortVisit(string $module, array $dependencies, array $grouped, array &$visited, array &$sorted)
+    private function topologicalSortVisit(string $module, array $dependencies, array $grouped, array &$visited, array &$visiting, array &$sorted)
     {
-        // 既に訪問済みの場合はスキップ
+        // 既に訪問完了の場合はスキップ
         if (isset($visited[$module])) {
             return;
         }
 
-        $visited[$module] = true;
+        // 訪問中のノードに再到達した場合は循環依存
+        if (isset($visiting[$module])) {
+            AcmsLogger::warning('【Zoho plugin】モジュール間の循環依存を検出しました。依存関係を無視して処理を続行します。', [
+                'module' => $module
+            ]);
+            return;
+        }
+
+        $visiting[$module] = true;
 
         // 依存先を先に処理
         if (isset($dependencies[$module])) {
             foreach ($dependencies[$module] as $dependency) {
                 if (isset($grouped[$dependency])) {
-                    $this->topologicalSortVisit($dependency, $dependencies, $grouped, $visited, $sorted);
+                    $this->topologicalSortVisit($dependency, $dependencies, $grouped, $visited, $visiting, $sorted);
                 }
             }
         }
+
+        unset($visiting[$module]);
+        $visited[$module] = true;
 
         // このモジュールのレコードを追加
         if (isset($grouped[$module])) {
@@ -291,6 +304,21 @@ class Record extends Builder
             // 複数行テキストフィールドの判定と登録
             if ($fieldType === 'textarea') {
                 $record->markAsTextareaField($fieldApiName);
+            }
+
+            // 日付フィールドの判定と登録
+            if ($fieldType === 'date') {
+                $record->markAsDateField($fieldApiName);
+            }
+
+            // 日時フィールドの判定と登録
+            if ($fieldType === 'datetime') {
+                $record->markAsDatetimeField($fieldApiName);
+            }
+
+            // 数値フィールドの判定と登録
+            if (in_array($fieldType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'])) {
+                $record->markAsNumberField($fieldApiName, $fieldType);
             }
 
             $item[$fieldApiName] = $normalizedValue;
@@ -669,8 +697,6 @@ class Record extends Builder
     /**
      * RecordModelのモジュール、タイプ、IDを更新
      *
-     * RecordModelのprivateプロパティをリフレクションで更新
-     *
      * @param RecordModel $record 更新対象のレコード
      * @param string $moduleApiName モジュールAPI名
      * @param string $type insert or update
@@ -679,16 +705,8 @@ class Record extends Builder
      */
     private function updateRecordProperties(RecordModel $record, string $moduleApiName, string $type, ?string $id)
     {
-        // リフレクションを使ってprivateプロパティを更新
-        $reflection = new \ReflectionClass($record);
-
-        $moduleProperty = $reflection->getProperty('moduleApiName');
-        $moduleProperty->setAccessible(true);
-        $moduleProperty->setValue($record, $moduleApiName);
-
-        $typeProperty = $reflection->getProperty('type');
-        $typeProperty->setAccessible(true);
-        $typeProperty->setValue($record, $type);
+        $record->setModuleApiName($moduleApiName);
+        $record->setType($type);
 
         if ($id) {
             $record->setId($id);

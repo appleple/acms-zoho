@@ -15,6 +15,7 @@ use com\zoho\crm\api\record\APIException;
 use com\zoho\crm\api\record\BodyWrapper;
 use com\zoho\crm\api\record\SuccessResponse;
 use com\zoho\crm\api\util\Choice;
+use DateTime;
 
 class RecordApi extends ApiBase
 {
@@ -446,6 +447,25 @@ class RecordApi extends ApiBase
                 // 複数行テキストフィールドは文字列として設定（改行を保持）
                 // nullまたは空文字列の場合は空文字列にする
                 $fieldValue = $value !== null ? (string)$value : '';
+            } elseif ($record->isDateField($apiName) || $dataType === 'date') {
+                // 日付フィールドの変換
+                $fieldValue = $this->convertToDate($value);
+                if ($fieldValue === null && $value !== '' && $value !== null) {
+                    continue; // 変換失敗時はスキップ
+                }
+            } elseif ($record->isDatetimeField($apiName) || $dataType === 'datetime') {
+                // 日時フィールドの変換
+                $fieldValue = $this->convertToDateTime($value);
+                if ($fieldValue === null && $value !== '' && $value !== null) {
+                    continue; // 変換失敗時はスキップ
+                }
+            } elseif ($record->isNumberField($apiName) || in_array($dataType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'])) {
+                // 数値フィールドの変換
+                $numberType = $record->getNumberFieldType($apiName) ?? $dataType;
+                $fieldValue = $this->convertToNumber($value, $numberType);
+                if ($fieldValue === null && $value !== '' && $value !== null) {
+                    continue; // 変換失敗時はスキップ
+                }
             } else {
                 $fieldValue = $value;
             }
@@ -473,5 +493,120 @@ class RecordApi extends ApiBase
         }
 
         return $apiRecord;
+    }
+
+    /**
+     * 値を日付（DateTime）に変換
+     *
+     * @param mixed $value 変換する値
+     * @return DateTime|null 変換されたDateTime、または空/失敗時はnull
+     */
+    private function convertToDate($value): ?DateTime
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        // 既にDateTimeの場合は時刻を00:00:00にリセット
+        if ($value instanceof DateTime) {
+            $value->setTime(0, 0, 0);
+            return $value;
+        }
+
+        // 文字列の場合は明示的なフォーマットでDateTimeに変換
+        // a-blog CMSからは "Y-m-d" 形式で送信される
+        $date = DateTime::createFromFormat('Y-m-d', $value);
+        if ($date !== false) {
+            $date->setTime(0, 0, 0);
+            return $date;
+        }
+
+        AcmsLogger::warning('【Zoho plugin】日付の変換に失敗しました。', [
+            'value' => $value,
+            'expectedFormat' => 'Y-m-d'
+        ]);
+        return null;
+    }
+
+    /**
+     * 値を日時（DateTime）に変換
+     *
+     * @param mixed $value 変換する値
+     * @return DateTime|null 変換されたDateTime、または空/失敗時はnull
+     */
+    private function convertToDateTime($value): ?DateTime
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+        if ($value instanceof DateTime) {
+            return $value;
+        }
+
+        // 文字列の場合は明示的なフォーマットでDateTimeに変換
+        // a-blog CMSからは "Y-m-d H:i:s" 形式で送信される
+        $datetime = DateTime::createFromFormat('Y-m-d H:i:s', $value);
+        if ($datetime !== false) {
+            return $datetime;
+        }
+
+        // "Y-m-d" のみの場合も許容（時刻は00:00:00になる）
+        $datetime = DateTime::createFromFormat('Y-m-d', $value);
+        if ($datetime !== false) {
+            $datetime->setTime(0, 0, 0);
+            return $datetime;
+        }
+
+        AcmsLogger::warning('【Zoho plugin】日時の変換に失敗しました。', [
+            'value' => $value,
+            'expectedFormat' => 'Y-m-d H:i:s'
+        ]);
+        return null;
+    }
+
+    /**
+     * 値を数値（int/float）に変換
+     *
+     * @param mixed $value 変換する値
+     * @param string|null $numberType 数値タイプ (integer, double, decimal, currency, bigint, number)
+     * @return int|float|null 変換された数値、または空/失敗時はnull
+     */
+    private function convertToNumber($value, ?string $numberType)
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            if ($numberType === 'integer' || $numberType === 'bigint') {
+                return (int)$value;
+            }
+            return (float)$value;
+        }
+
+        if (is_string($value)) {
+            // カンマを除去（通貨フォーマット対応）
+            $cleanValue = str_replace(',', '', $value);
+
+            // 通貨記号を除去（Unicodeカテゴリで全通貨記号に対応）
+            $cleanValue = preg_replace('/\p{Sc}/u', '', $cleanValue);
+            $cleanValue = trim($cleanValue);
+
+            if (!is_numeric($cleanValue)) {
+                AcmsLogger::warning('【Zoho plugin】数値の変換に失敗しました。', [
+                    'value' => $value,
+                    'cleanValue' => $cleanValue,
+                    'numberType' => $numberType
+                ]);
+                return null;
+            }
+
+            if ($numberType === 'integer' || $numberType === 'bigint') {
+                return (int)$cleanValue;
+            }
+            return (float)$cleanValue;
+        }
+
+        return null;
     }
 }
