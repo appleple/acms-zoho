@@ -59,6 +59,15 @@ class Record
     /** @var array 複数行テキストフィールドのリスト [フィールド名 => true] */
     private $textareaFields = [];
 
+    /** @var array 日付フィールドのリスト [フィールド名 => true] */
+    private $dateFields = [];
+
+    /** @var array 日時フィールドのリスト [フィールド名 => true] */
+    private $datetimeFields = [];
+
+    /** @var array 数値フィールドのリスト [フィールド名 => データタイプ] */
+    private $numberFields = [];
+
     /**
      * @param string $moduleApiName モジュールAPI名
      * @param string $type insert|update|pending
@@ -80,11 +89,31 @@ class Record
     }
 
     /**
+     * @param string $moduleApiName モジュールAPI名
+     * @return self
+     */
+    public function setModuleApiName(string $moduleApiName): self
+    {
+        $this->moduleApiName = $moduleApiName;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getType(): string
     {
         return $this->type;
+    }
+
+    /**
+     * @param string $type insert|update|pending
+     * @return self
+     */
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+        return $this;
     }
 
     /**
@@ -254,6 +283,87 @@ class Record
     public function isTextareaField(string $fieldName): bool
     {
         return isset($this->textareaFields[$fieldName]);
+    }
+
+    /**
+     * フィールドを日付フィールドとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsDateField(string $fieldName)
+    {
+        $this->dateFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドが日付フィールドかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isDateField(string $fieldName): bool
+    {
+        return isset($this->dateFields[$fieldName]);
+    }
+
+    /**
+     * フィールドを日時フィールドとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsDatetimeField(string $fieldName)
+    {
+        $this->datetimeFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドが日時フィールドかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isDatetimeField(string $fieldName): bool
+    {
+        return isset($this->datetimeFields[$fieldName]);
+    }
+
+    /**
+     * フィールドを数値フィールドとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @param string $numberType 数値タイプ (integer, double, decimal, currency, bigint, number)
+     * @return self
+     */
+    public function markAsNumberField(string $fieldName, string $numberType = 'double')
+    {
+        $this->numberFields[$fieldName] = $numberType;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドが数値フィールドかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isNumberField(string $fieldName): bool
+    {
+        return isset($this->numberFields[$fieldName]);
+    }
+
+    /**
+     * 数値フィールドのタイプを取得
+     *
+     * @param string $fieldName フィールド名
+     * @return string|null 数値タイプ またはnull
+     */
+    public function getNumberFieldType(string $fieldName): ?string
+    {
+        return $this->numberFields[$fieldName] ?? null;
     }
 
     /**
