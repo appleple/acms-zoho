@@ -14,12 +14,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         entryFileNames: `acms-zoho.js`,
-        // assetFileNames: ({ name }) => {
-        //   if (name && name.endsWith('.css')) {
-        //     return 'acms-ai.css'; // 固定ファイル名
-        //   }
-        //   return '[name].[ext]';
-        // },
         globals: {}
       },
       external: [],

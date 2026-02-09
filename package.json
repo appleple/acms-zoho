@@ -4,20 +4,21 @@
   "description": "Zoho API と連携し、お問い合わせフォームなどで送信された内容をZoho CRMに登録します。",
   "main": "deploy.js",
   "scripts": {
-    "start": "npm run dev",
+    "start": "pnpm run dev",
     "dev": "vite build --watch",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 0",
-    "package": "npm run setup && npm run build:app",
+    "package": "pnpm run setup && pnpm run build:app",
     "build:app": "node ./tools/build.js",
     "setup": "node ./tools/setup.js",
     "version:sync": "node ./tools/version.js",
     "release:commit": "node ./tools/commit.js",
-    "release:patch": "npm version patch --no-git-tag-version && npm run version:sync && npm run package && npm run release:commit",
-    "release:minor": "npm version minor --no-git-tag-version && npm run version:sync && npm run package && npm run release:commit",
-    "release:major": "npm version major --no-git-tag-version && npm run version:sync && npm run package && npm run release:commit"
+    "release:patch": "pnpm version patch --no-git-tag-version && pnpm run version:sync && pnpm run package && pnpm run release:commit",
+    "release:minor": "pnpm version minor --no-git-tag-version && pnpm run version:sync && pnpm run package && pnpm run release:commit",
+    "release:major": "pnpm version major --no-git-tag-version && pnpm run version:sync && pnpm run package && pnpm run release:commit"
   },
+  "packageManager": "pnpm@10.29.1",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/appleple/acms-zoho.git"

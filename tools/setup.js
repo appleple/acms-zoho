@@ -36,7 +36,7 @@ const { systemCmd } = require('./lib/system.js');
 
 (async () => {
   try {
-    await systemCmd('npm ci');
+    await systemCmd('pnpm install --frozen-lockfile');
     await systemCmd('cd app && rm -rf vendor');
     await systemCmd('cd app && composer install');
 

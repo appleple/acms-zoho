@@ -1,2 +1,0 @@
-/vendor/zohocrm/php-sdk/src/resources
-/vendor/zohocrm/php-sdk/src/com/zoho/oauth/logger/
