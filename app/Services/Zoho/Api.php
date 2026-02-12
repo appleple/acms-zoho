@@ -6,6 +6,8 @@ use Acms\Plugins\Zoho\Services\Zoho\Client;
 use Acms\Plugins\Zoho\Services\Zoho\Api\RecordApi;
 use Acms\Plugins\Zoho\Services\Zoho\Api\ModuleApi;
 use Acms\Plugins\Zoho\Services\Zoho\Api\FieldApi;
+use Acms\Plugins\Zoho\Services\Zoho\Api\NoteApi;
+use Acms\Plugins\Zoho\Services\Zoho\Api\TagApi;
 
 /**
  * Zoho CRM APIとの通信を行うエントリーポイントクラス（ApiManagerパターン）
@@ -26,6 +28,12 @@ class Api
 
     /** @var FieldApi|null */
     private $fieldApi = null;
+
+    /** @var NoteApi|null */
+    private $noteApi = null;
+
+    /** @var TagApi|null */
+    private $tagApi = null;
 
     /**
      * コンストラクタ
@@ -56,6 +64,12 @@ class Api
         }
         if ($this->fieldApi !== null) {
             $this->fieldApi->setLabelToApiNameMap($map);
+        }
+        if ($this->noteApi !== null) {
+            $this->noteApi->setLabelToApiNameMap($map);
+        }
+        if ($this->tagApi !== null) {
+            $this->tagApi->setLabelToApiNameMap($map);
         }
 
         return $this;
@@ -101,5 +115,33 @@ class Api
             $this->fieldApi->setLabelToApiNameMap($this->labelNameToApiNameMap);
         }
         return $this->fieldApi;
+    }
+
+    /**
+     * NoteApiインスタンスを取得
+     *
+     * @return NoteApi
+     */
+    public function note(): NoteApi
+    {
+        if ($this->noteApi === null) {
+            $this->noteApi = new NoteApi($this->client);
+            $this->noteApi->setLabelToApiNameMap($this->labelNameToApiNameMap);
+        }
+        return $this->noteApi;
+    }
+
+    /**
+     * TagApiインスタンスを取得
+     *
+     * @return TagApi
+     */
+    public function tag(): TagApi
+    {
+        if ($this->tagApi === null) {
+            $this->tagApi = new TagApi($this->client);
+            $this->tagApi->setLabelToApiNameMap($this->labelNameToApiNameMap);
+        }
+        return $this->tagApi;
     }
 }

@@ -68,6 +68,15 @@ class Record
     /** @var array 数値フィールドのリスト [フィールド名 => データタイプ] */
     private $numberFields = [];
 
+    /** @var string|null メモのタイトル */
+    private $noteTitle;
+
+    /** @var string|null メモの本文 */
+    private $noteContent;
+
+    /** @var string[] タグのリスト */
+    private $tags = [];
+
     /**
      * @param string $moduleApiName モジュールAPI名
      * @param string $type insert|update|pending
@@ -364,6 +373,93 @@ class Record
     public function getNumberFieldType(string $fieldName): ?string
     {
         return $this->numberFields[$fieldName] ?? null;
+    }
+
+    /**
+     * メモのタイトルを設定
+     *
+     * @param string|null $noteTitle メモのタイトル
+     * @return self
+     */
+    public function setNoteTitle(?string $noteTitle): self
+    {
+        $this->noteTitle = $noteTitle;
+        return $this;
+    }
+
+    /**
+     * メモのタイトルを取得
+     *
+     * @return string|null
+     */
+    public function getNoteTitle(): ?string
+    {
+        return $this->noteTitle;
+    }
+
+    /**
+     * メモの本文を設定
+     *
+     * @param string|null $noteContent メモの本文
+     * @return self
+     */
+    public function setNoteContent(?string $noteContent): self
+    {
+        $this->noteContent = $noteContent;
+        return $this;
+    }
+
+    /**
+     * メモの本文を取得
+     *
+     * @return string|null
+     */
+    public function getNoteContent(): ?string
+    {
+        return $this->noteContent;
+    }
+
+    /**
+     * メモが設定されているかどうか判定
+     * Note_Contentが非空であればtrue（Note_Titleは任意）
+     *
+     * @return bool
+     */
+    public function hasNote(): bool
+    {
+        return !empty($this->noteContent);
+    }
+
+    /**
+     * タグを設定
+     *
+     * @param string[] $tags タグ名の配列
+     * @return self
+     */
+    public function setTags(array $tags): self
+    {
+        $this->tags = $tags;
+        return $this;
+    }
+
+    /**
+     * タグを取得
+     *
+     * @return string[]
+     */
+    public function getTags(): array
+    {
+        return $this->tags;
+    }
+
+    /**
+     * タグが設定されているかどうか判定
+     *
+     * @return bool
+     */
+    public function hasTags(): bool
+    {
+        return !empty($this->tags);
     }
 
     /**

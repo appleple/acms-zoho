@@ -34,8 +34,13 @@ class ModuleField extends Zoho
             $moduleFields = $api->field()->getModuleFields($moduleApiName);
 
             $moduleFieldMapper = new ZohoModuleFieldMapper($moduleFields, new Field());
+            $fields = $moduleFieldMapper->toArray();
 
-            return Common::ResponseJson($moduleFieldMapper->toArray());
+            // Zoho Fields APIはNotesをモジュールフィールドとして返さないため、Note用の仮想フィールドを追加
+            $fields[] = ['apiName' => 'Note_Title', 'fieldName' => 'メモのタイトル', 'dataType' => 'note'];
+            $fields[] = ['apiName' => 'Note_Content', 'fieldName' => 'メモの本文', 'dataType' => 'note'];
+
+            return Common::ResponseJson($fields);
         } catch (\Exception $e) {
             AcmsLogger::error('【Zoho plugin】モジュールフィールド情報の取得に失敗しました: ' . $e->getMessage());
             return Common::ResponseJson(['error' => 'Failed to fetch module fields']);

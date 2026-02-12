@@ -69,15 +69,23 @@ class Engine
             // レコードの構造体作成
             $records = $recordBuilder->buildRecords($recordApi);
 
-            // 依存関係順に並び替え（ルックアップの参照先が先に処理されるように）
+            // ルックアップの参照先が先に処理されるように、依存関係順に並び替え
             $records = $recordBuilder->sortRecordsByDependency($records);
 
             // 処理済みレコードを格納する配列
             $processedRecords = [];
 
+            // NoteApiの取得
+            $noteApi = $api->note();
+
+            // TagApiの取得
+            $tagApi = $api->tag();
+
             // 成功・失敗の集計
             $createdCount = 0;
             $updatedCount = 0;
+            $noteCount = 0;
+            $tagCount = 0;
             $allFailures = [];
 
             // 依存関係レベルごとにグループ化
@@ -135,9 +143,34 @@ class Engine
                             $allFailures = array_merge($allFailures, $result['failures']);
                         }
 
-                        // 処理済みレコードに追加
+                        // 処理済みレコードに追加し、メモがあれば作成
                         foreach ($chunk as $record) {
                             $processedRecords[] = $record;
+
+                            // メモの作成（レコードのIDが確定し、かつNote_Contentが設定されている場合）
+                            if ($record->hasNote() && $record->getId()) {
+                                $success = $noteApi->createNote(
+                                    $record->getId(),
+                                    $record->getModuleApiName(),
+                                    $record->getNoteTitle(),
+                                    $record->getNoteContent()
+                                );
+                                if ($success) {
+                                    $noteCount++;
+                                }
+                            }
+
+                            // タグの追加（レコードのIDが確定し、かつTagが設定されている場合）
+                            if ($record->hasTags() && $record->getId()) {
+                                $success = $tagApi->addTagsToRecord(
+                                    $record->getId(),
+                                    $record->getModuleApiName(),
+                                    $record->getTags()
+                                );
+                                if ($success) {
+                                    $tagCount++;
+                                }
+                            }
                         }
                     }
                 }
@@ -150,6 +183,12 @@ class Engine
             }
             if ($updatedCount > 0) {
                 $messages[] = "レコードを{$updatedCount}件更新";
+            }
+            if ($noteCount > 0) {
+                $messages[] = "メモを{$noteCount}件作成";
+            }
+            if ($tagCount > 0) {
+                $messages[] = "タグを{$tagCount}件追加";
             }
 
             if (!empty($messages)) {
