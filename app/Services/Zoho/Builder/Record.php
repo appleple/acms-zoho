@@ -124,6 +124,7 @@ class Record extends Builder
         }
 
         // 訪問中のノードに再到達した場合は循環依存
+        // 相互にリレーショナルしている状態で、登録の順序を解決できないため、警告を出して無視する
         if (isset($visiting[$module])) {
             AcmsLogger::warning('【Zoho plugin】モジュール間の循環依存を検出しました。依存関係を無視して処理を続行します。', [
                 'module' => $module
@@ -268,6 +269,41 @@ class Record extends Builder
                 $fieldType = $fieldData['dataType'] ?? null;
             }
 
+            // メモフィールドの判定（Note_Title / Note_Content）
+            // メモはZohoのレコードフィールドではなく別エンティティのため、通常フィールドとしては追加しない
+            if ($fieldType === 'note') {
+                // insert/updateの権限チェック
+                $isNoteAllowed = ($type === 'insert' && $canInsert)
+                    || ($type === 'update' && $canUpdate)
+                    || ($type === 'pending' && ($canInsert || $canUpdate));
+                if ($isNoteAllowed) {
+                    $value = $this->getFieldValue($key, $groupArr, $index);
+                    $normalizedValue = $this->normalizeValue($value);
+                    if ($fieldApiName === 'Note_Title') {
+                        $record->setNoteTitle((string)$normalizedValue);
+                    } elseif ($fieldApiName === 'Note_Content') {
+                        $record->setNoteContent((string)$normalizedValue);
+                    }
+                }
+                continue;
+            }
+
+            // タグフィールドの判定
+            // タグはRecordDetailTagオブジェクトとして設定する必要があるため、通常フィールドとは別に処理する
+            if ($fieldApiName === 'Tag') {
+                $isTagAllowed = ($type === 'insert' && $canInsert)
+                    || ($type === 'update' && $canUpdate)
+                    || ($type === 'pending' && ($canInsert || $canUpdate));
+                if ($isTagAllowed) {
+                    $rawValues = $this->field->getArray($key);
+                    $tags = $this->parseTagValue($rawValues);
+                    if (!empty($tags)) {
+                        $record->setTags($tags);
+                    }
+                }
+                continue;
+            }
+
             // pendingタイプの場合はモジュールチェックをスキップ（全フィールドを取得）
             if ($scope !== '__PENDING__') {
                 // スコープが一致しない場合はスキップ
@@ -395,6 +431,34 @@ class Record extends Builder
             return false;
         }
         return $value;
+    }
+
+    /**
+     * タグの値をパースして文字列配列に変換
+     *
+     * 配列またはカンマ区切り文字列を受け付ける
+     *
+     * @param mixed $value タグの値
+     * @return string[] パース済みタグ名の配列
+     */
+    private function parseTagValue(mixed $value): array
+    {
+        if (is_array($value)) {
+            $value = implode(',', $value);
+        }
+
+        $value = trim((string)$value);
+        if ($value === '') {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+        $tags = is_array($decoded) ? $decoded : explode(',', $value);
+
+        return array_values(array_filter(
+            array_map(trim(...), $tags),
+            fn(string $v) => $v !== '',
+        ));
     }
 
     /**
