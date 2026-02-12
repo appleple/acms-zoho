@@ -254,6 +254,7 @@ class Record extends Builder
 
         foreach ($fieldKeys as $i => $fieldKey) {
             $key = $this->config->get('zoho_link_field_cms_field', '', $i);
+            $isFixed = $this->config->get('zoho_link_field_cms_field_fixed', '', $i) === 'on';
             $scopesJson = $this->config->get('zoho_link_field_module', '', $i);
             $moduleScopes = ModuleScope::parseJsonArray($scopesJson);
             $scopes = ModuleScope::toApiNames($moduleScopes);
@@ -277,7 +278,7 @@ class Record extends Builder
                     || ($type === 'update' && $canUpdate)
                     || ($type === 'pending' && ($canInsert || $canUpdate));
                 if ($isNoteAllowed) {
-                    $value = $this->getFieldValue($key, $groupArr, $index);
+                    $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
                     $normalizedValue = $this->normalizeValue($value);
                     if ($fieldApiName === 'Note_Title') {
                         $record->setNoteTitle((string)$normalizedValue);
@@ -295,7 +296,7 @@ class Record extends Builder
                     || ($type === 'update' && $canUpdate)
                     || ($type === 'pending' && ($canInsert || $canUpdate));
                 if ($isTagAllowed) {
-                    $rawValues = $this->field->getArray($key);
+                    $rawValues = $isFixed ? [$this->resolveGlobalVars($key)] : $this->field->getArray($key);
                     $tags = $this->parseTagValue($rawValues);
                     if (!empty($tags)) {
                         $record->setTags($tags);
@@ -323,7 +324,7 @@ class Record extends Builder
                 }
             }
 
-            $value = $this->getFieldValue($key, $groupArr, $index);
+            $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
             $normalizedValue = $this->normalizeValue($value);
 
             // ルックアップフィールドの判定と登録
@@ -823,20 +824,5 @@ class Record extends Builder
                 $record->removeField($fieldApiName);
             }
         }
-    }
-
-    /**
-     * 文字列がJSON形式かどうかを判定
-     *
-     * @param string $string 判定する文字列
-     * @return bool JSON形式の場合true
-     */
-    private function isJson(string $string): bool
-    {
-        if (empty($string)) {
-            return false;
-        }
-        json_decode($string);
-        return json_last_error() === JSON_ERROR_NONE;
     }
 }
