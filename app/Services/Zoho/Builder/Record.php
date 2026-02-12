@@ -418,16 +418,16 @@ class Record extends Builder
     /**
      * 値を適切な型に変換
      *
-     * 文字列の "true"/"false" をboolean型に変換する
+     * 文字列の "on"/"off" をboolean型に変換する
      *
      * @param mixed $value 変換前の値
      * @return mixed 変換後の値
      */
     private function normalizeValue($value)
     {
-        if ($value === 'true') {
+        if ($value === 'on') {
             return true;
-        } elseif ($value === 'false') {
+        } elseif ($value === 'off') {
             return false;
         }
         return $value;
