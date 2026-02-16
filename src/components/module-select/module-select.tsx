@@ -3,6 +3,7 @@ import { SelectInstance } from 'react-select';
 import RichSelect from '../rich-select/rich-select';
 import { useModulesSWR } from '../../hooks/use-modules-swr';
 import { Module, ModuleWithFields } from '../../types';
+import { parseModulesJson } from '../../utils';
 
 interface ModuleSelectProps
   extends Partial<
@@ -24,7 +25,8 @@ export const ModuleSelect = ({
 }: ModuleSelectProps) => {
   const { modules, isLoading } = useModulesSWR();
 
-  const [value, setValue] = useState<ModuleWithFields[]>([]);
+  // 初期値がある場合はパースして最初から表示する
+  const [value, setValue] = useState<ModuleWithFields[]>(() => parseModulesJson(defaultValueProp));
   const [currentName, setCurrentName] = useState<string>(props.name || '');
 
   const handleChange = useCallback(
@@ -45,19 +47,19 @@ export const ModuleSelect = ({
     [onChange, originalInputRef]
   );
 
+  // APIからデータが取得できたら、初期値をフルデータ（fields付き）に置き換える
   useEffect(() => {
-    if (modules && modules.length > 0 && defaultValueProp && value.length === 0) {
-      // JSON配列文字列をModule配列に変換
-      try {
-        const parsedModules: Module[] = JSON.parse(defaultValueProp);
-        const apiNames = parsedModules.map(m => m.apiName);
-        const initialValue = modules.filter((module) => apiNames.includes(module.apiName));
-        setValue(initialValue);
-      } catch {
-        // パースエラーの場合は空配列として扱う
+    if (modules && modules.length > 0 && value.length > 0) {
+      const needsUpdate = value.some(v => !modules.includes(v));
+      if (needsUpdate) {
+        const apiNames = value.map(v => v.apiName);
+        const fullDataValues = modules.filter((module) => apiNames.includes(module.apiName));
+        if (fullDataValues.length > 0) {
+          setValue(fullDataValues);
+        }
       }
     }
-  }, [modules, defaultValueProp, value.length, originalInputRef]);
+  }, [modules, value]);
 
   // name属性の動的監視（無限ループを防ぐため）
   useEffect(() => {
@@ -80,7 +82,8 @@ export const ModuleSelect = ({
       getOptionValue={(option) => option.apiName}
       isMulti
       closeMenuOnSelect={false}
-      placeholder="モジュールを選択"
+      placeholder={isLoading ? "更新中" : "モジュールを選択"}
+      loadingMessage={() => "更新中"}
       noOptionsMessage={() => "選択可能なモジュールがありません"}
       name={currentName} // acmsでnameに[{i}]が付与されるため、動的に更新されるようにする
     />

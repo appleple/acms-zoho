@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { SingleValue } from 'react-select';
+import RichSelect from '../rich-select/rich-select';
 import { useModuleFieldsSWR } from '../../hooks/use-module-fields-swr';
-import { SimpleSelect } from '../simple-select/simple-select';
+import { ModuleField } from '../../types';
 
 interface Props {
   name: string;
@@ -8,28 +10,32 @@ interface Props {
   moduleApiNames?: string[];
   originalInputRef?: HTMLInputElement;
   onChange?: (value: string) => void;
+  filterByDataType?: string;
 }
+
+// valueがJSON形式の場合はapiNameとfieldNameを取得
+const parseFieldValue = (val: string): { apiName: string; fieldName: string } | null => {
+  if (!val) return null;
+  try {
+    const parsed = JSON.parse(val);
+    const apiName = parsed.apiName || val;
+    const fieldName = parsed.fieldName || apiName;
+    return { apiName, fieldName };
+  } catch {
+    // JSON parse失敗時は元の値を返す（後方互換性）
+    return { apiName: val, fieldName: val };
+  }
+};
 
 export const ModuleFieldSelect = ({
   name,
   value,
   moduleApiNames = [],
   originalInputRef,
-  onChange
+  onChange,
+  filterByDataType,
 }: Props) => {
-  // valueがJSON形式の場合はapiNameを取得
-  const getApiNameFromValue = (val: string): string => {
-    if (!val) return '';
-    try {
-      const parsed = JSON.parse(val);
-      return parsed.apiName || val;
-    } catch {
-      // JSON parse失敗時は元の値を返す（後方互換性）
-      return val;
-    }
-  };
-
-  const apiNameValue = getApiNameFromValue(value);
+  const parsedValue = parseFieldValue(value);
 
   const { fieldsResults, isLoading } = useModuleFieldsSWR(moduleApiNames);
 
@@ -58,45 +64,68 @@ export const ModuleFieldSelect = ({
     );
   }, [fieldsResults, moduleApiNames]);
 
-  const options = displayFields.map(field => ({
-    value: field.apiName,
-    label: field.fieldName
-  }));
+  const filteredFields = useMemo(() => {
+    if (!filterByDataType) return displayFields;
+    return displayFields.filter(field => field.dataType === filterByDataType);
+  }, [displayFields, filterByDataType]);
+
+  // 初期値がある場合は仮のオブジェクトを作成して即座に表示
+  const [selected, setSelected] = useState<ModuleField | null>(() => {
+    if (!parsedValue) return null;
+    return {
+      apiName: parsedValue.apiName,
+      fieldName: parsedValue.fieldName, // 保存済みのfieldNameを使用
+    };
+  });
+
+  // APIからデータが取得できたら、初期値をフルデータ（fieldName付き）に置き換える
+  useEffect(() => {
+    if (filteredFields.length > 0 && selected && !filteredFields.includes(selected)) {
+      const fullData = filteredFields.find(f => f.apiName === selected.apiName);
+      if (fullData) {
+        setSelected(fullData);
+      }
+    }
+  }, [filteredFields, selected]);
 
   const placeholder = moduleApiNames.length === 0
     ? 'モジュールを選択してください。'
-    : isLoading
-    ? '項目を読み込み中...'
     : '項目を選択';
 
-  const handleFieldChange = (selectedApiName: string) => {
-    // 選択されたフィールドの情報を取得
-    const selectedField = displayFields.find(field => field.apiName === selectedApiName);
+  const handleChange = useCallback(
+    (newValue: SingleValue<ModuleField>) => {
+      setSelected(newValue);
 
-    if (selectedField && originalInputRef) {
-      // JSONオブジェクトとして保存
-      const fieldData = {
-        apiName: selectedField.apiName,
-        dataType: selectedField.dataType || null
-      };
-      originalInputRef.value = JSON.stringify(fieldData);
-    }
+      if (newValue && originalInputRef) {
+        const fieldData = {
+          apiName: newValue.apiName,
+          fieldName: newValue.fieldName,
+          dataType: newValue.dataType || null
+        };
+        originalInputRef.value = JSON.stringify(fieldData);
+      } else if (!newValue && originalInputRef) {
+        originalInputRef.value = '';
+      }
 
-    // onChangeコールバックを実行
-    if (onChange) {
-      onChange(selectedApiName);
-    }
-  };
+      onChange?.(newValue?.apiName || '');
+    },
+    [onChange, originalInputRef]
+  );
 
   return (
-    <SimpleSelect
+    <RichSelect<ModuleField, false>
       name={name}
-      className="acms-admin-form-width-full"
-      defaultValue={apiNameValue}
-      originalInputRef={originalInputRef}
-      options={options}
-      placeholder={placeholder}
-      onChange={handleFieldChange}
+      isClearable
+      value={selected}
+      onChange={handleChange}
+      options={filteredFields}
+      isLoading={isLoading}
+      isDisabled={moduleApiNames.length === 0}
+      getOptionLabel={(option) => option.fieldName}
+      getOptionValue={(option) => option.apiName}
+      placeholder={isLoading && !selected ? "更新中" : placeholder}
+      loadingMessage={() => "更新中"}
+      noOptionsMessage={() => "選択可能な項目がありません"}
     />
   );
 };

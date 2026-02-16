@@ -10,24 +10,24 @@
     <tr>
       <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
       <th class="acms-admin-table-left">
-        <!--T-->a-blog cmsのフィールド名<!--/T-->
+        <!--T-->a-blog cmsのカスタムフィールド名<!--/T-->
         <i
           class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
           data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。チェックをすると入力値がそのまま登録されます。<!--/T-->"
         ></i>
       </th>
       <th class="acms-admin-table-left">
-        <!--T-->タブのAPI名<!--/T-->
+        <!--T-->タブ名<!--/T-->
         <i
           class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
           data-acms-tooltip="<!--T-->Zoho側のタブを指定します。<!--/T-->"
         ></i>
       </th>
       <th class="acms-admin-table-left">
-        <!--T-->項目のAPI名<!--/T-->
+        <!--T-->項目名<!--/T-->
         <i
           class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-          data-acms-tooltip="<!--T-->Zoho側のフィールド名を指定します。タブのAPI名が複数指定されている場合、API名が一致する項目が表示されます。<!--/T-->"
+          data-acms-tooltip="<!--T-->Zoho側のフィールド名を指定します。タブのAPI名が複数指定されている場合、項目のAPI名が一致する項目が表示されます。<!--/T-->"
         ></i>
       </th>
       <th class="acms-admin-table-left" style="width: 50px; text-align: center"><!--T-->追加<!--/T--></th>
@@ -120,16 +120,18 @@
         <i class="acms-admin-icon-sort"></i>
       </td>
       <td>
-        <input
-          type="text"
-          name="zoho_link_field_cms_field[]"
-          value=""
-          class="acms-admin-form-width-full"
-        />
-        <label class="acms-admin-form-checkbox" style="margin-right: 0">
-          <input type="checkbox" name="zoho_link_field_cms_field_fixed[]" value="on" class="acms-admin-form-width-full" />
-          <i class="acms-admin-ico-checkbox"></i>
-        </label>
+        <div class="acms-admin-hstack">
+          <input
+            type="text"
+            name="zoho_link_field_cms_field[]"
+            value=""
+            class="acms-admin-form-width-full"
+          />
+          <label class="acms-admin-form-checkbox" style="margin-right: 0">
+            <input type="checkbox" name="zoho_link_field_cms_field_fixed[]" value="on" class="acms-admin-form-width-full" />
+            <i class="acms-admin-ico-checkbox"></i>
+          </label>
+        </div>
       </td>
       <td colspan="2" class="js-acms-zoho-link-field-row">
         <div

@@ -70,12 +70,14 @@ class Client
         /**
          * 最新のトークン情報を取得
          */
-        if ($tokenStore === 'file' && env('ZOHO_TOKEN_PERSISTENCE_PATH')) {
-            $this->tokenPresistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH');
-            if ($this->tokenPresistencePath === '' || !is_string($this->tokenPresistencePath)) {
-                // ファイルストアのパスが未設定
-                return false;
+        if ($tokenStore === 'file') {
+            $persistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH');
+            if (empty($persistencePath) || !is_string($persistencePath)) {
+                AcmsLogger::warning('【Zoho plugin】環境変数 ZOHO_TOKEN_PERSISTENCE_PATH が設定されていません。');
+                $this->tokenStore = $tokenStore;
+                return;
             }
+            $this->tokenPresistencePath = $persistencePath;
             $this->store = new CustomFileStore($this->tokenPresistencePath);
         }
         $this->tokenStore = $tokenStore;
@@ -145,6 +147,10 @@ class Client
                 return null;
             }
             $this->tokenId = $tokenId;
+            if (!$this->store) {
+                AcmsLogger::error('【Zoho plugin】トークンストアが初期化されていません。環境変数 ZOHO_TOKEN_PERSISTENCE_PATH を確認してください。');
+                return null;
+            }
             $token = $this->store->findTokenById($tokenId);
             if (!$token) {
                 AcmsLogger::error('【Zoho plugin】トークンがストアから削除された可能性があります。再認証してください。');
@@ -217,7 +223,7 @@ class Client
             Initializer::removeUserConfiguration($token);
 
             // FileStore からトークン削除
-            $fileStore = new CustomFileStore(env('ZOHO_TOKEN_PERSISTENCE_PATH'));
+            $fileStore = new CustomFileStore($this->tokenPresistencePath);
             if ($this->tokenId) {
                 $fileStore->removeTokenById($this->tokenId);
             } else {

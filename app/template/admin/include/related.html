@@ -3,16 +3,16 @@
   <thead class="acms-admin-hide-sp">
     <tr>
       <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
-      <th class="acms-admin-table-left"><!--T-->a-blog cmsのフィールド名<!--/T--></th>
-      <th class="acms-admin-table-left"><!--T-->関連元タブ<!--/T--></th>
+      <th class="acms-admin-table-left"><!--T-->a-blog cmsのカスタムフィールド名<!--/T--></th>
+      <th class="acms-admin-table-left"><!--T-->関連元タブ名<!--/T--></th>
       <th class="acms-admin-table-left">
         <!--T-->ルックアップID<!--/T-->
         <i
           class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-          data-acms-tooltip="<!--T-->カスタム項目の場合はIDを指定してください。（カスタム項目名_ID）になります。<!--/T-->"
+          data-acms-tooltip="<!--T-->Zoho側のルックアップIDを指定します。<!--/T-->"
         ></i>
       </th>
-      <th class="acms-admin-table-left"><!--T-->関連先タブ<!--/T--></th>
+      <th class="acms-admin-table-left"><!--T-->関連先タブ名<!--/T--></th>
       <th class="acms-admin-table-left">比較フィールド</th>
       <th class="acms-admin-table-left acms-admin-admin-config-table-action"><!--T-->削除<!--/T--></th>
     </tr>
@@ -31,37 +31,12 @@
           class="acms-admin-form-width-full"
         />
       </td>
-      <td>
-        <input
-          type="text"
-          name="zoho_related_scope[{i}]"
-          value="{zoho_related_scope}"
-          class="acms-admin-form-width-full"
-        />
-      </td>
-      <td>
-        <input
-          type="text"
-          name="zoho_related_lookup_id[{i}]"
-          value="{zoho_related_lookup_id}"
-          class="acms-admin-form-width-full"
-        />
-      </td>
-      <td>
-        <input
-          type="text"
-          name="zoho_related_target_scope[{i}]"
-          value="{zoho_related_target_scope}"
-          class="acms-admin-form-width-full"
-        />
-      </td>
-      <td>
-        <input
-          type="text"
-          name="zoho_related_compare_field[{i}]"
-          value="{zoho_related_compare_field}"
-          class="acms-admin-form-width-full"
-        />
+      <td colspan="4" class="js-acms-zoho-related-row">
+        <div data-acms-zoho-related-root></div>
+        <input type="hidden" name="zoho_related_scope[{i}]" value="{zoho_related_scope}" data-acms-zoho-related-scope />
+        <input type="hidden" name="zoho_related_lookup_id[{i}]" value="{zoho_related_lookup_id}" data-acms-zoho-related-lookup-id />
+        <input type="hidden" name="zoho_related_target_scope[{i}]" value="{zoho_related_target_scope}" data-acms-zoho-related-target-scope />
+        <input type="hidden" name="zoho_related_compare_field[{i}]" value="{zoho_related_compare_field}" data-acms-zoho-related-compare-field />
       </td>
       <td>
         <input
@@ -79,17 +54,12 @@
       <td>
         <input type="text" name="zoho_related_cms_field[]" value="" class="acms-admin-form-width-full" />
       </td>
-      <td>
-        <input type="text" name="zoho_related_scope[]" value="" class="acms-admin-form-width-full" />
-      </td>
-      <td>
-        <input type="text" name="zoho_related_lookup_id[]" value="" class="acms-admin-form-width-full" />
-      </td>
-      <td>
-        <input type="text" name="zoho_related_target_scope[]" value="" class="acms-admin-form-width-full" />
-      </td>
-      <td>
-        <input type="text" name="zoho_related_compare_field[]" value="" class="acms-admin-form-width-full" />
+      <td colspan="4" class="js-acms-zoho-related-row">
+        <div data-acms-zoho-related-root></div>
+        <input type="hidden" name="zoho_related_scope[]" value="" data-acms-zoho-related-scope />
+        <input type="hidden" name="zoho_related_lookup_id[]" value="" data-acms-zoho-related-lookup-id />
+        <input type="hidden" name="zoho_related_target_scope[]" value="" data-acms-zoho-related-target-scope />
+        <input type="hidden" name="zoho_related_compare_field[]" value="" data-acms-zoho-related-compare-field />
       </td>
       <td>
         <input
@@ -102,7 +72,7 @@
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="5">
+      <td colspan="7">
         <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
       </td>
     </tr>
