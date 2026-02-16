@@ -52,14 +52,8 @@ class Hook
         }
 
         try {
-            if (class_exists('AcmsLogger')) {
-                AcmsLogger::debug('【Zoho plugin】Zoho CRM へデータ登録処理を開始します。');
-            }
             $engine = new Engine($thisModule->Post->getChild('field'), $info['data']->getChild('mail'));
             $engine->send();
-            if (class_exists('AcmsLogger')) {
-                AcmsLogger::debug('【Zoho plugin】Zoho CRM へのデータ登録処理が終了しました。');
-            }
 
             if (HOOK_ENABLE) {
                 $hook = ACMS_Hook::singleton();
@@ -74,17 +68,13 @@ class Hook
             if ($this->isDebugMode()) {
                 throw $e;
             }
-            if (class_exists('AcmsLogger')) {
-                AcmsLogger::error(
-                    '【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。',
-                    Common::exceptionArray($e, [
-                        'code' => $e->getExceptionCode(),
-                        'details' => $e->getExceptionDetails(),
-                    ]),
-                );
-            } else {
-                AcmsLogger::error('ACMS Error: Zoho plugin, ' . $e->getMessage());
-            }
+            AcmsLogger::error(
+                '【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。',
+                Common::exceptionArray($e, [
+                    'code' => $e->getExceptionCode(),
+                    'details' => $e->getExceptionDetails(),
+                ]),
+            );
         } catch (\Exception $e) {
             if (HOOK_ENABLE) {
                 $hook = ACMS_Hook::singleton();
@@ -94,11 +84,7 @@ class Hook
             if ($this->isDebugMode()) {
                 throw $e;
             }
-            if (class_exists('AcmsLogger')) {
-                AcmsLogger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
-            } else {
-                AcmsLogger::error('ACMS Error: Zoho plugin, ' . $e->getMessage());
-            }
+            AcmsLogger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
         }
 
         if (HOOK_ENABLE) {

@@ -1,31 +1,47 @@
+import { useState } from 'react';
 import { useSWRConfig } from 'swr';
 
 export const CacheClearButton = () => {
   const { cache, mutate } = useSWRConfig();
+  const [isClearing, setIsClearing] = useState(false);
 
-  const handleClearCache = () => {
-    // SWRキャッシュを全てクリア（Map型のcacheの場合）
-    if (cache instanceof Map) {
-      cache.clear();
-    } else {
-      // 特定のキーパターンでクリア
-      mutate('modules', undefined, { revalidate: false });
+  const handleClearCache = async () => {
+    setIsClearing(true);
 
-      // モジュールフィールド関連のキャッシュをクリア
-      // 既知のキーを個別に削除
-      const moduleFieldKeys = Array.from(cache.keys?.() || [])
-        .filter(key => typeof key === 'string' && key.startsWith('module-fields-'));
-
-      moduleFieldKeys.forEach(key => {
-        mutate(key, undefined, { revalidate: false });
+    try {
+      // 1. サーバーサイドキャッシュをクリア
+      const rootUrl = (window as any).ACMS?.Config?.root || '/';
+      const formData = new FormData();
+      formData.append('ACMS_POST_Zoho_CacheClear', 'exec');
+      formData.append('formToken', window.csrfToken || '');
+      await fetch(rootUrl, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: formData,
       });
-    }
 
-    console.log('SWRキャッシュをクリアしました');
+      // 2. SWRキャッシュを全てクリア（Map型のcacheの場合）
+      if (cache instanceof Map) {
+        cache.clear();
+      } else {
+        // 特定のキーパターンでクリア
+        mutate('modules', undefined, { revalidate: false });
 
-    // 成功メッセージを表示（オプション）
-    if (window.alert) {
-      window.alert('キャッシュをクリアしました');
+        // モジュールフィールド関連のキャッシュをクリア
+        const moduleFieldKeys = Array.from(cache.keys?.() || [])
+          .filter(key => typeof key === 'string' && key.startsWith('module-fields-'));
+
+        moduleFieldKeys.forEach(key => {
+          mutate(key, undefined, { revalidate: false });
+        });
+      }
+
+      window.alert('キャッシュをクリアしました。ページをリロードしてください。');
+    } catch (error) {
+      console.error('キャッシュクリアに失敗しました:', error);
+      window.alert('キャッシュクリアに失敗しました');
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -34,10 +50,8 @@ export const CacheClearButton = () => {
       type="button"
       className="acms-admin-btn acms-admin-btn-admin"
       onClick={handleClearCache}
-      title="SWRキャッシュをクリアします"
-    >
-      <i className="acms-admin-icon-refresh" aria-hidden="true"></i>
-      キャッシュクリア
-    </button>
+      disabled={isClearing}
+      title="サーバー・クライアントのキャッシュをクリアします"
+    >キャッシュクリア</button>
   );
 };

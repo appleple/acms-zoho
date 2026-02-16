@@ -521,7 +521,9 @@ class Record extends Builder
             }
 
             // ルックアップIDを取得
-            $lookupId = $this->config->get('zoho_related_lookup_id', '', $i);
+            $lookupIdJson = $this->config->get('zoho_related_lookup_id', '', $i);
+            $lookupIdData = json_decode($lookupIdJson, true);
+            $lookupId = $lookupIdData['apiName'] ?? '';
 
             // フィールド名が一致するか確認
             if ($lookupId === $fieldName) {
@@ -548,10 +550,16 @@ class Record extends Builder
                 continue;
             }
 
+            $lookupIdJson = $this->config->get('zoho_related_lookup_id', '', $i);
+            $lookupIdData = json_decode($lookupIdJson, true);
+
+            $compareFieldJson = $this->config->get('zoho_related_compare_field', '', $i);
+            $compareFieldData = json_decode($compareFieldJson, true);
+
             $configs[] = [
-                'lookupId' => $this->config->get('zoho_related_lookup_id', '', $i),
+                'lookupId' => $lookupIdData['apiName'] ?? '',
                 'targetScope' => $this->config->get('zoho_related_target_scope', '', $i),
-                'compareField' => $this->config->get('zoho_related_compare_field', '', $i),
+                'compareField' => $compareFieldData['apiName'] ?? '',
                 'cmsField' => $this->config->get('zoho_related_cms_field', '', $i)
             ];
         }
@@ -681,9 +689,6 @@ class Record extends Builder
             // 最優先の候補を設定
             $selected = $lookupCandidates[0];
             $record->addFields([$selected['lookupId'] => $selected['recordId']]);
-        } else {
-            // 全ての候補で見つからなかった場合
-            AcmsLogger::debug('【Zoho plugin】ルックアップ先が見つからず、全てのルックアップフィールドを削除しました。');
         }
     }
 

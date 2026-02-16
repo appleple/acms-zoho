@@ -3,6 +3,8 @@
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
 use AcmsLogger;
+use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
+use Acms\Services\Facades\Cache;
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
 use com\zoho\crm\api\fields\ResponseWrapper as FieldsResponseWrapper;
@@ -20,6 +22,22 @@ class FieldApi extends ApiBase
      */
     public function getModuleFields(string $moduleApiName): array
     {
+        try {
+            $cache = Cache::module();
+            $cacheKey = 'zoho-module-fields-' . $moduleApiName;
+
+            if ($cache->has($cacheKey)) {
+                return $cache->get($cacheKey);
+            }
+        } catch (\Exception $e) {
+            AcmsLogger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。', [
+                'module' => $moduleApiName,
+                'message' => $e->getMessage(),
+            ]);
+            $cache = null;
+            $cacheKey = null;
+        }
+
         try {
             $fieldsOperations = new FieldsOperations();
             $paramInstance = new ParameterMap();
@@ -51,75 +69,37 @@ class FieldApi extends ApiBase
                             'api_name' => $field->getAPIName(),
                             'field_label' => $field->getFieldLabel(),
                             'data_type' => $dataTypeValue,
-                            // 'length' => $field->getLength(),
-                            // 'required' => $field->getRequired(),
-                            // 'unique' => $field->getUnique(),
-                            // 'read_only' => $field->getReadOnly(),
-                            // 'custom_field' => $field->getCustomField(),
-                            // 'default_value' => $field->getDefaultValue(),
-                            // 'sequence_number' => $field->getSequenceNumber(),
-                            // 'id' => $field->getId(),
-                            // 'tooltip' => $field->getTooltip(),
-                            // 'created_source' => $field->getCreatedSource(),
-                            // 'field_read_only' => $field->getFieldReadOnly(),
-                            // 'display_label' => $field->getDisplayLabel(),
-                            // 'validation_rule' => $field->getValidationRule(),
-                            // 'convert_mapping' => $field->getConvertMapping(),
                         ];
-
-                        // 選択肢フィールドの場合
-                        // $pickListValues = $field->getPickListValues();
-                        // if (!empty($pickListValues)) {
-                        //     $fieldData['pick_list_values'] = [];
-                        //     foreach ($pickListValues as $pickListValue) {
-                        //         $fieldData['pick_list_values'][] = [
-                        //             'display_value' => $pickListValue->getDisplayValue(),
-                        //             'actual_value' => $pickListValue->getActualValue(),
-                        //             'sequence_number' => $pickListValue->getSequenceNumber(),
-                        //             'maps' => $pickListValue->getMaps(),
-                        //         ];
-                        //     }
-                        // }
-
-                        // ルックアップフィールドの場合
-                        // $lookup = $field->getLookup();
-                        // if ($lookup != null) {
-                        //     $fieldData['lookup'] = [
-                        //         'display_label' => $lookup->getDisplayLabel(),
-                        //         'api_name' => $lookup->getAPIName(),
-                        //         'module' => $lookup->getModule(),
-                        //         'id' => $lookup->getId(),
-                        //     ];
-                        // }
-
-                        // 数式フィールドの場合
-                        // $formula = $field->getFormula();
-                        // if ($formula != null) {
-                        //     $fieldData['formula'] = [
-                        //         'return_type' => $formula->getReturnType(),
-                        //         'expression' => $formula->getExpression(),
-                        //     ];
-                        // }
-
-                        // 通貨フィールドの場合
-                        // $currency = $field->getCurrency();
-                        // if ($currency != null) {
-                        //     $fieldData['currency'] = [
-                        //         'rounding_option' => $currency->getRoundingOption(),
-                        //         'precision' => $currency->getPrecision(),
-                        //     ];
-                        // }
 
                         $result[] = $fieldData;
                     }
 
+                    // キャッシュに保存
+                    if ($cache !== null && $cacheKey !== null) {
+                        try {
+                            $cache->put($cacheKey, $result, ZohoApi::cacheLifetime());
+                            $this->registerCacheKey($cache, $cacheKey);
+                        } catch (\Exception $e) {
+                            AcmsLogger::warning('【Zoho plugin】キャッシュの保存に失敗しました。', [
+                                'module' => $moduleApiName,
+                                'message' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+
                     return $result;
                 } elseif ($responseHandler instanceof APIException) {
-                    AcmsLogger::warning('Zoho API Exception in getModuleFields: ' . $responseHandler->getMessage());
+                    AcmsLogger::warning('【Zoho plugin】モジュールフィールドの取得でAPIエラーが発生しました。', [
+                        'module' => $moduleApiName,
+                        'message' => $responseHandler->getMessage(),
+                    ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('Exception in getModuleFields: ' . $e->getMessage());
+            AcmsLogger::warning('【Zoho plugin】モジュールフィールドの取得で例外が発生しました。', [
+                'module' => $moduleApiName,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return [];
@@ -185,11 +165,19 @@ class FieldApi extends ApiBase
                         return $fieldData;
                     }
                 } elseif ($responseHandler instanceof APIException) {
-                    AcmsLogger::info('Zoho API Exception in getField: ' . $responseHandler->getMessage());
+                    AcmsLogger::warning('【Zoho plugin】フィールド情報の取得でAPIエラーが発生しました。', [
+                        'module' => $moduleApiName,
+                        'field' => $fieldApiName,
+                        'message' => $responseHandler->getMessage(),
+                    ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::info('Exception in getField: ' . $e->getMessage());
+            AcmsLogger::warning('【Zoho plugin】フィールド情報の取得で例外が発生しました。', [
+                'module' => $moduleApiName,
+                'field' => $fieldApiName,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return null;
@@ -239,5 +227,22 @@ class FieldApi extends ApiBase
         }
 
         return $result;
+    }
+
+    /**
+     * キャッシュキーを一覧に登録（クリア時に使用）
+     *
+     * @param \Acms\Services\Cache\Contracts\AdapterInterface $cache
+     * @param string $cacheKey
+     * @return void
+     */
+    private function registerCacheKey($cache, string $cacheKey): void
+    {
+        $registryKey = 'zoho-cached-field-keys';
+        $keys = $cache->get($registryKey) ?: [];
+        if (!in_array($cacheKey, $keys, true)) {
+            $keys[] = $cacheKey;
+            $cache->put($registryKey, $keys, 0);
+        }
     }
 }

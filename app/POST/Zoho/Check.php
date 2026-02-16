@@ -52,11 +52,7 @@ class Check extends Zoho
             if ($this->isDebugMode()) {
                 throw $e;
             }
-            if (class_exists('AcmsLogger')) {
-                AcmsLogger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
-            } else {
-                userErrorLog('ACMS Error: Zoho plugin, ' . $e->getMessage());
-            }
+            AcmsLogger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
         }
 
         return Common::responseJson($this->Post);

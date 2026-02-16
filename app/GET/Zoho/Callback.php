@@ -44,10 +44,16 @@ class Callback extends ACMS_GET
             $SQL->addInsert('config_blog_id', BID);
             $DB->query($SQL->get(dsn()), 'exec');
 
+            AcmsLogger::info('【Zoho plugin】OAuth認証が完了しました。');
+
         } catch (\RuntimeException $e) {
-            AcmsLogger::error($e->getMessage());
+            AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
+                'message' => $e->getMessage(),
+            ]);
         } catch (\InvalidArgumentException $e) {
-            AcmsLogger::error($e->getMessage());
+            AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
+                'message' => $e->getMessage(),
+            ]);
         }
         $base_uri = acmsLink(array(
             'bid' => BID,

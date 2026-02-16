@@ -35,11 +35,15 @@ class ModuleApi extends ApiBase
                     // 元のZohoモジュールオブジェクトをそのまま返す
                     return $modules;
                 } else if ($responseHandler instanceof APIException) {
-                    AcmsLogger::info('Zoho API Exception in getModules: ' . $responseHandler->getMessage());
+                    AcmsLogger::warning('【Zoho plugin】モジュール一覧の取得でAPIエラーが発生しました。', [
+                        'message' => $responseHandler->getMessage(),
+                    ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::info('Exception in getModules: ' . $e->getMessage());
+            AcmsLogger::warning('【Zoho plugin】モジュール一覧の取得で例外が発生しました。', [
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return [];
@@ -70,11 +74,17 @@ class ModuleApi extends ApiBase
                         return $modules[0];
                     }
                 } else if ($responseHandler instanceof APIException) {
-                    AcmsLogger::info('Zoho API Exception in getModule: ' . $responseHandler->getMessage());
+                    AcmsLogger::warning('【Zoho plugin】モジュール情報の取得でAPIエラーが発生しました。', [
+                        'module' => $moduleApiName,
+                        'message' => $responseHandler->getMessage(),
+                    ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::info('Exception in getModule: ' . $e->getMessage());
+            AcmsLogger::warning('【Zoho plugin】モジュール情報の取得で例外が発生しました。', [
+                'module' => $moduleApiName,
+                'message' => $e->getMessage(),
+            ]);
         }
 
         return null;

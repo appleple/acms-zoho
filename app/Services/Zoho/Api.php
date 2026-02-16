@@ -14,6 +14,11 @@ use Acms\Plugins\Zoho\Services\Zoho\Api\TagApi;
  */
 class Api
 {
+    /**
+     * デフォルトのキャッシュ有効期間（秒）
+     */
+    const DEFAULT_CACHE_LIFETIME = 3600;
+
     /** @var Client */
     private $client;
 
@@ -143,5 +148,16 @@ class Api
             $this->tagApi->setLabelToApiNameMap($this->labelNameToApiNameMap);
         }
         return $this->tagApi;
+    }
+
+    /**
+     * キャッシュの有効期間（秒）を取得
+     * 環境変数 ZOHO_CACHE_LIFETIME で上書き可能
+     *
+     * @return int
+     */
+    public static function cacheLifetime(): int
+    {
+        return intval(env('ZOHO_CACHE_LIFETIME', strval(self::DEFAULT_CACHE_LIFETIME)));
     }
 }
