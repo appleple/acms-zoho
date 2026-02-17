@@ -1,0 +1,20 @@
+<table>
+  <tr>
+    <th>
+      Zoho CRM連携<i
+        class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+        data-acms-tooltip="チェックをすると、Zoho CRMとの連携が有効になります。"
+      ></i>
+    </th>
+    <td>
+      <div class="acms-admin-form-checkbox">
+        <input type="hidden" name="zoho_void" value="off">
+        <input type="checkbox" name="zoho_void" value="on"{zoho_void:checked#on} id="input-zoho_void">
+        <label for="input-zoho_void">
+          <i class="acms-admin-ico-checkbox"></i>有効
+        </label>
+      </div>
+      <input type="hidden" name="mail[]" value="zoho_void">
+    </td>
+  </tr>
+</table>
