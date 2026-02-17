@@ -5,11 +5,8 @@ namespace Acms\Plugins\Zoho;
 use ACMS_App;
 use Acms\Services\Common\HookFactory;
 use Acms\Services\Common\InjectTemplate;
-use Acms\Services\Facades\Storage;
 use Acms\Services\Facades\Config;
-use Acms\Services\Facades\Common;
 use App;
-use AcmsLogger;
 
 class ServiceProvider extends ACMS_App
 {
@@ -58,24 +55,6 @@ class ServiceProvider extends ACMS_App
         $_SERVER['user_email_id'] = $userEmailId;
 
         App::singleton('zoho.api', Api::class);
-
-        try {
-            $this->initZohoConfig();
-        } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】Zohoの設定ファイルの初期化時に例外が発生しました。', Common::exceptionArray($e));
-        }
-
-        try {
-            $this->updateZohoConfig();
-        } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】Zohoの設定ファイルの更新時に例外が発生しました。', Common::exceptionArray($e));
-        }
-
-        try {
-            $this->initZohoOauthLogger();
-        } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】ZohoのOAuthログファイルの初期化時に例外が発生しました。', Common::exceptionArray($e));
-        }
 
         $hook = HookFactory::singleton();
         $hook->attach('Zoho', new Hook());
@@ -150,96 +129,4 @@ class ServiceProvider extends ACMS_App
         return true;
     }
 
-    /**
-     * Zoho設定ファイルの初期化
-     *
-     * @param string $message
-     */
-    private function initZohoConfig()
-    {
-        $configFile = 'configuration.properties';
-        $oauthConfigFile = 'oauth_configuration.properties';
-        $zohoDir = PLUGIN_LIB_DIR . $this->name . '/';
-        $resourcesDir = $zohoDir . 'vendor/zohocrm/php-sdk/src/resources/';
-        $configFilePath = $zohoDir . $configFile;
-        $configFileDestPath = $resourcesDir . $configFile;
-        $oauthConfigFilePath = $zohoDir . $oauthConfigFile;
-        $oauthConfigFileDestPath = $resourcesDir . $oauthConfigFile;
-
-        if (Storage::exists($resourcesDir) === false) {
-            Storage::makeDirectory($resourcesDir);
-        }
-
-        if (Storage::exists($configFileDestPath) === false) {
-            if (Storage::exists($configFilePath) === false) {
-                AcmsLogger::warning(
-                    "【Zoho plugin】Zohoディレクトリに {$configFile} が見つかりませんでした。"
-                );
-                return;
-            }
-            $config = Storage::get($configFilePath);
-            $config = preg_replace('/{application_log_file_path}/', '', $config);
-            Storage::put($configFileDestPath, $config);
-            AcmsLogger::info("【Zoho plugin】Zohoの設定ファイルを作成しました。", [
-                'path' => $configFileDestPath,
-            ]);
-        }
-        if (Storage::exists($oauthConfigFileDestPath) === false) {
-            if (Storage::exists($oauthConfigFilePath) === false) {
-                AcmsLogger::warning(
-                    "【Zoho plugin】Zohoディレクトリに {$oauthConfigFile} が見つかりませんでした。"
-                );
-                return;
-            }
-            $oauthConfig = Storage::get($oauthConfigFilePath);
-            $oauthConfig = preg_replace('/{client_id}/', '', $oauthConfig);
-            $oauthConfig = preg_replace('/{client_secret}/', '', $oauthConfig);
-            $oauthConfig = preg_replace('/{token_persistence_path}/', '', $oauthConfig);
-            Storage::put($oauthConfigFileDestPath, $oauthConfig);
-            AcmsLogger::info("【Zoho plugin】ZohoのOAuth設定ファイルを作成しました。", [
-                'path' => $oauthConfigFileDestPath,
-            ]);
-        }
-    }
-
-    /**
-     * Zoho設定ファイルの更新
-     */
-    private function updateZohoConfig()
-    {
-        $configFile = 'configuration.properties';
-        $zohoDir = PLUGIN_LIB_DIR . $this->name . '/';
-        $resourcesDir = $zohoDir . 'vendor/zohocrm/php-sdk/src/resources/';
-        $configFilePath = $zohoDir . $configFile;
-        $configFileDestPath = $resourcesDir . $configFile;
-
-        if (Storage::exists($configFileDestPath) === false) {
-            return;
-        }
-        $config = Storage::get($configFilePath);
-        $config = preg_replace('/{application_log_file_path}/', env('ZOHO_APPLICATION_LOG_FILE_PATH', './'), $config);
-        Storage::put($configFileDestPath, $config);
-    }
-
-    /**
-     * ZohoOAuthログファイルの初期化
-     */
-    private function initZohoOauthLogger()
-    {
-        $logFile = 'OAuth.log';
-        $zohoDir = PLUGIN_LIB_DIR . $this->name . '/';
-        $loggerDir = $zohoDir . 'vendor/zohocrm/php-sdk/src/com/zoho/oauth/logger/';
-        $logFilePath = $loggerDir . $logFile;
-
-        if (Storage::exists($loggerDir) === false) {
-            Storage::makeDirectory($loggerDir);
-        }
-
-        if (Storage::exists($logFilePath) === false) {
-            Storage::put($logFilePath, '');
-            AcmsLogger::info("【Zoho plugin】ZohoのOAuthログファイルを作成しました。", [
-                'path' => $logFilePath,
-            ]);
-        }
-    }
 }
