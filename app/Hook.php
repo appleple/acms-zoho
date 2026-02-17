@@ -45,6 +45,9 @@ class Hook
         if (empty($info)) {
             return;
         }
+        if ($info['data']->getChild('mail')->get('zoho_void') !== 'on') {
+            return;
+        };
 
         if (HOOK_ENABLE) {
             $hook = ACMS_Hook::singleton();
