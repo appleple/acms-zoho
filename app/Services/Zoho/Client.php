@@ -21,7 +21,7 @@ class Client
     /** @var string $tokenStore ストアの種類 */
     private $tokenStore = 'file';
 
-    private $tokenPresistencePath = '/var/www/html/';
+    private $tokenPresistencePath = '';
 
     /** @var Store $store ストア情報 */
     private $store;
@@ -30,7 +30,7 @@ class Client
 
     private $dataCenterEnv = 'production';
 
-    private $loggerFilePath = '/php_sdk_log.log';
+    private $loggerFilePath = 'php_zoho_sdk.log';
 
     private $loggerLevel = 'info';
 
@@ -56,31 +56,16 @@ class Client
 
     public function __construct()
     {
-        $tokenStore = null;
-        if (env('ZOHO_TOKEN_STORE')) {
-            $tokenStore = env('ZOHO_TOKEN_STORE');
-        }
-        if ($tokenStore !== 'file' && $tokenStore !== 'database') {
-            throw new \InvalidArgumentException('ZOHO_TOKEN_STORE はfileである必要があります。');
-        }
-        if (env('ZOHO_LOGGER_FILE_PATH')) {
-            $this->loggerFilePath = env('ZOHO_LOGGER_FILE_PATH');
+        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+        $this->loggerFilePath = env('ZOHO_LOGGER_FILE_PATH', $documentRoot . '/' . $this->loggerFilePath);
+        $this->tokenPresistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH', $documentRoot);
+
+        if (empty($this->tokenPresistencePath)) {
+            AcmsLogger::warning('【Zoho plugin】環境変数 ZOHO_TOKEN_PERSISTENCE_PATH が設定されていません。');
+            return;
         }
 
-        /**
-         * 最新のトークン情報を取得
-         */
-        if ($tokenStore === 'file') {
-            $persistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH');
-            if (empty($persistencePath) || !is_string($persistencePath)) {
-                AcmsLogger::warning('【Zoho plugin】環境変数 ZOHO_TOKEN_PERSISTENCE_PATH が設定されていません。');
-                $this->tokenStore = $tokenStore;
-                return;
-            }
-            $this->tokenPresistencePath = $persistencePath;
-            $this->store = new CustomFileStore($this->tokenPresistencePath);
-        }
-        $this->tokenStore = $tokenStore;
+        $this->store = new CustomFileStore($this->tokenPresistencePath);
     }
 
     public function getTokenStore()
