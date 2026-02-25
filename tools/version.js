@@ -4,7 +4,7 @@ const fs = require('fs-extra');
 
 // package.json
 const { version } = require('../package.json');
-const serviceProvider = 'ServiceProvider.php';
+const serviceProvider = 'app/ServiceProvider.php';
 
 try {
   /**
