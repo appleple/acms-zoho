@@ -325,7 +325,7 @@ class Record extends Builder
             }
 
             $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
-            $normalizedValue = $this->normalizeValue($value);
+            $normalizedValue = $this->normalizeValue($value, $fieldType);
 
             // ルックアップフィールドの判定と登録
             $isLookup = $fieldType === 'lookup' || $this->isLookupField($fieldApiName, $scope);
@@ -419,16 +419,22 @@ class Record extends Builder
     /**
      * 値を適切な型に変換
      *
-     * 文字列の "on"/"off" をboolean型に変換する
+     * 文字列の "on"/"off"、"true"/"false" をboolean型に変換する
+     * $fieldType が "boolean" の場合は "1"/"0" もboolean型に変換する
      *
      * @param mixed $value 変換前の値
+     * @param string|null $fieldType Zohoフィールドのデータタイプ
      * @return mixed 変換後の値
      */
-    private function normalizeValue($value)
+    private function normalizeValue($value, ?string $fieldType = null)
     {
-        if ($value === 'on') {
+        if ($value === 'on' || $value === 'true') {
             return true;
-        } elseif ($value === 'off') {
+        } elseif ($value === 'off' || $value === 'false') {
+            return false;
+        } elseif ($fieldType === 'boolean' && ($value === '1' || $value === 1)) {
+            return true;
+        } elseif ($fieldType === 'boolean' && ($value === '0' || $value === 0)) {
             return false;
         }
         return $value;
