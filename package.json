@@ -1,19 +1,24 @@
 {
   "name": "acms-zoho",
-  "version": "2.1.3",
+  "version": "3.0.0",
   "description": "Zoho API と連携し、お問い合わせフォームなどで送信された内容をZoho CRMに登録します。",
   "main": "deploy.js",
   "scripts": {
+    "start": "pnpm run dev",
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 0",
-    "package": "npm run setup && npm run build:app",
+    "package": "pnpm run setup && pnpm run build:app",
     "build:app": "node ./tools/build.js",
     "setup": "node ./tools/setup.js",
     "version:sync": "node ./tools/version.js",
     "release:commit": "node ./tools/commit.js",
-    "release:patch": "npm version patch --no-git-tag-version && npm run version:sync && npm run package && npm run release:commit",
-    "release:minor": "npm version minor --no-git-tag-version && npm run version:sync && npm run package && npm run release:commit",
-    "release:major": "npm version major --no-git-tag-version && npm run version:sync && npm run package && npm run release:commit"
+    "release:patch": "pnpm version patch --no-git-tag-version && pnpm run version:sync && pnpm run package && pnpm run release:commit",
+    "release:minor": "pnpm version minor --no-git-tag-version && pnpm run version:sync && pnpm run package && pnpm run release:commit",
+    "release:major": "pnpm version major --no-git-tag-version && pnpm run version:sync && pnpm run package && pnpm run release:commit"
   },
+  "packageManager": "pnpm@10.29.1",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/appleple/acms-zoho.git"
@@ -25,10 +30,21 @@
   },
   "homepage": "https://github.com/appleple/acms-zoho#readme",
   "devDependencies": {
+    "@types/react": "^19.1.5",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.0",
     "archiver": "^2.1.1",
     "co": "^4.6.0",
     "fs-extra": "^2.1.2",
-    "node-cmd": "^3.0.0"
+    "node-cmd": "^3.0.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   },
-  "dependencies": {}
+  "dependencies": {
+    "classnames": "^2.5.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-select": "^5.10.2",
+    "swr": "^2.3.6"
+  }
 }

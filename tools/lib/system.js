@@ -49,6 +49,7 @@ exports.zipPromise = (src, dist) => {
     });
 
     archive.pipe(output);
-    archive.directory(src).finalize();
+    // srcディレクトリをZohoディレクトリ名で配置
+    archive.directory(src, 'Zoho').finalize();
   });
 };

@@ -1,0 +1,197 @@
+<h3 class="acms-admin-admin-title2">
+  <!--T-->Zohoと連携するa-blog cmsフィールドの設定<!--/T-->
+  <i
+    class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+    data-acms-tooltip="<!--T-->a-blog cmsフォームからZohoCRMに送信する設定です。<!--/T-->"
+  ></i>
+</h3>
+<table class="js-fieldgroup-sortable" id="js-acms-zoho-link-field">
+  <thead class="acms-admin-hide-sp">
+    <tr>
+      <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
+      <th class="acms-admin-table-left">
+        <!--T-->a-blog cmsのカスタムフィールド名<!--/T-->
+        <i
+          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+          data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。チェックをすると入力値がそのまま登録されます。<!--/T-->"
+        ></i>
+      </th>
+      <th class="acms-admin-table-left">
+        <!--T-->タブ名<!--/T-->
+        <i
+          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+          data-acms-tooltip="<!--T-->Zoho側のタブを指定します。<!--/T-->"
+        ></i>
+      </th>
+      <th class="acms-admin-table-left">
+        <!--T-->項目名<!--/T-->
+        <i
+          class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+          data-acms-tooltip="<!--T-->Zoho側のフィールド名を指定します。タブのAPI名が複数指定されている場合、項目のAPI名が一致する項目が表示されます。<!--/T-->"
+        ></i>
+      </th>
+      <th class="acms-admin-table-left" style="width: 50px; text-align: center"><!--T-->追加<!--/T--></th>
+      <th class="acms-admin-table-left" style="width: 50px; text-align: center"><!--T-->更新<!--/T--></th>
+      <th class="acms-admin-table-left acms-admin-admin-config-table-action"><!--T-->削除<!--/T--></th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- BEGIN zoho_link_field_group:loop -->
+    <tr class="sortable-item">
+      <td class="item-handle">
+        <i class="acms-admin-icon-sort"></i>
+      </td>
+      <td>
+        <div class="acms-admin-hstack">
+          <input
+          type="text"
+          name="zoho_link_field_cms_field[{i}]"
+          value="{zoho_link_field_cms_field}"
+          class="acms-admin-form-width-full"
+          placeholder="<!--T-->例）<!--/T-->email"
+        />
+        <label class="acms-admin-form-checkbox" style="margin-right: 0">
+          <input
+            type="checkbox"
+            name="zoho_link_field_cms_field_fixed[{i}]"
+            value="on"
+            class="acms-admin-form-width-full"
+            {zoho_link_field_cms_field_fixed:checked#on}
+          />
+          <i class="acms-admin-ico-checkbox"></i>
+        </label>
+        </div>
+      </td>
+      <td colspan="2" class="js-acms-zoho-link-field-row">
+        <div
+          data-acms-zoho-link-field-root
+        ></div>
+        <input
+          type="hidden"
+          name="zoho_link_field_module[{i}]"
+          value="{zoho_link_field_module}"
+          data-acms-zoho-link-field-module
+        >
+        <input
+          type="hidden"
+          name="zoho_link_field_module_field[{i}]"
+          value="{zoho_link_field_module_field}"
+          class="acms-admin-form-width-full"
+          data-acms-zoho-link-field-module-field
+        >
+      </td>
+      <td style="width: 50px; text-align: center">
+        <label class="acms-admin-form-checkbox" style="margin-right: 0">
+          <input
+            type="checkbox"
+            name="zoho_link_field_insert[{i}]"
+            value="on"
+            class="acms-admin-form-width-full"
+            {zoho_link_field_insert:checked#on}
+          />
+          <i class="acms-admin-ico-checkbox"></i>
+        </label>
+      </td>
+      <td style="width: 50px; text-align: center">
+        <label class="acms-admin-form-checkbox" style="margin-right: 0">
+          <input
+            type="checkbox"
+            name="zoho_link_field_update[{i}]"
+            value="on"
+            class="acms-admin-form-width-full"
+            {zoho_link_field_update:checked#on}
+          />
+          <i class="acms-admin-ico-checkbox"></i>
+        </label>
+      </td>
+      <td>
+        <input
+          type="button"
+          class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger"
+          value="<!--T-->削除<!--/T-->"
+        />
+        <input type="hidden" name="zoho_form_index[]" value="index" />
+      </td>
+    </tr>
+    <!-- END zoho_link_field_group:loop -->
+
+    <tr class="sortable-item item-template">
+      <td class="item-handle">
+        <i class="acms-admin-icon-sort"></i>
+      </td>
+      <td>
+        <div class="acms-admin-hstack">
+          <input
+            type="text"
+            name="zoho_link_field_cms_field[]"
+            value=""
+            class="acms-admin-form-width-full"
+          />
+          <label class="acms-admin-form-checkbox" style="margin-right: 0">
+            <input type="checkbox" name="zoho_link_field_cms_field_fixed[]" value="on" class="acms-admin-form-width-full" />
+            <i class="acms-admin-ico-checkbox"></i>
+          </label>
+        </div>
+      </td>
+      <td colspan="2" class="js-acms-zoho-link-field-row">
+        <div
+          data-acms-zoho-link-field-root
+        ></div>
+        <input
+          type="hidden"
+          name="zoho_link_field_module[]"
+          value=""
+          data-acms-zoho-link-field-module
+        >
+        <input
+          type="hidden"
+          name="zoho_link_field_module_field[]"
+          value=""
+          class="acms-admin-form-width-full"
+          data-acms-zoho-link-field-module-field
+        >
+      </td>
+      <td style="width: 50px; text-align: center">
+        <label class="acms-admin-form-checkbox" style="margin-right: 0">
+          <input type="checkbox" name="zoho_link_field_insert[]" value="on" class="acms-admin-form-width-full" />
+          <i class="acms-admin-ico-checkbox"></i>
+        </label>
+      </td>
+      <td style="width: 50px; text-align: center">
+        <label class="acms-admin-form-checkbox" style="margin-right: 0">
+          <input type="checkbox" name="zoho_link_field_update[]" value="on" class="acms-admin-form-width-full" />
+          <i class="acms-admin-ico-checkbox"></i>
+        </label>
+      </td>
+      <td>
+        <input
+          type="button"
+          class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger"
+          value="<!--T-->削除<!--/T-->"
+        />
+        <input type="hidden" name="zoho_form_index[]" value="index" />
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="7">
+        <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
+      </td>
+    </tr>
+  </tfoot>
+</table>
+
+<input type="hidden" name="@zoho_link_field_group[]" value="zoho_link_field_cms_field" />
+<input type="hidden" name="mail[]" value="zoho_link_field_cms_field" />
+<input type="hidden" name="@zoho_link_field_group[]" value="zoho_link_field_cms_field_fixed" />
+<input type="hidden" name="mail[]" value="zoho_link_field_cms_field_fixed" />
+<input type="hidden" name="@zoho_link_field_group[]" value="zoho_link_field_module" />
+<input type="hidden" name="mail[]" value="zoho_link_field_module" />
+<input type="hidden" name="@zoho_link_field_group[]" value="zoho_link_field_module_field" />
+<input type="hidden" name="mail[]" value="zoho_link_field_module_field" />
+<input type="hidden" name="@zoho_link_field_group[]" value="zoho_link_field_insert" />
+<input type="hidden" name="mail[]" value="zoho_link_field_insert" />
+<input type="hidden" name="@zoho_link_field_group[]" value="zoho_link_field_update" />
+<input type="hidden" name="mail[]" value="zoho_link_field_update" />
+<input type="hidden" name="mail[]" value="@zoho_link_field_group" />

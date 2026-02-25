@@ -1,0 +1,91 @@
+<h3 class="acms-admin-admin-title2">
+  <!--T-->Zoho リレーショナル設定<!--/T-->
+  <i
+    class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
+    data-acms-tooltip="<!--T-->Zoho CRMのルックアップフィールドを指定します。<!--/T-->"
+  ></i>
+</h3>
+<table class="js-fieldgroup-sortable adminTable" id="js-acms-zoho-related">
+  <thead class="acms-admin-hide-sp">
+    <tr>
+      <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
+      <th class="acms-admin-table-left"><!--T-->a-blog cmsのカスタムフィールド名<!--/T--></th>
+      <th class="acms-admin-table-left"><!--T-->関連元タブ名<!--/T--></th>
+      <th class="acms-admin-table-left"><!--T-->ルックアップID<!--/T--></th>
+      <th class="acms-admin-table-left"><!--T-->関連先タブ名<!--/T--></th>
+      <th class="acms-admin-table-left">比較フィールド</th>
+      <th class="acms-admin-table-left acms-admin-admin-config-table-action"><!--T-->削除<!--/T--></th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- BEGIN zoho_related_group:loop -->
+    <tr class="sortable-item">
+      <td class="item-handle">
+        <i class="acms-admin-icon-sort"></i>
+      </td>
+      <td>
+        <input
+          type="text"
+          name="zoho_related_cms_field[{i}]"
+          value="{zoho_related_cms_field}"
+          class="acms-admin-form-width-full"
+        />
+      </td>
+      <td colspan="4" class="js-acms-zoho-related-row">
+        <div data-acms-zoho-related-root></div>
+        <input type="hidden" name="zoho_related_scope[{i}]" value="{zoho_related_scope}" data-acms-zoho-related-scope />
+        <input type="hidden" name="zoho_related_lookup_id[{i}]" value="{zoho_related_lookup_id}" data-acms-zoho-related-lookup-id />
+        <input type="hidden" name="zoho_related_target_scope[{i}]" value="{zoho_related_target_scope}" data-acms-zoho-related-target-scope />
+        <input type="hidden" name="zoho_related_compare_field[{i}]" value="{zoho_related_compare_field}" data-acms-zoho-related-compare-field />
+      </td>
+      <td>
+        <input
+          type="button"
+          class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger"
+          value="<!--T-->削除<!--/T-->"
+        />
+      </td>
+    </tr>
+    <!-- END zoho_related_group:loop -->
+    <tr class="sortable-item item-template">
+      <td class="item-handle">
+        <i class="acms-admin-icon-sort"></i>
+      </td>
+      <td>
+        <input type="text" name="zoho_related_cms_field[]" value="" class="acms-admin-form-width-full" />
+      </td>
+      <td colspan="4" class="js-acms-zoho-related-row">
+        <div data-acms-zoho-related-root></div>
+        <input type="hidden" name="zoho_related_scope[]" value="" data-acms-zoho-related-scope />
+        <input type="hidden" name="zoho_related_lookup_id[]" value="" data-acms-zoho-related-lookup-id />
+        <input type="hidden" name="zoho_related_target_scope[]" value="" data-acms-zoho-related-target-scope />
+        <input type="hidden" name="zoho_related_compare_field[]" value="" data-acms-zoho-related-compare-field />
+      </td>
+      <td>
+        <input
+          type="button"
+          class="item-delete acms-admin-btn-admin acms-admin-btn-admin-danger"
+          value="<!--T-->削除<!--/T-->"
+        />
+      </td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="7">
+        <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
+      </td>
+    </tr>
+  </tfoot>
+</table>
+<input type="hidden" name="@zoho_related_group[]" value="zoho_related_cms_field" />
+<input type="hidden" name="mail[]" value="zoho_related_cms_field" />
+<input type="hidden" name="@zoho_related_group[]" value="zoho_related_scope" />
+<input type="hidden" name="mail[]" value="zoho_related_scope" />
+<input type="hidden" name="@zoho_related_group[]" value="zoho_related_target_scope" />
+<input type="hidden" name="mail[]" value="zoho_related_target_scope" />
+<input type="hidden" name="@zoho_related_group[]" value="zoho_related_compare_field" />
+<input type="hidden" name="mail[]" value="zoho_related_compare_field" />
+<input type="hidden" name="@zoho_related_group[]" value="zoho_related_lookup_id" />
+<input type="hidden" name="mail[]" value="zoho_related_lookup_id" />
+<input type="hidden" name="mail[]" value="@zoho_related_group" />

@@ -1,0 +1,69 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "a29c61c1f677f5e4e65df54c0d36a201",
+    "packages": [
+        {
+            "name": "zohocrm/php-sdk-8.0",
+            "version": "4.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zoho/zohocrm-php-sdk-8.0.git",
+                "reference": "368bbfa2f0b89d4e1ed9984beb73dc262c991e1d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zoho/zohocrm-php-sdk-8.0/zipball/368bbfa2f0b89d4e1ed9984beb73dc262c991e1d",
+                "reference": "368bbfa2f0b89d4e1ed9984beb73dc262c991e1d",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": ">=5.7"
+            },
+            "type": "sdk",
+            "autoload": {
+                "psr-4": {
+                    "": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Zoho CRM API Team",
+                    "email": "support@zohocrm.com",
+                    "homepage": "https://www.zoho.com/crm/help/customer-support.html",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Zoho CRM API SDK for PHP",
+            "homepage": "https://github.com/zoho/zohocrm-php-sdk-8.0",
+            "support": {
+                "source": "https://github.com/zoho/zohocrm-php-sdk-8.0/tree/4.0.0"
+            },
+            "time": "2025-10-01T06:25:32+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "platform-overrides": {
+        "php": "8.4"
+    },
+    "plugin-api-version": "2.6.0"
+}
