@@ -521,6 +521,22 @@ class RecordApi extends ApiBase
             return $date;
         }
 
+        // スラッシュ区切りの日付形式（例: "2026/02/26"）にも対応
+        $date = DateTime::createFromFormat('Y/m/d', $value);
+        if ($date !== false) {
+            $date->setTime(0, 0, 0);
+            return $date;
+        }
+
+        // 上記フォーマットで失敗した場合はPHPのDateTimeパーサーで試みる
+        try {
+            $date = new DateTime($value);
+            $date->setTime(0, 0, 0);
+            return $date;
+        } catch (\Exception $e) {
+            // パース失敗時は下のwarningへ
+        }
+
         AcmsLogger::warning('【Zoho plugin】日付の変換に失敗しました。', [
             'value' => $value,
             'expectedFormat' => 'Y-m-d'
@@ -555,6 +571,20 @@ class RecordApi extends ApiBase
         if ($datetime !== false) {
             $datetime->setTime(0, 0, 0);
             return $datetime;
+        }
+
+        // スラッシュ区切り + ISO 8601風（例: "2026/02/26T09:00:00+09:00"）にも対応
+        $datetime = DateTime::createFromFormat('Y/m/d\TH:i:sP', $value);
+        if ($datetime !== false) {
+            return $datetime;
+        }
+
+        // 上記フォーマットで失敗した場合はPHPのDateTimeパーサーで試みる
+        try {
+            $datetime = new DateTime($value);
+            return $datetime;
+        } catch (\Exception $e) {
+            // パース失敗時は下のwarningへ
         }
 
         AcmsLogger::warning('【Zoho plugin】日時の変換に失敗しました。', [
