@@ -36,10 +36,10 @@ export const CacheClearButton = () => {
         });
       }
 
-      window.alert('キャッシュをクリアしました。ページをリロードしてください。');
+      window.alert('Zohoのキャッシュをクリアしました。ページをリロードしZohoから情報を再取得してください。');
     } catch (error) {
-      console.error('キャッシュクリアに失敗しました:', error);
-      window.alert('キャッシュクリアに失敗しました');
+      console.error('Zohoのキャッシュクリアに失敗しました:', error);
+      window.alert('Zohoのキャッシュクリアに失敗しました');
     } finally {
       setIsClearing(false);
     }
@@ -51,7 +51,7 @@ export const CacheClearButton = () => {
       className="acms-admin-btn acms-admin-btn-admin"
       onClick={handleClearCache}
       disabled={isClearing}
-      title="サーバー・クライアントのキャッシュをクリアします"
-    >キャッシュクリア</button>
+      title="ZohoのキャッシュをクリアしてZohoから情報を再取得します"
+    >Zohoから情報を再取得</button>
   );
 };
