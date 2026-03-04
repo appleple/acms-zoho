@@ -29,8 +29,8 @@
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "strictBindCallApply": true,
-    "strictPropertyInitialization": true
+    "strictPropertyInitialization": true,
+    "jsx": "react-jsx"
   },
-  "jsx": "react-jsx",
   "include": ["src"]
 }
