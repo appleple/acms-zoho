@@ -47,9 +47,10 @@ class OAuth2 extends ACMS_POST
         }
         else {
             AcmsLogger::error('【Zoho plugin】OAuth2認証のためのパラメータが不足しています。');
-            return null;
+            $this->addError('クライアントID、クライアントシークレットを入力してください。');
+            return $this->Post;
         }
 
-        $this->Post;
+        return $this->Post;
     }
 }
