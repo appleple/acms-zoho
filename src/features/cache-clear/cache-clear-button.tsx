@@ -36,10 +36,10 @@ export const CacheClearButton = () => {
         });
       }
 
-      window.alert('Zohoのキャッシュをクリアしました。ページをリロードしZohoから情報を再取得してください。');
+      await (window.ACMS.Library?.dialog?.alert ?? window.alert)('Zohoのキャッシュをクリアしました。ページをリロードしZohoから情報を再取得してください。');
     } catch (error) {
       console.error('Zohoのキャッシュクリアに失敗しました:', error);
-      window.alert('Zohoのキャッシュクリアに失敗しました');
+      await (window.ACMS.Library?.dialog?.alert ?? window.alert)('Zohoのキャッシュクリアに失敗しました');
     } finally {
       setIsClearing(false);
     }
