@@ -2,6 +2,11 @@ declare global {
   interface Window {
     ACMS: {
       Ready: () => void,
+      Library: {
+        dialog: {
+          alert: (message: string) => Promise<void>,
+        },
+      },
       Config: {
         root: string,
         LiteEditorConf: {

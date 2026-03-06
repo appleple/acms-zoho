@@ -10,11 +10,14 @@
     <tr>
       <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
       <th class="acms-admin-table-left">
-        <!--T-->a-blog cmsのカスタムフィールド名<!--/T-->
+        <!--T-->種別<!--/T-->
         <i
           class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-          data-acms-tooltip="<!--T-->Zohoのキーに対応する a-blog cms 側のカスタムフィールド名を指定します。チェックをすると入力値がそのまま登録されます。<!--/T-->"
+          data-acms-tooltip="<!--T-->「固定値」を選ぶとinputで入力した値がそのまま登録されます。<!--/T-->"
         ></i>
+      </th>
+      <th class="acms-admin-table-left">
+        <!--T-->a-blog cmsのカスタムフィールド名 / 固定値<!--/T-->
       </th>
       <th class="acms-admin-table-left">
         <!--T-->タブ名<!--/T-->
@@ -41,26 +44,20 @@
       <td class="item-handle">
         <i class="acms-admin-icon-sort"></i>
       </td>
+      <td style="white-space: nowrap; width: 1%;">
+        <select name="zoho_link_field_cms_field_fixed[{i}]" class="acms-admin-form-select">
+          <option value=""<!-- BEGIN_IF [{zoho_link_field_cms_field_fixed}/em] --> selected<!-- END_IF -->><!--T-->フィールド<!--/T--></option>
+          <option value="on"{zoho_link_field_cms_field_fixed:selected#on}><!--T-->固定値<!--/T--></option>
+        </select>
+      </td>
       <td>
-        <div class="acms-admin-hstack">
-          <input
+        <input
           type="text"
           name="zoho_link_field_cms_field[{i}]"
           value="{zoho_link_field_cms_field}"
           class="acms-admin-form-width-full"
           placeholder="<!--T-->例）<!--/T-->email"
         />
-        <label class="acms-admin-form-checkbox" style="margin-right: 0">
-          <input
-            type="checkbox"
-            name="zoho_link_field_cms_field_fixed[{i}]"
-            value="on"
-            class="acms-admin-form-width-full"
-            {zoho_link_field_cms_field_fixed:checked#on}
-          />
-          <i class="acms-admin-ico-checkbox"></i>
-        </label>
-        </div>
       </td>
       <td colspan="2" class="js-acms-zoho-link-field-row">
         <div
@@ -119,19 +116,19 @@
       <td class="item-handle">
         <i class="acms-admin-icon-sort"></i>
       </td>
+      <td style="white-space: nowrap; width: 1%;">
+        <select name="zoho_link_field_cms_field_fixed[]" class="acms-admin-form-select">
+          <option value="" selected><!--T-->フィールド<!--/T--></option>
+          <option value="on"><!--T-->固定値<!--/T--></option>
+        </select>
+      </td>
       <td>
-        <div class="acms-admin-hstack">
-          <input
-            type="text"
-            name="zoho_link_field_cms_field[]"
-            value=""
-            class="acms-admin-form-width-full"
-          />
-          <label class="acms-admin-form-checkbox" style="margin-right: 0">
-            <input type="checkbox" name="zoho_link_field_cms_field_fixed[]" value="on" class="acms-admin-form-width-full" />
-            <i class="acms-admin-ico-checkbox"></i>
-          </label>
-        </div>
+        <input
+          type="text"
+          name="zoho_link_field_cms_field[]"
+          value=""
+          class="acms-admin-form-width-full"
+        />
       </td>
       <td colspan="2" class="js-acms-zoho-link-field-row">
         <div
@@ -175,7 +172,7 @@
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="7">
+      <td colspan="8">
         <input type="button" class="item-insert acms-admin-btn-admin" value="<!--T-->追加<!--/T-->" />
       </td>
     </tr>

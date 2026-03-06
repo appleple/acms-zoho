@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef } from 'react';
+import { forwardRef, useRef } from 'react';
 import Select from 'react-select';
 import classnames from 'classnames';
 import type { SelectInstance, Props, GroupBase, StylesConfig } from 'react-select';
@@ -71,4 +71,4 @@ export default forwardRef(RichSelect) as <
   Group extends GroupBase<Option> = GroupBase<Option>,
 >(
   props: RichSelectProps<Option, IsMulti, Group> & { ref?: React.Ref<SelectInstance<Option, IsMulti, Group>> }
-) => JSX.Element;
+) => React.JSX.Element;

@@ -42,4 +42,4 @@ export default forwardRef(AsyncSelect) as <
   Group extends GroupBase<Option> = GroupBase<Option>,
 >(
   props: AsyncSelectProps<Option, IsMulti, Group> & { ref?: React.Ref<SelectInstance<Option, IsMulti, Group>> }
-) => JSX.Element;
+) => React.JSX.Element;

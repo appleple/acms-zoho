@@ -56,14 +56,13 @@ class Client
 
     public function __construct()
     {
-        $documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
-        $this->loggerFilePath = env('ZOHO_LOGGER_FILE_PATH', $documentRoot . '/' . $this->loggerFilePath);
-        $this->tokenPresistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH', $documentRoot);
+        $scriptDir = defined('SCRIPT_DIR') ? SCRIPT_DIR : ($_SERVER['DOCUMENT_ROOT'] ?? '');
+        $defaultTokenPath = $scriptDir . 'private/zoho_tokens.csv';
+        $defaultLogPath = $scriptDir . 'private/' . $this->loggerFilePath;
 
-        if (empty($this->tokenPresistencePath)) {
-            AcmsLogger::warning('【Zoho plugin】環境変数 ZOHO_TOKEN_PERSISTENCE_PATH が設定されていません。');
-            return;
-        }
+        $this->loggerFilePath = env('ZOHO_LOGGER_FILE_PATH', $defaultLogPath);
+        $tokenPersistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH', '');
+        $this->tokenPresistencePath = $tokenPersistencePath !== '' ? $tokenPersistencePath : $defaultTokenPath;
 
         $this->store = new CustomFileStore($this->tokenPresistencePath);
     }
