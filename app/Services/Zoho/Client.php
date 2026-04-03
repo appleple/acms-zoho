@@ -26,8 +26,6 @@ class Client
     /** @var Store $store ストア情報 */
     private $store;
 
-    private $dataCenterDomain = 'jp';
-
     private $dataCenterEnv = 'production';
 
     private $loggerFilePath = 'php_zoho_sdk.log';
@@ -190,6 +188,18 @@ class Client
         } catch (SDKException $e) {
             throw new \RuntimeException("Zoho SDK Error: " . $e->getMessage(), $e->getCode(), $e);
         }
+    }
+
+    /**
+     * トークンのユーザー名を更新する
+     *
+     * @param string $tokenId
+     * @param string $userName
+     * @return void
+     */
+    public function updateTokenUserName(string $tokenId, string $userName): void
+    {
+        $this->store->updateUserName($tokenId, $userName);
     }
 
     public function deauthorize(): bool

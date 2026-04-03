@@ -27,21 +27,22 @@
 
         <table class="acms-admin-table-admin-edit">
           <tbody>
+            <input type="hidden" name="zoho_token_id" value="{tokenId}">
+
             <tr>
               <th>
-                <span>id</span>
+                <span>ユーザー名</span>
                 <i
                   class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
-                  data-acms-tooltip="CMS上で管理されているIDです。"
+                  data-acms-tooltip="認証されたZohoユーザーのアカウント名です。"
                 ></i>
               </th>
               <td>
                 <!-- BEGIN_IF [{authorized}/eq/true] -->
-                <span>{tokenId}</span>
+                <span>{userName}</span>
                 <!-- ELSE -->
                 <span>認証してください</span>
                 <!-- END_IF -->
-                <input type="hidden" name="zoho_token_id" value="{tokenId}">
               </td>
             </tr>
 
