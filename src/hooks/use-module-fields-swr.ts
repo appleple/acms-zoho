@@ -26,6 +26,10 @@ const fetcher = async (moduleApiNames: string[]): Promise<{ data: ModuleField[] 
       const response = await fetch(rootUrl, options);
       const json = await response.json();
 
+      if (!Array.isArray(json)) {
+        return { data: [] };
+      }
+
       return { data: json };
     } catch (error) {
       console.error(`Error fetching fields for module ${moduleApiName}:`, error);
