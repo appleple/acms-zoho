@@ -24,11 +24,8 @@
       <!-- BEGIN_MODULE Zoho_Admin -->
       <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-form">
         <h2 class="acms-admin-admin-title2"><!--T-->Zoho 認証設定<!--/T--></h2>
-
         <table class="acms-admin-table-admin-edit">
           <tbody>
-            <input type="hidden" name="zoho_token_id" value="{tokenId}">
-
             <tr>
               <th>
                 <span>ユーザー名</span>
@@ -98,6 +95,8 @@
             <tr>
               <th class="acms-admin-hide-visually">認証ボタン</th>
               <td>
+                <input type="hidden" name="zoho_token_id" value="{tokenId}">
+
                 <!-- BEGIN_IF [{authorized}/eq/true] -->
                 <button
                   type="submit"
