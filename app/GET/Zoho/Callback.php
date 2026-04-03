@@ -8,7 +8,7 @@ use SQL;
 use AcmsLogger;
 use Acms\Services\Facades\Session;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
-// use Acms\Plugins\Zoho\Services\Zoho\Store\File as ZohoFileStore;
+use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 
 class Callback extends ACMS_GET
 {
@@ -43,6 +43,12 @@ class Callback extends ACMS_GET
             $SQL->addInsert('config_value', $zohoClient->getTokenId());
             $SQL->addInsert('config_blog_id', BID);
             $DB->query($SQL->get(dsn()), 'exec');
+
+            $userInfo = (new ZohoApi($zohoClient))->user()->getCurrentUser();
+            $userName = $userInfo['email'] ?? null;
+            if ($userName) {
+                $zohoClient->updateTokenUserName($zohoClient->getTokenId(), $userName);
+            }
 
             AcmsLogger::info('【Zoho plugin】OAuth認証が完了しました。');
 

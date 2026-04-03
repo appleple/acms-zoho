@@ -3,6 +3,7 @@
 namespace Acms\Plugins\Zoho\Services\Zoho;
 
 use Acms\Plugins\Zoho\Services\Zoho\Contracts\StoreInterface;
+use Acms\Plugins\Zoho\Services\Zoho\Store\CustomFileStore;
 use com\zoho\api\authenticator\store\TokenStore;
 use com\zoho\api\authenticator\OAuthToken;
 
@@ -71,6 +72,20 @@ class Store implements StoreInterface
     {
         $store = $this->store;
         $store->deleteToken($id);
+    }
+
+    /**
+     * トークンのユーザー名を更新する
+     *
+     * @param string $id
+     * @param string $userName
+     * @return void
+     */
+    public function updateUserName(string $id, string $userName): void
+    {
+        if ($this->store instanceof CustomFileStore) {
+            $this->store->updateUserName($id, $userName);
+        }
     }
 
     /**

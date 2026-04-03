@@ -55,11 +55,15 @@ class Admin extends ACMS_GET
             ]);
         }
 
+        $userSignature = $token->getUserSignature();
+        $userName = $userSignature !== null ? $userSignature->getName() : '';
+
         return $Tpl->render([
             'authorized' => 'true',
             'tokenId' => $token->getId(),
             'clientId' => $token->getClientId(),
             'secretId' => $token->getClientSecret(),
+            'userName' => $userName,
         ]);
     }
 }

@@ -363,6 +363,35 @@ class CustomFileStore extends FileStore
     }
 
     /**
+     * Update user name for a token
+     *
+     * @param string $id
+     * @param string $userName
+     * @return void
+     */
+    public function updateUserName(string $id, string $userName): void
+    {
+        try {
+            $allContents = file($this->filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $isRowPresent = false;
+            for ($index = 1; $index < sizeof($allContents); $index++) {
+                $nextRecord = str_getcsv($allContents[$index], ',', '"', '\\');
+                if (sizeof($nextRecord) > 1 && $nextRecord[0] == $id) {
+                    $nextRecord[1] = $userName;
+                    $allContents[$index] = implode(",", $nextRecord);
+                    $isRowPresent = true;
+                    break;
+                }
+            }
+            if ($isRowPresent) {
+                file_put_contents($this->filePath, implode(PHP_EOL, $allContents));
+            }
+        } catch (\Exception $e) {
+            throw new SDKException(Constants::TOKEN_STORE, Constants::SAVE_TOKEN_FILE_ERROR, null, $e);
+        }
+    }
+
+    /**
      * Remove token by refresh token
      *
      * @param string $refreshToken

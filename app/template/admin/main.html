@@ -24,24 +24,22 @@
       <!-- BEGIN_MODULE Zoho_Admin -->
       <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-form">
         <h2 class="acms-admin-admin-title2"><!--T-->Zoho 認証設定<!--/T--></h2>
-
         <table class="acms-admin-table-admin-edit">
           <tbody>
             <tr>
               <th>
-                <span>id</span>
+                <span>ユーザー名</span>
                 <i
                   class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
-                  data-acms-tooltip="CMS上で管理されているIDです。"
+                  data-acms-tooltip="認証されたZohoユーザーのアカウント名です。"
                 ></i>
               </th>
               <td>
                 <!-- BEGIN_IF [{authorized}/eq/true] -->
-                <span>{tokenId}</span>
+                <span>{userName}</span>
                 <!-- ELSE -->
                 <span>認証してください</span>
                 <!-- END_IF -->
-                <input type="hidden" name="zoho_token_id" value="{tokenId}">
               </td>
             </tr>
 
@@ -97,6 +95,8 @@
             <tr>
               <th class="acms-admin-hide-visually">認証ボタン</th>
               <td>
+                <input type="hidden" name="zoho_token_id" value="{tokenId}">
+
                 <!-- BEGIN_IF [{authorized}/eq/true] -->
                 <button
                   type="submit"
