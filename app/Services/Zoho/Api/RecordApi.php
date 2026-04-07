@@ -440,8 +440,11 @@ class RecordApi extends ApiBase
 
             // ルックアップフィールドの場合、ZohoRecordオブジェクトに変換
             if ($isLookup) {
+                if (empty($value)) {
+                    continue;
+                }
                 // 値がレコードIDの形式（数値）かチェック
-                if (!is_numeric($value) && !empty($value)) {
+                if (!is_numeric($value)) {
                     AcmsLogger::warning('【Zoho plugin】ルックアップフィールドの値がレコードIDではありません。フィールドをスキップします。', [
                         'module' => $scope,
                         'apiName' => $apiName,
@@ -499,7 +502,16 @@ class RecordApi extends ApiBase
                 continue;
             } elseif ($record->isUserLookupField($apiName) || in_array($dataType, ['ownerlookup', 'userlookup'])) {
                 // オーナー/ユーザールックアップ：ユーザーIDのZohoRecordとして送信
-                if (!is_numeric($value) || empty($value)) {
+                if (empty($value)) {
+                    continue;
+                }
+                if (!is_numeric($value)) {
+                    AcmsLogger::warning('【Zoho plugin】オーナー/ユーザールックアップフィールドの値がユーザーIDではありません。フィールドをスキップします。', [
+                        'module' => $scope,
+                        'apiName' => $apiName,
+                        'value' => $value,
+                        'dataType' => $dataType,
+                    ]);
                     continue;
                 }
                 $lookupRecord = new ZohoRecord();
