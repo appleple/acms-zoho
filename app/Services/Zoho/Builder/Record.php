@@ -205,7 +205,7 @@ class Record extends Builder
                 $record = new RecordModel(
                     $insertScope,
                     'insert',
-                    in_array($insertScope, $updateScopes) ? $uniqueKey : ''
+                    in_array($insertScope, $updateScopes, true) ? $uniqueKey : ''
                 );
                 $record->groupIndex = $i;
 
@@ -218,7 +218,7 @@ class Record extends Builder
 
             // insertに含まれないupdateスコープのみレコードを生成
             foreach ($updateScopes as $updateScope) {
-                if (!in_array($updateScope, $insertScopes)) {
+                if (!in_array($updateScope, $insertScopes, true)) {
                     $record = new RecordModel($updateScope, 'update', $uniqueKey);
                     $record->groupIndex = $i;
 
@@ -270,6 +270,15 @@ class Record extends Builder
                 $fieldType = $fieldData['dataType'] ?? null;
             }
 
+            // multiselectlookupは未対応
+            if ($fieldType === 'multiselectlookup') {
+                AcmsLogger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                    'module' => $scope,
+                    'apiName' => $fieldApiName,
+                ]);
+                continue;
+            }
+
             // メモフィールドの判定（Note_Title / Note_Content）
             // メモはZohoのレコードフィールドではなく別エンティティのため、通常フィールドとしては追加しない
             if ($fieldType === 'note') {
@@ -308,7 +317,7 @@ class Record extends Builder
             // pendingタイプの場合はモジュールチェックをスキップ（全フィールドを取得）
             if ($scope !== '__PENDING__') {
                 // スコープが一致しない場合はスキップ
-                if (!in_array($scope, $scopes)) {
+                if (!in_array($scope, $scopes, true)) {
                     continue;
                 }
 
@@ -324,7 +333,12 @@ class Record extends Builder
                 }
             }
 
-            $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
+            // multiselectpicklist は複数値を配列のまま渡す（getFieldValueはハイフン結合するため）
+            if ($fieldType === 'multiselectpicklist') {
+                $value = $isFixed ? [$this->resolveGlobalVars($key)] : $this->field->getArray($key);
+            } else {
+                $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
+            }
             $normalizedValue = $this->normalizeValue($value, $fieldType);
 
             // ルックアップフィールドの判定と登録
@@ -354,8 +368,18 @@ class Record extends Builder
             }
 
             // 数値フィールドの判定と登録
-            if (in_array($fieldType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'])) {
+            if (in_array($fieldType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'], true)) {
                 $record->markAsNumberField($fieldApiName, $fieldType);
+            }
+
+            // 時刻フィールドの判定と登録
+            if ($fieldType === 'time') {
+                $record->markAsTimeField($fieldApiName);
+            }
+
+            // オーナー/ユーザールックアップフィールドの判定と登録
+            if (in_array($fieldType, ['ownerlookup', 'userlookup'], true)) {
+                $record->markAsUserLookupField($fieldApiName);
             }
 
             $item[$fieldApiName] = $normalizedValue;
@@ -409,7 +433,7 @@ class Record extends Builder
      */
     private function getFieldValue(string $key, ?array $groupArr, int $index)
     {
-        if ($groupArr && in_array($key, $groupArr)) {
+        if ($groupArr && in_array($key, $groupArr, true)) {
             return $this->field->get($key, '', $index);
         } else {
             return implode("-", $this->field->getArray($key));
@@ -432,9 +456,9 @@ class Record extends Builder
             return true;
         } elseif ($value === 'off' || $value === 'false') {
             return false;
-        } elseif ($fieldType === 'boolean' && ($value === '1' || $value === 1)) {
+        } elseif (in_array($fieldType, ['boolean', 'checkbox'], true) && ($value === '1' || $value === 1)) {
             return true;
-        } elseif ($fieldType === 'boolean' && ($value === '0' || $value === 0)) {
+        } elseif (in_array($fieldType, ['boolean', 'checkbox'], true) && ($value === '0' || $value === 0)) {
             return false;
         }
         return $value;
@@ -590,7 +614,7 @@ class Record extends Builder
                 $dependencies[$relatedScope] = [];
             }
 
-            if (!in_array($targetScope, $dependencies[$relatedScope])) {
+            if (!in_array($targetScope, $dependencies[$relatedScope], true)) {
                 $dependencies[$relatedScope][] = $targetScope;
             }
         }
@@ -754,7 +778,7 @@ class Record extends Builder
                 }
 
                 // updateScopeに含まれている場合は既存レコードを検索
-                if (in_array($moduleName, $updateScopes)) {
+                if (in_array($moduleName, $updateScopes, true)) {
                     $existingRecord = $apiRecordHandler->searchByUniqueKey($moduleName, $uniqueKey, $uniqueValue);
                     if ($existingRecord) {
                         $this->updateRecordProperties($record, $moduleName, 'update', $existingRecord['id']);
@@ -822,7 +846,7 @@ class Record extends Builder
             $canUpdate = $this->config->get('zoho_link_field_update', '', $i);
 
             // スコープが一致しない場合、このフィールドを削除
-            if (!in_array($moduleApiName, $scopes)) {
+            if (!in_array($moduleApiName, $scopes, true)) {
                 if ($record->hasField($fieldApiName)) {
                     $record->removeField($fieldApiName);
                 }

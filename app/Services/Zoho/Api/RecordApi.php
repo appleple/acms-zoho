@@ -422,13 +422,29 @@ class RecordApi extends ApiBase
                 continue;
             }
 
+            // 配列が来た場合は multiselectpicklist のみ許可
+            $isMultiArrayField = ($record->isPicklistField($apiName) && is_array($value))
+                || $dataType === 'multiselectpicklist';
+            if (is_array($value) && !$isMultiArrayField) {
+                AcmsLogger::notice('【Zoho plugin】配列の値は multiselectpicklist フィールドにのみ使用できます。フィールドをスキップします。', [
+                    'module' => $scope,
+                    'apiName' => $apiName,
+                    'value' => $value,
+                    'dataType' => $dataType,
+                ]);
+                continue;
+            }
+
             // ルックアップフィールドの判定（メタデータから取得した情報も考慮）
             $isLookup = $record->isLookupField($apiName) || $dataType === 'lookup';
 
             // ルックアップフィールドの場合、ZohoRecordオブジェクトに変換
             if ($isLookup) {
+                if (empty($value)) {
+                    continue;
+                }
                 // 値がレコードIDの形式（数値）かチェック
-                if (!is_numeric($value) && !empty($value)) {
+                if (!is_numeric($value)) {
                     AcmsLogger::warning('【Zoho plugin】ルックアップフィールドの値がレコードIDではありません。フィールドをスキップします。', [
                         'module' => $scope,
                         'apiName' => $apiName,
@@ -442,7 +458,12 @@ class RecordApi extends ApiBase
                 $fieldValue = $lookupRecord;
             } elseif ($record->isPicklistField($apiName) || $dataType === 'picklist' || $dataType === 'multiselectpicklist') {
                 // ピックリストフィールドはChoiceオブジェクトとして設定
-                $fieldValue = new Choice($value);
+                // multiselectpicklist は Choice オブジェクトの配列として送信
+                if (is_array($value)) {
+                    $fieldValue = array_map(fn($v) => new Choice($v), $value);
+                } else {
+                    $fieldValue = new Choice($value);
+                }
             } elseif ($isTextarea) {
                 // 複数行テキストフィールドは文字列として設定（改行を保持）
                 // nullまたは空文字列の場合は空文字列にする
@@ -459,13 +480,43 @@ class RecordApi extends ApiBase
                 if ($fieldValue === null && $value !== '' && $value !== null) {
                     continue; // 変換失敗時はスキップ
                 }
-            } elseif ($record->isNumberField($apiName) || in_array($dataType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'])) {
+            } elseif ($record->isNumberField($apiName) || in_array($dataType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'], true)) {
                 // 数値フィールドの変換
                 $numberType = $record->getNumberFieldType($apiName) ?? $dataType;
                 $fieldValue = $this->convertToNumber($value, $numberType);
                 if ($fieldValue === null && $value !== '' && $value !== null) {
                     continue; // 変換失敗時はスキップ
                 }
+            } elseif ($record->isTimeField($apiName) || $dataType === 'time') {
+                // 時刻フィールドのバリデーション（HH:MM 形式）
+                $fieldValue = $this->validateTimeFormat($value);
+                if ($fieldValue === null && $value !== '' && $value !== null) {
+                    continue; // バリデーション失敗時はスキップ
+                }
+            } elseif ($dataType === 'multiselectlookup') {
+                // 複数選択ルックアップフィールドは未対応
+                AcmsLogger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                    'module' => $scope,
+                    'apiName' => $apiName,
+                ]);
+                continue;
+            } elseif ($record->isUserLookupField($apiName) || in_array($dataType, ['ownerlookup', 'userlookup'], true)) {
+                // オーナー/ユーザールックアップ：ユーザーIDのZohoRecordとして送信
+                if (empty($value)) {
+                    continue;
+                }
+                if (!is_numeric($value)) {
+                    AcmsLogger::warning('【Zoho plugin】オーナー/ユーザールックアップフィールドの値がユーザーIDではありません。フィールドをスキップします。', [
+                        'module' => $scope,
+                        'apiName' => $apiName,
+                        'value' => $value,
+                        'dataType' => $dataType,
+                    ]);
+                    continue;
+                }
+                $lookupRecord = new ZohoRecord();
+                $lookupRecord->setId($value);
+                $fieldValue = $lookupRecord;
             } else {
                 $fieldValue = $value;
             }
@@ -590,6 +641,33 @@ class RecordApi extends ApiBase
         AcmsLogger::warning('【Zoho plugin】日時の変換に失敗しました。', [
             'value' => $value,
             'expectedFormat' => 'Y-m-d H:i:s'
+        ]);
+        return null;
+    }
+
+    /**
+     * 時刻文字列をバリデーション（HH:MM 形式）
+     *
+     * @param mixed $value 検証する値
+     * @return string|null HH:MM 形式の文字列、またはバリデーション失敗時はnull
+     */
+    private function validateTimeFormat($value): ?string
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        $value = (string)$value;
+
+        // HH:MM または HH:MM:SS 形式を許容
+        if (preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $value)) {
+            // HH:MM:SS の場合は HH:MM に切り詰める
+            return substr($value, 0, 5);
+        }
+
+        AcmsLogger::warning('【Zoho plugin】時刻の形式が不正です。', [
+            'value' => $value,
+            'expectedFormat' => 'HH:MM'
         ]);
         return null;
     }
