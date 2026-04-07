@@ -466,6 +466,26 @@ class RecordApi extends ApiBase
                 if ($fieldValue === null && $value !== '' && $value !== null) {
                     continue; // 変換失敗時はスキップ
                 }
+            } elseif ($record->isTimeField($apiName) || $dataType === 'time') {
+                // 時刻フィールドのバリデーション（HH:MM 形式）
+                $fieldValue = $this->validateTimeFormat($value);
+                if ($fieldValue === null && $value !== '' && $value !== null) {
+                    continue; // バリデーション失敗時はスキップ
+                }
+            } elseif ($record->isMultiselectlookupField($apiName) || $dataType === 'multiselectlookup') {
+                // 複数選択ルックアップフィールド：レコードIDの配列として送信
+                $fieldValue = $this->convertToMultiselectlookup($value);
+                if ($fieldValue === null) {
+                    continue;
+                }
+            } elseif ($record->isUserLookupField($apiName) || in_array($dataType, ['ownerlookup', 'userlookup'])) {
+                // オーナー/ユーザールックアップ：ユーザーIDのZohoRecordとして送信
+                if (!is_numeric($value) || empty($value)) {
+                    continue;
+                }
+                $lookupRecord = new ZohoRecord();
+                $lookupRecord->setId($value);
+                $fieldValue = $lookupRecord;
             } else {
                 $fieldValue = $value;
             }
@@ -592,6 +612,70 @@ class RecordApi extends ApiBase
             'expectedFormat' => 'Y-m-d H:i:s'
         ]);
         return null;
+    }
+
+    /**
+     * 時刻文字列をバリデーション（HH:MM 形式）
+     *
+     * @param mixed $value 検証する値
+     * @return string|null HH:MM 形式の文字列、またはバリデーション失敗時はnull
+     */
+    private function validateTimeFormat($value): ?string
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        $value = (string)$value;
+
+        // HH:MM または HH:MM:SS 形式を許容
+        if (preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $value)) {
+            // HH:MM:SS の場合は HH:MM に切り詰める
+            return substr($value, 0, 5);
+        }
+
+        AcmsLogger::warning('【Zoho plugin】時刻の形式が不正です。', [
+            'value' => $value,
+            'expectedFormat' => 'HH:MM'
+        ]);
+        return null;
+    }
+
+    /**
+     * 値を複数選択ルックアップ用のZohoRecordオブジェクト配列に変換
+     *
+     * カンマ区切り文字列または配列としてのレコードIDを受け付ける
+     *
+     * @param mixed $value レコードIDの値（カンマ区切り文字列または配列）
+     * @return ZohoRecord[]|null ZohoRecordの配列、または変換失敗時はnull
+     */
+    private function convertToMultiselectlookup($value): ?array
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        $ids = is_array($value) ? $value : explode(',', (string)$value);
+        $ids = array_filter(array_map('trim', $ids), fn($id) => $id !== '');
+
+        if (empty($ids)) {
+            return null;
+        }
+
+        $records = [];
+        foreach ($ids as $id) {
+            if (!is_numeric($id)) {
+                AcmsLogger::warning('【Zoho plugin】複数選択ルックアップのIDが数値ではありません。スキップします。', [
+                    'id' => $id,
+                ]);
+                continue;
+            }
+            $lookupRecord = new ZohoRecord();
+            $lookupRecord->setId($id);
+            $records[] = $lookupRecord;
+        }
+
+        return empty($records) ? null : $records;
     }
 
     /**

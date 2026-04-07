@@ -358,6 +358,23 @@ class Record extends Builder
                 $record->markAsNumberField($fieldApiName, $fieldType);
             }
 
+            // 時刻フィールドの判定と登録
+            if ($fieldType === 'time') {
+                $record->markAsTimeField($fieldApiName);
+            }
+
+            // 複数選択ルックアップフィールドの判定と登録
+            if ($fieldType === 'multiselectlookup') {
+                $record->markAsMultiselectlookupField($fieldApiName);
+            }
+
+            // オーナー/ユーザールックアップフィールドの判定と登録
+            if (in_array($fieldType, ['ownerlookup', 'userlookup'])) {
+                $record->markAsUserLookupField($fieldApiName);
+            }
+
+            // checkboxはboolean型として正規化済み（normalizeValueで処理される）
+
             $item[$fieldApiName] = $normalizedValue;
         }
 
@@ -432,9 +449,9 @@ class Record extends Builder
             return true;
         } elseif ($value === 'off' || $value === 'false') {
             return false;
-        } elseif ($fieldType === 'boolean' && ($value === '1' || $value === 1)) {
+        } elseif (in_array($fieldType, ['boolean', 'checkbox']) && ($value === '1' || $value === 1)) {
             return true;
-        } elseif ($fieldType === 'boolean' && ($value === '0' || $value === 0)) {
+        } elseif (in_array($fieldType, ['boolean', 'checkbox']) && ($value === '0' || $value === 0)) {
             return false;
         }
         return $value;

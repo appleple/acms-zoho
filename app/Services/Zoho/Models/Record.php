@@ -68,6 +68,15 @@ class Record
     /** @var array 数値フィールドのリスト [フィールド名 => データタイプ] */
     private $numberFields = [];
 
+    /** @var array 時刻フィールドのリスト [フィールド名 => true] */
+    private $timeFields = [];
+
+    /** @var array 複数選択ルックアップフィールドのリスト [フィールド名 => true] */
+    private $multiselectlookupFields = [];
+
+    /** @var array オーナー/ユーザールックアップフィールドのリスト [フィールド名 => true] */
+    private $userLookupFields = [];
+
     /** @var string|null メモのタイトル */
     private $noteTitle;
 
@@ -373,6 +382,75 @@ class Record
     public function getNumberFieldType(string $fieldName): ?string
     {
         return $this->numberFields[$fieldName] ?? null;
+    }
+
+    /**
+     * フィールドを時刻フィールドとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsTimeField(string $fieldName)
+    {
+        $this->timeFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドが時刻フィールドかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isTimeField(string $fieldName): bool
+    {
+        return isset($this->timeFields[$fieldName]);
+    }
+
+    /**
+     * フィールドを複数選択ルックアップフィールドとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsMultiselectlookupField(string $fieldName)
+    {
+        $this->multiselectlookupFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドが複数選択ルックアップフィールドかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isMultiselectlookupField(string $fieldName): bool
+    {
+        return isset($this->multiselectlookupFields[$fieldName]);
+    }
+
+    /**
+     * フィールドをオーナー/ユーザールックアップフィールドとしてマーク
+     *
+     * @param string $fieldName フィールド名
+     * @return self
+     */
+    public function markAsUserLookupField(string $fieldName)
+    {
+        $this->userLookupFields[$fieldName] = true;
+        return $this;
+    }
+
+    /**
+     * 指定フィールドがオーナー/ユーザールックアップフィールドかどうか判定
+     *
+     * @param string $fieldName フィールド名
+     * @return bool
+     */
+    public function isUserLookupField(string $fieldName): bool
+    {
+        return isset($this->userLookupFields[$fieldName]);
     }
 
     /**
