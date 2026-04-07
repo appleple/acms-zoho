@@ -422,6 +422,19 @@ class RecordApi extends ApiBase
                 continue;
             }
 
+            // 配列が来た場合は multiselectpicklist のみ許可
+            $isMultiArrayField = ($record->isPicklistField($apiName) && is_array($value))
+                || $dataType === 'multiselectpicklist';
+            if (is_array($value) && !$isMultiArrayField) {
+                AcmsLogger::error('【Zoho plugin】配列の値は multiselectpicklist フィールドにのみ使用できます。フィールドをスキップします。', [
+                    'module' => $scope,
+                    'apiName' => $apiName,
+                    'value' => $value,
+                    'dataType' => $dataType,
+                ]);
+                continue;
+            }
+
             // ルックアップフィールドの判定（メタデータから取得した情報も考慮）
             $isLookup = $record->isLookupField($apiName) || $dataType === 'lookup';
 
@@ -442,7 +455,12 @@ class RecordApi extends ApiBase
                 $fieldValue = $lookupRecord;
             } elseif ($record->isPicklistField($apiName) || $dataType === 'picklist' || $dataType === 'multiselectpicklist') {
                 // ピックリストフィールドはChoiceオブジェクトとして設定
-                $fieldValue = new Choice($value);
+                // multiselectpicklist は Choice オブジェクトの配列として送信
+                if (is_array($value)) {
+                    $fieldValue = array_map(fn($v) => new Choice($v), $value);
+                } else {
+                    $fieldValue = new Choice($value);
+                }
             } elseif ($isTextarea) {
                 // 複数行テキストフィールドは文字列として設定（改行を保持）
                 // nullまたは空文字列の場合は空文字列にする
@@ -472,12 +490,13 @@ class RecordApi extends ApiBase
                 if ($fieldValue === null && $value !== '' && $value !== null) {
                     continue; // バリデーション失敗時はスキップ
                 }
-            } elseif ($record->isMultiselectlookupField($apiName) || $dataType === 'multiselectlookup') {
-                // 複数選択ルックアップフィールド：レコードIDの配列として送信
-                $fieldValue = $this->convertToMultiselectlookup($value);
-                if ($fieldValue === null) {
-                    continue;
-                }
+            } elseif ($dataType === 'multiselectlookup') {
+                // 複数選択ルックアップフィールドは未対応
+                AcmsLogger::error('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                    'module' => $scope,
+                    'apiName' => $apiName,
+                ]);
+                continue;
             } elseif ($record->isUserLookupField($apiName) || in_array($dataType, ['ownerlookup', 'userlookup'])) {
                 // オーナー/ユーザールックアップ：ユーザーIDのZohoRecordとして送信
                 if (!is_numeric($value) || empty($value)) {
@@ -639,43 +658,6 @@ class RecordApi extends ApiBase
             'expectedFormat' => 'HH:MM'
         ]);
         return null;
-    }
-
-    /**
-     * 値を複数選択ルックアップ用のZohoRecordオブジェクト配列に変換
-     *
-     * カンマ区切り文字列または配列としてのレコードIDを受け付ける
-     *
-     * @param mixed $value レコードIDの値（カンマ区切り文字列または配列）
-     * @return ZohoRecord[]|null ZohoRecordの配列、または変換失敗時はnull
-     */
-    private function convertToMultiselectlookup($value): ?array
-    {
-        if ($value === '' || $value === null) {
-            return null;
-        }
-
-        $ids = is_array($value) ? $value : explode(',', (string)$value);
-        $ids = array_filter(array_map('trim', $ids), fn($id) => $id !== '');
-
-        if (empty($ids)) {
-            return null;
-        }
-
-        $records = [];
-        foreach ($ids as $id) {
-            if (!is_numeric($id)) {
-                AcmsLogger::warning('【Zoho plugin】複数選択ルックアップのIDが数値ではありません。スキップします。', [
-                    'id' => $id,
-                ]);
-                continue;
-            }
-            $lookupRecord = new ZohoRecord();
-            $lookupRecord->setId($id);
-            $records[] = $lookupRecord;
-        }
-
-        return empty($records) ? null : $records;
     }
 
     /**

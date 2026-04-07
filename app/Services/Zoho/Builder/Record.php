@@ -270,6 +270,15 @@ class Record extends Builder
                 $fieldType = $fieldData['dataType'] ?? null;
             }
 
+            // multiselectlookupは未対応
+            if ($fieldType === 'multiselectlookup') {
+                AcmsLogger::error('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                    'module' => $scope,
+                    'apiName' => $fieldApiName,
+                ]);
+                continue;
+            }
+
             // メモフィールドの判定（Note_Title / Note_Content）
             // メモはZohoのレコードフィールドではなく別エンティティのため、通常フィールドとしては追加しない
             if ($fieldType === 'note') {
@@ -324,7 +333,12 @@ class Record extends Builder
                 }
             }
 
-            $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
+            // multiselectpicklist は複数値を配列のまま渡す（getFieldValueはハイフン結合するため）
+            if ($fieldType === 'multiselectpicklist') {
+                $value = $isFixed ? [$this->resolveGlobalVars($key)] : $this->field->getArray($key);
+            } else {
+                $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
+            }
             $normalizedValue = $this->normalizeValue($value, $fieldType);
 
             // ルックアップフィールドの判定と登録
@@ -363,17 +377,10 @@ class Record extends Builder
                 $record->markAsTimeField($fieldApiName);
             }
 
-            // 複数選択ルックアップフィールドの判定と登録
-            if ($fieldType === 'multiselectlookup') {
-                $record->markAsMultiselectlookupField($fieldApiName);
-            }
-
             // オーナー/ユーザールックアップフィールドの判定と登録
             if (in_array($fieldType, ['ownerlookup', 'userlookup'])) {
                 $record->markAsUserLookupField($fieldApiName);
             }
-
-            // checkboxはboolean型として正規化済み（normalizeValueで処理される）
 
             $item[$fieldApiName] = $normalizedValue;
         }
