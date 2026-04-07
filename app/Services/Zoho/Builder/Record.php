@@ -205,7 +205,7 @@ class Record extends Builder
                 $record = new RecordModel(
                     $insertScope,
                     'insert',
-                    in_array($insertScope, $updateScopes) ? $uniqueKey : ''
+                    in_array($insertScope, $updateScopes, true) ? $uniqueKey : ''
                 );
                 $record->groupIndex = $i;
 
@@ -218,7 +218,7 @@ class Record extends Builder
 
             // insertに含まれないupdateスコープのみレコードを生成
             foreach ($updateScopes as $updateScope) {
-                if (!in_array($updateScope, $insertScopes)) {
+                if (!in_array($updateScope, $insertScopes, true)) {
                     $record = new RecordModel($updateScope, 'update', $uniqueKey);
                     $record->groupIndex = $i;
 
@@ -317,7 +317,7 @@ class Record extends Builder
             // pendingタイプの場合はモジュールチェックをスキップ（全フィールドを取得）
             if ($scope !== '__PENDING__') {
                 // スコープが一致しない場合はスキップ
-                if (!in_array($scope, $scopes)) {
+                if (!in_array($scope, $scopes, true)) {
                     continue;
                 }
 
@@ -368,7 +368,7 @@ class Record extends Builder
             }
 
             // 数値フィールドの判定と登録
-            if (in_array($fieldType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'])) {
+            if (in_array($fieldType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'], true)) {
                 $record->markAsNumberField($fieldApiName, $fieldType);
             }
 
@@ -433,7 +433,7 @@ class Record extends Builder
      */
     private function getFieldValue(string $key, ?array $groupArr, int $index)
     {
-        if ($groupArr && in_array($key, $groupArr)) {
+        if ($groupArr && in_array($key, $groupArr, true)) {
             return $this->field->get($key, '', $index);
         } else {
             return implode("-", $this->field->getArray($key));
@@ -614,7 +614,7 @@ class Record extends Builder
                 $dependencies[$relatedScope] = [];
             }
 
-            if (!in_array($targetScope, $dependencies[$relatedScope])) {
+            if (!in_array($targetScope, $dependencies[$relatedScope], true)) {
                 $dependencies[$relatedScope][] = $targetScope;
             }
         }
@@ -778,7 +778,7 @@ class Record extends Builder
                 }
 
                 // updateScopeに含まれている場合は既存レコードを検索
-                if (in_array($moduleName, $updateScopes)) {
+                if (in_array($moduleName, $updateScopes, true)) {
                     $existingRecord = $apiRecordHandler->searchByUniqueKey($moduleName, $uniqueKey, $uniqueValue);
                     if ($existingRecord) {
                         $this->updateRecordProperties($record, $moduleName, 'update', $existingRecord['id']);
@@ -846,7 +846,7 @@ class Record extends Builder
             $canUpdate = $this->config->get('zoho_link_field_update', '', $i);
 
             // スコープが一致しない場合、このフィールドを削除
-            if (!in_array($moduleApiName, $scopes)) {
+            if (!in_array($moduleApiName, $scopes, true)) {
                 if ($record->hasField($fieldApiName)) {
                     $record->removeField($fieldApiName);
                 }

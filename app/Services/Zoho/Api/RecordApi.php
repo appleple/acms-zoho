@@ -480,7 +480,7 @@ class RecordApi extends ApiBase
                 if ($fieldValue === null && $value !== '' && $value !== null) {
                     continue; // 変換失敗時はスキップ
                 }
-            } elseif ($record->isNumberField($apiName) || in_array($dataType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'])) {
+            } elseif ($record->isNumberField($apiName) || in_array($dataType, ['integer', 'double', 'decimal', 'currency', 'bigint', 'number'], true)) {
                 // 数値フィールドの変換
                 $numberType = $record->getNumberFieldType($apiName) ?? $dataType;
                 $fieldValue = $this->convertToNumber($value, $numberType);
@@ -500,7 +500,7 @@ class RecordApi extends ApiBase
                     'apiName' => $apiName,
                 ]);
                 continue;
-            } elseif ($record->isUserLookupField($apiName) || in_array($dataType, ['ownerlookup', 'userlookup'])) {
+            } elseif ($record->isUserLookupField($apiName) || in_array($dataType, ['ownerlookup', 'userlookup'], true)) {
                 // オーナー/ユーザールックアップ：ユーザーIDのZohoRecordとして送信
                 if (empty($value)) {
                     continue;
