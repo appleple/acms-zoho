@@ -426,7 +426,7 @@ class RecordApi extends ApiBase
             $isMultiArrayField = ($record->isPicklistField($apiName) && is_array($value))
                 || $dataType === 'multiselectpicklist';
             if (is_array($value) && !$isMultiArrayField) {
-                AcmsLogger::error('【Zoho plugin】配列の値は multiselectpicklist フィールドにのみ使用できます。フィールドをスキップします。', [
+                AcmsLogger::notice('【Zoho plugin】配列の値は multiselectpicklist フィールドにのみ使用できます。フィールドをスキップします。', [
                     'module' => $scope,
                     'apiName' => $apiName,
                     'value' => $value,
@@ -495,7 +495,7 @@ class RecordApi extends ApiBase
                 }
             } elseif ($dataType === 'multiselectlookup') {
                 // 複数選択ルックアップフィールドは未対応
-                AcmsLogger::error('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                AcmsLogger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
                     'module' => $scope,
                     'apiName' => $apiName,
                 ]);

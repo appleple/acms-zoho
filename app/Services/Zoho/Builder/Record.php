@@ -272,7 +272,7 @@ class Record extends Builder
 
             // multiselectlookupは未対応
             if ($fieldType === 'multiselectlookup') {
-                AcmsLogger::error('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                AcmsLogger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
                     'module' => $scope,
                     'apiName' => $fieldApiName,
                 ]);
@@ -378,7 +378,7 @@ class Record extends Builder
             }
 
             // オーナー/ユーザールックアップフィールドの判定と登録
-            if (in_array($fieldType, ['ownerlookup', 'userlookup'])) {
+            if (in_array($fieldType, ['ownerlookup', 'userlookup'], true)) {
                 $record->markAsUserLookupField($fieldApiName);
             }
 
@@ -456,9 +456,9 @@ class Record extends Builder
             return true;
         } elseif ($value === 'off' || $value === 'false') {
             return false;
-        } elseif (in_array($fieldType, ['boolean', 'checkbox']) && ($value === '1' || $value === 1)) {
+        } elseif (in_array($fieldType, ['boolean', 'checkbox'], true) && ($value === '1' || $value === 1)) {
             return true;
-        } elseif (in_array($fieldType, ['boolean', 'checkbox']) && ($value === '0' || $value === 0)) {
+        } elseif (in_array($fieldType, ['boolean', 'checkbox'], true) && ($value === '0' || $value === 0)) {
             return false;
         }
         return $value;
