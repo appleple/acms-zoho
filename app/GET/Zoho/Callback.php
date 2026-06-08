@@ -56,12 +56,12 @@ class Callback extends Zoho
             AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
                 'message' => $e->getMessage(),
             ]);
-            $this->addAuthError($e->getMessage());
+            $this->addError($e->getMessage());
         } catch (\InvalidArgumentException $e) {
             AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
                 'message' => $e->getMessage(),
             ]);
-            $this->addAuthError($e->getMessage());
+            $this->addError($e->getMessage());
         }
         $base_uri = acmsLink(array(
             'bid' => BID,
