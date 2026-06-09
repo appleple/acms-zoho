@@ -2,15 +2,15 @@
 
 namespace Acms\Plugins\Zoho\GET\Zoho;
 
-use ACMS_GET;
 use DB;
 use SQL;
 use AcmsLogger;
 use Acms\Services\Facades\Session;
+use Acms\Plugins\Zoho\GET\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 
-class Callback extends ACMS_GET
+class Callback extends Zoho
 {
     public function get()
     {
@@ -56,10 +56,12 @@ class Callback extends ACMS_GET
             AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
                 'message' => $e->getMessage(),
             ]);
+            $this->addError($e->getMessage());
         } catch (\InvalidArgumentException $e) {
             AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
                 'message' => $e->getMessage(),
             ]);
+            $this->addError($e->getMessage());
         }
         $base_uri = acmsLink(array(
             'bid' => BID,
