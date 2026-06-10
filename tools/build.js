@@ -2,8 +2,7 @@
  * 配布バージョン作成プログラム
  */
 
-const fs = require('fs-extra');
-const co = require('co');
+const fs = require('node:fs');
 const { zipPromise } = require('./lib/system.js');
 
 const { version } = require('../package.json');
@@ -15,21 +14,21 @@ const renames = [
   },
 ];
 
-co(function* () {
+(async () => {
   try {
     /**
      * ready plugins files
      */
     const copyFiles = fs.readdirSync('./app');
-    fs.mkdirsSync('Zoho');
-    fs.mkdirsSync(`build/v${version}`);
+    fs.mkdirSync('Zoho', { recursive: true });
+    fs.mkdirSync(`build/v${version}`, { recursive: true });
 
     /**
      * copy app directory files only
      */
     console.log('Copy app directory files.');
     copyFiles.forEach((file) => {
-      fs.copySync(`./app/${file}`, `Zoho/${file}`);
+      fs.cpSync(`./app/${file}`, `Zoho/${file}`, { recursive: true });
     });
 
     /**
@@ -39,15 +38,15 @@ co(function* () {
     console.log(renames);
     renames.forEach(({ from, to }) => {
       if (fs.existsSync(`Zoho/${from}`)) {
-        fs.moveSync(`Zoho/${from}`, `Zoho/${to}`);
+        fs.renameSync(`Zoho/${from}`, `Zoho/${to}`);
       }
     });
 
-    yield zipPromise('Zoho', `./build/v${version}/Zoho.zip`);
-    fs.copySync(`./build/v${version}/Zoho.zip`, './build/Zoho.zip');
+    await zipPromise('Zoho', `./build/v${version}/Zoho.zip`);
+    fs.cpSync(`./build/v${version}/Zoho.zip`, './build/Zoho.zip');
   } catch (err) {
     console.log(err);
   } finally {
-    fs.removeSync('Zoho');
+    fs.rmSync('Zoho', { recursive: true, force: true });
   }
-});
+})();

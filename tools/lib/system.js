@@ -1,39 +1,36 @@
-const cmd = require('node-cmd');
-const fs = require('fs-extra');
+'use strict';
+
+const { execSync } = require('node:child_process');
+const fs = require('node:fs');
 const archiver = require('archiver');
 
 /**
  * Run system command
  *
- * @param cmdString
- * @returns {Promise}
+ * @param {string} cmdString
+ * @returns {string} stdout
  */
-exports.systemCmd = (cmdString) =>
-  new Promise((resolve) => {
-    cmd.get(cmdString, (data, err, stderr) => {
-      console.log(cmdString);
-      console.log(data);
-      if (err) {
-        console.log(err);
-      }
-      if (stderr) {
-        console.log(stderr);
-      }
-      resolve(data);
-    });
-  });
+exports.systemCmd = (cmdString) => {
+  console.log(cmdString);
+  const stdout = execSync(cmdString, { encoding: 'utf-8', stdio: ['inherit', 'pipe', 'inherit'] });
+  if (stdout) {
+    console.log(stdout);
+  }
+  return stdout;
+};
 
-exports.systemDirList = (directory) =>
-  new Promise((resolve) => {
-    fs.readdir(directory, (err, files) => {
-      if (err) throw err;
-      resolve(files);
-    });
-  });
+exports.systemDirList = (directory) => fs.promises.readdir(directory);
 
-exports.zipPromise = (src, dist) => {
-  return new Promise((resolve, reject) => {
-    const archive = archiver.create('zip', {});
+/**
+ * Create a zip archive of a directory.
+ *
+ * @param {string} src  source directory
+ * @param {string} dist output zip path
+ * @returns {Promise<void>}
+ */
+exports.zipPromise = (src, dist) =>
+  new Promise((resolve, reject) => {
+    const archive = archiver('zip', {});
     const output = fs.createWriteStream(dist);
 
     // listen for all archive data to be written
@@ -52,4 +49,3 @@ exports.zipPromise = (src, dist) => {
     // srcディレクトリをZohoディレクトリ名で配置
     archive.directory(src, 'Zoho').finalize();
   });
-};

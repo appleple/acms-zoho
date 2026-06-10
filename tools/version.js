@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs-extra');
+const fs = require('node:fs');
 
 // package.json
 const { version } = require('../package.json');
