@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  # PHP 側: コーディング規約 + PHP バージョン互換チェック（PHPCompatibility testVersion 8.1-8.5）
+  lint:
+    name: PHP CodeSniffer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist
+
+      - name: Coding standards (PHP_CodeSniffer + PHPCompatibility)
+        run: composer lint
+
+  # JS 側: 型チェック + Vite ビルド。管理画面 UI は React/TypeScript のため CI で検証する。
+  js:
+    name: TypeScript build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (tsc + vite)
+        run: pnpm run build

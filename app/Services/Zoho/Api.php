@@ -18,7 +18,7 @@ class Api
     /**
      * デフォルトのキャッシュ有効期間（秒）
      */
-    const DEFAULT_CACHE_LIFETIME = 3600;
+    public const DEFAULT_CACHE_LIFETIME = 3600;
 
     /** @var Client */
     private $client;

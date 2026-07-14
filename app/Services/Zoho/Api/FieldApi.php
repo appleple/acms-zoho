@@ -60,7 +60,7 @@ class FieldApi extends ApiBase
                         if ($dataType) {
                             if (is_object($dataType) && method_exists($dataType, 'getValue')) {
                                 $dataTypeValue = $dataType->getValue();
-                            } else if (is_string($dataType)) {
+                            } elseif (is_string($dataType)) {
                                 $dataTypeValue = $dataType;
                             }
                         }

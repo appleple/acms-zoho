@@ -1,0 +1,65 @@
+name: Release
+
+# 配布用 zip をビルドし、GitHub Release として公開する。v1.2.3 のようなタグ push で発火。
+#
+# 管理画面 UI は React/TypeScript で、成果物 app/dist は Vite ビルドで生成する（Git 管理外）。
+# また app/ は Zoho SDK を composer で持つため、Packager が app/ で composer install --no-dev を
+# 実行し app/vendor を同梱する。したがって PHP でパッケージ化する前に pnpm で app/dist を生成する。
+#
+# プラグインのバージョンは app/ServiceProvider.php の $version が正。タグとこの値を一致させること
+# （Verify ステップで不一致なら失敗させ、食い違った zip を公開しない）。
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # --- JS: React/TypeScript UI を Vite でビルドし app/dist を生成 ---
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build UI (tsc + vite) into app/dist
+        run: pnpm run build
+
+      # --- PHP: app/（app/dist + Zoho SDK の app/vendor 含む）を zip 化 ---
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: zip
+          tools: composer
+
+      - name: Verify tag matches ServiceProvider $version
+        run: php scripts/package.php --check-version="${GITHUB_REF_NAME#v}"
+
+      - name: Create release package
+        run: php scripts/package.php
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            ./build/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

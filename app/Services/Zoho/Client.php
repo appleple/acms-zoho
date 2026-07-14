@@ -115,7 +115,7 @@ class Client
         ?string $clientSecret = null,
         ?string $redirectUrl = null,
         ?string $grantToken = null
-    ){
+    ) {
         if ($clientId && $clientSecret && $redirectUrl && $grantToken) {
             $this->clientId = $clientId;
             $this->clientSecret = $clientSecret;

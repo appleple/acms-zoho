@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!-- phpのファイルがコーディング規約に則っているかを診断するためのphpcsの設定ファイル -->
+<ruleset name="phpcs rules">
+    <rule ref="PSR12">
+      <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+    </rule>
+
+    <!-- Run against the PHPCompatibility ruleset -->
+    <rule ref="PHPCompatibility"/>
+    <config name="testVersion" value="8.1-8.5"/>
+
+    <!-- 行長の警告は無効化（Zoho API のフィールドマッピング等、長い行は整形すると可読性を損なうため） -->
+    <rule ref="Generic.Files.LineLength">
+        <severity>0</severity>
+    </rule>
+
+    <!-- 拡張子が php のものにだけ適用 -->
+    <arg name="extensions" value="php" />
+
+    <!-- 出力に色を適用 -->
+    <arg name="colors" />
+
+    <!-- オプション p:進捗表示  s:エラー表示時にルールを表示 -->
+    <arg value="ps" />
+
+    <!-- 適用するファイル・ディレクトリ -->
+    <file>app</file>
+
+    <!-- 除外するファイル・ディレクトリ -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/dist/*</exclude-pattern>
+    <exclude-pattern>*/build/*</exclude-pattern>
+</ruleset>

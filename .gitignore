@@ -25,3 +25,7 @@ vendor
 ## app
 /Zoho
 
+
+# CI 成果物 / ビルド生成物（配布 zip は Release/pipeline が生成）
+/build/
+app/dist

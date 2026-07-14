@@ -128,5 +128,4 @@ class ServiceProvider extends ACMS_App
     {
         return true;
     }
-
 }

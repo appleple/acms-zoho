@@ -249,7 +249,7 @@ class CustomFileStore extends FileStore
         return $isRowPresent;
     }
 
-    private function getData(String $value)
+    private function getData(string $value)
     {
         return ($value != null && !empty($value) && strlen($value) > 0) ? $value : null;
     }

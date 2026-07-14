@@ -3,7 +3,6 @@
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
 use AcmsLogger;
-
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
 use com\zoho\crm\api\modules\ModulesOperations;
@@ -34,7 +33,7 @@ class ModuleApi extends ApiBase
 
                     // 元のZohoモジュールオブジェクトをそのまま返す
                     return $modules;
-                } else if ($responseHandler instanceof APIException) {
+                } elseif ($responseHandler instanceof APIException) {
                     AcmsLogger::warning('【Zoho plugin】モジュール一覧の取得でAPIエラーが発生しました。', [
                         'message' => $responseHandler->getMessage(),
                     ]);
@@ -73,7 +72,7 @@ class ModuleApi extends ApiBase
                         // 元のZohoモジュールオブジェクトをそのまま返す
                         return $modules[0];
                     }
-                } else if ($responseHandler instanceof APIException) {
+                } elseif ($responseHandler instanceof APIException) {
                     AcmsLogger::warning('【Zoho plugin】モジュール情報の取得でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
                         'message' => $responseHandler->getMessage(),

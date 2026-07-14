@@ -51,7 +51,6 @@ class Callback extends Zoho
             }
 
             AcmsLogger::info('【Zoho plugin】OAuth認証が完了しました。');
-
         } catch (\RuntimeException $e) {
             AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
                 'message' => $e->getMessage(),

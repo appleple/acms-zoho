@@ -90,7 +90,7 @@ class ModuleScope
      */
     public static function toApiNames(array $scopes): array
     {
-        return array_map(function(ModuleScope $scope) {
+        return array_map(function (ModuleScope $scope) {
             return $scope->apiName;
         }, $scopes);
     }

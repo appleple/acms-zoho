@@ -9,7 +9,6 @@ use com\zoho\crm\api\modules\Modules as ZohoModules;
 
 class Module extends Mapper
 {
-
     /** @var ZohoModules[] Zohoから取得したモジュールのリスト */
     public $modules;
 
