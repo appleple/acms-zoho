@@ -261,4 +261,9 @@ docker compose exec acms bash -lc "cd /workspace && ACMS_ROOT=/var/www/html \
 - **js**: 管理画面 UI（TypeScript）の型チェック + Vite ビルド。
 - **ci**: 上記すべての成功を集約する必須チェック（ブランチ保護ではこのジョブを必須に指定する）。
 
+依存更新は `.github/dependabot.yml`（GitHub Actions + 開発用 Composer）が週次で提案し、patch / minor は
+`.github/workflows/dependabot-auto-merge.yml` が CI 通過後に自動マージします（major は手動レビュー）。
+自動マージには、リポジトリ Settings で **"Allow auto-merge" を有効化**し、デフォルトブランチのブランチ保護で
+集約ジョブ **`ci`** を必須ステータスチェックに指定しておく必要があります（未設定だと CI を待たずにマージされます）。
+
 配布 zip のビルドと GitHub Release への公開は `v*` タグの push で `.github/workflows/release.yml` が行います。

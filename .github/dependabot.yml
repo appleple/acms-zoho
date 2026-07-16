@@ -1,5 +1,6 @@
 # ワークフローが使う GitHub Actions と、開発用 Composer 依存を最新に保つ。
-# 破壊的（major）バンプはレビューして手動でマージする想定（自動マージは設定していない）。
+# patch / minor バンプは CI 通過後に .github/workflows/dependabot-auto-merge.yml が自動マージし、
+# 破壊的（major）バンプはレビューして手動でマージする。
 version: 2
 updates:
   - package-ecosystem: "github-actions"
