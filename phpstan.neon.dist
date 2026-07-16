@@ -1,0 +1,40 @@
+includes:
+    # ablogcms/testing-framework 同梱。a-blog cms コアのシンボル（スタブ・短縮ファサード・request 定数）を供給する。
+    - vendor/ablogcms/testing-framework/phpstan/extension.neon
+    # 既存の未テスト層（HTTP/SDK 通信・トークン永続化・GET/POST/Hook/Engine/ServiceProvider・
+    # 名前空間不整合のデッドコード）の型負債を捕捉するベースライン。テスト済みドメインロジック層
+    # （Models/Builder/Mapper/Collections）は本体を修正して level 6 クリーンにしてあり、ここには含めない。
+    # 新規・変更コードは level 6 で検査される。負債は段階的に解消していく。
+    - phpstan-baseline.neon
+parameters:
+    # a-blog cms コアは型付けが緩く（Config::get / DB::query など多くの API が mixed を返す）、level 9 相当の
+    # strict-mixed 検査は本体側の型に由来するノイズ（cast mixed to string 等）が大量に出る。プラグイン向けの
+    # 実用水準として 6 を採用する（未定義メソッド・引数型・戻り値型・デッドコード・型ヒント欠落までを検出）。
+    level: 6
+    # 本番の対応 PHP は 8.1〜8.5。全レンジで解析する。
+    phpVersion:
+        min: 80100
+        max: 80500
+    paths:
+        - app
+        - tests
+    excludePaths:
+        # プラグイン同梱のランタイム依存（zohocrm/php-sdk-8.0）は「解析」対象からのみ除外する。
+        # analyseAndScan（トップレベルのリスト指定）にするとシンボルスキャンからも外れ、com\zoho\crm\api\*
+        # を未知クラス扱いしてしまうため、必ず analyse サブキーで指定する（スキャンは継続＝シンボルは供給）。
+        analyse:
+            - app/vendor
+    scanDirectories:
+        # a-blog cms 本体コア。appleple/acms イメージ／同梱 docker-compose.yml ではここに展開される。
+        # ローカルで別パスの本体を使う場合は、この .dist をコピーした phpstan.neon（git 無視）で上書きする。
+        - /var/www/html/php
+    ignoreErrors:
+        # Mapper は Zoho SDK 応答・フォーム設定由来の入力を扱う。プロパティは型宣言上は常に array のため
+        # PHPStan は「!is_array(...) は常に false」と判定するが、実行時の想定外入力（SDK 応答の欠落・改変）に
+        # 備えた防御的な is_array ガードを意図的に残している。ドメイン層で唯一残る偽陽性なので理由付きで無視する。
+        -
+            identifier: booleanNot.alwaysFalse
+            path: app/Services/Zoho/Mapper/Module.php
+        -
+            identifier: booleanNot.alwaysFalse
+            path: app/Services/Zoho/Mapper/ModuleField.php

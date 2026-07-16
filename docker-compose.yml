@@ -1,0 +1,40 @@
+# Zoho プラグインの開発・テスト環境。
+# 本体同梱の appleple/acms イメージに、このプラグインを extension/plugins/ へバインドマウントする。
+# リポジトリ全体を /workspace にもマウントし、composer / phpunit / phpstan / phpcs はそこから実行する。
+services:
+  acms:
+    image: appleple/acms:${ACMS_IMAGE_TAG:-3.2-php8.5}
+    ports:
+      - '8080:80'
+    environment:
+      ACMS_DB_HOST: db
+      ACMS_DB_NAME: acms
+      ACMS_DB_USER: acms
+      ACMS_DB_PASS: acms
+      # テスト基盤（Bootstrap）が参照する本体ルート。
+      ACMS_ROOT: /var/www/html
+    volumes:
+      # 本番コードは app/。プラグイン本体としてデプロイされる（PHP ソース + 同梱 Zoho SDK の app/vendor）。
+      - ./app:/var/www/html/extension/plugins/Zoho
+      # リポジトリ全体（composer.json / tests/ / app/）。composer とテストはここから実行する。
+      - .:/workspace
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: acms
+      MYSQL_USER: acms
+      MYSQL_PASSWORD: acms
+      MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-proot']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  db-data:

@@ -9,7 +9,7 @@ use com\zoho\crm\api\modules\Modules as ZohoModules;
 
 class Module extends Mapper
 {
-    /** @var ZohoModules[] Zohoから取得したモジュールのリスト */
+    /** @var array<int, mixed> Zohoから取得したモジュールのリスト（要素は ZohoModules を想定。実行時の混入に備え mixed で受ける） */
     public $modules;
 
     /** @var Field FormIDの拡張アプリ設定 */
@@ -18,7 +18,7 @@ class Module extends Mapper
     /**
      * コンストラクタ
      *
-     * @param ZohoModules[] $modules
+     * @param array<int, mixed> $modules 要素は ZohoModules を想定
      * @param Field $config
      */
     public function __construct(array $modules, Field $config)
@@ -51,7 +51,7 @@ class Module extends Mapper
     /**
      * モジュールをタブ名、apiName、項目情報を配列にもつ配列に変換する
      *
-     * @return array モジュール情報の配列
+     * @return array<int, array<string, mixed>> モジュール情報の配列
      */
     public function toArray()
     {

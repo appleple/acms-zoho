@@ -1,0 +1,29 @@
+# ワークフローが使う GitHub Actions と、開発用 Composer 依存を最新に保つ。
+# 破壊的（major）バンプはレビューして手動でマージする想定（自動マージは設定していない）。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ルートの composer.json（開発用: testing-framework / phpstan / phpcs / phpunit 等）。
+  # ランタイム依存（app/composer.json の Zoho SDK）は配布物に同梱するため手動管理とする。
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      composer-dev:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

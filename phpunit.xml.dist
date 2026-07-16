@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         failOnWarning="true"
+         failOnRisky="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <!-- DB を使わない純粋ロジック（Acms\TestingFramework\TestCase）。 -->
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <!-- DB を使う統合テスト（Acms\TestingFramework\DatabaseTestCase。トランザクションで自動ロールバック）。 -->
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <!--
+                カバレッジ目標はドメインロジック層（CMS ⇄ Zoho のデータ変換とモデル）。
+                app/Services 配下の純粋ロジックを計測対象にする。src/ は管理画面 UI（TypeScript）、
+                app 直下の GET/POST/Hook/Engine/ServiceProvider は HTTP/exit 終端で実機・E2E の領域。
+            -->
+            <directory suffix=".php">app/Services</directory>
+        </include>
+        <exclude>
+            <!-- プラグイン同梱のランタイム依存（zohocrm/php-sdk-8.0）。 -->
+            <directory>app/vendor</directory>
+            <!--
+                Zoho SDK の *Operations を介した実 HTTP 通信・SDK 初期化・トークン永続化（CSV）は
+                ユニットの範囲外＝実機/E2E で検証する。ドメイン変換ロジックのカバレッジ目標から除外する。
+            -->
+            <directory>app/Services/Zoho/Api</directory>
+            <file>app/Services/Zoho/Api.php</file>
+            <file>app/Services/Zoho/Client.php</file>
+            <file>app/Services/Zoho/Store.php</file>
+            <directory>app/Services/Zoho/Store</directory>
+            <!--
+                名前空間が Acms\Plugins\Zoho\Models（ディレクトリと不整合）で PSR-4 では解決されない
+                未使用のデッドコード。到達不能なため計測対象から除外する。
+            -->
+            <file>app/Services/Zoho/Models/Module.php</file>
+        </exclude>
+    </source>
+    <php>
+        <!--
+            a-blog cms 本体のルート。Docker（appleple/acms イメージ／同梱 docker-compose.yml）では
+            コンテナ内の /var/www/html。ローカルで別パスの本体を使う場合は、この .dist をコピーした
+            phpunit.xml（git 無視）で ACMS_ROOT を上書きする。
+        -->
+        <env name="ACMS_ROOT" value="/var/www/html"/>
+    </php>
+</phpunit>

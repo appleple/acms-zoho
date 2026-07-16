@@ -1,0 +1,871 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to function is_null\(\) with Acms\\Plugins\\Zoho\\Services\\Zoho\\Client will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Engine.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:__construct\(\) has parameter \$config with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Engine.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:__construct\(\) has parameter \$field with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Engine.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:calculateModuleLevel\(\) has parameter \$dependencies with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Engine.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:calculateModuleLevel\(\) has parameter \$visiting with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Engine.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:groupRecordsByDependencyLevel\(\) has parameter \$records with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Engine.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:send\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Engine.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\GET\\Zoho\:\:addError\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/GET/Zoho.php
+
+		-
+			message: '#^Call to function is_null\(\) with string will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/GET/Zoho/Admin.php
+
+		-
+			message: '#^Call to method getExceptionCode\(\) on an unknown class ZCRMException\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Call to method getExceptionDetails\(\) on an unknown class ZCRMException\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Caught class ZCRMException not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Instanceof between string and ACMS_POST_Form_Submit will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Instanceof between string and ACMS_POST_Form_Update will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:afterPostFire\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:extendsGlobalVars\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:zohoFormSubmit\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:zohoFormSubmit\(\) has parameter \$thisModule with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:zohoFormUpdate\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:zohoFormUpdate\(\) has parameter \$thisModule with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Throwing object of an unknown class ZCRMException\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Hook.php
+
+		-
+			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/POST/Zoho/CacheClear.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between com\\zoho\\crm\\api\\Initializer and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/POST/Zoho/Deauthorize.php
+
+		-
+			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: app/POST/Zoho/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\POST\\Zoho\\Module\:\:post\(\) should return Field_Validation but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: app/POST/Zoho/Module.php
+
+		-
+			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 4
+			path: app/POST/Zoho/ModuleField.php
+
+		-
+			message: '#^Variable \$moduleApiName in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: app/POST/Zoho/ModuleField.php
+
+		-
+			message: '#^Call to function is_string\(\) with non\-falsy\-string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 3
+			path: app/POST/Zoho/OAuth2.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/POST/Zoho/OAuth2.php
+
+		-
+			message: '#^Class Acms\\Plugins\\Zoho\\Api not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/ServiceProvider.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\ServiceProvider\:\:init\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/ServiceProvider.php
+
+		-
+			message: '#^PHPDoc type bool\|string of property Acms\\Plugins\\Zoho\\ServiceProvider\:\:\$module is not covariant with PHPDoc type bool of overridden property ACMS_App\:\:\$module\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/ServiceProvider.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\:\:setLabelToApiNameMap\(\) has parameter \$map with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\:\:\$labelNameToApiNameMap type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\ApiBase\:\:setLabelToApiNameMap\(\) has parameter \$map with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/ApiBase.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\ApiBase\:\:\$labelNameToApiNameMap type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/ApiBase.php
+
+		-
+			message: '#^Class com\\zoho\\crm\\api\\fields\\FieldsOperations does not have a constructor and must be instantiated without any parameters\.$#'
+			identifier: new.noConstructor
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:createLabelToApiNameMap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:createMultiModuleLabelToApiNameMap\(\) has parameter \$moduleApiNames with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:createMultiModuleLabelToApiNameMap\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:getField\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:getModuleFields\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method com\\zoho\\crm\\api\\fields\\FieldsOperations\:\:getField\(\) invoked with 3 parameters, 1\-2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method com\\zoho\\crm\\api\\fields\\FieldsOperations\:\:getFields\(\) invoked with 2 parameters, 0\-1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Parameter \#2 \$value of method com\\zoho\\crm\\api\\ParameterMap\:\:add\(\) expects object, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-falsy\-string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Zoho/Api/FieldApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\ModuleApi\:\:getModules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/ModuleApi.php
+
+		-
+			message: '#^Method com\\zoho\\crm\\api\\modules\\ModulesOperations\:\:getModule\(\) invoked with 3 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Services/Zoho/Api/ModuleApi.php
+
+		-
+			message: '#^Instanceof between com\\zoho\\crm\\api\\util\\Choice and com\\zoho\\crm\\api\\util\\Choice will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: app/Services/Zoho/Api/NoteApi.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Instanceof between Acms\\Plugins\\Zoho\\Services\\Zoho\\Models\\Record and Acms\\Plugins\\Zoho\\Services\\Zoho\\Models\\Record will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Instanceof between com\\zoho\\crm\\api\\util\\Choice and com\\zoho\\crm\\api\\util\\Choice will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:createFailureFromAPIException\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:getFieldMetadata\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:handleActionResponses\(\) has parameter \$actionResponses with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:handleActionResponses\(\) has parameter \$result with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:handleActionResponses\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:insertRecords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:processRecords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:searchByUniqueKey\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:updateRecords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Parameter \#2 \$value of method com\\zoho\\crm\\api\\ParameterMap\:\:add\(\) expects object, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:\$fieldMetadataCache type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed~'''' and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 4
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and 204 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Zoho/Api/RecordApi.php
+
+		-
+			message: '#^Instanceof between com\\zoho\\crm\\api\\util\\Choice and com\\zoho\\crm\\api\\util\\Choice will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: app/Services/Zoho/Api/TagApi.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getAccessToken\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getRefreshToken\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getStore\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getTokenId\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getTokenIdByBid\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getTokenPresistencePath\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getTokenStore\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:setTokenId\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 2
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$accessToken has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$apiDomain has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$apiDomain is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$clientId has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$clientSecret has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$dataCenterEnv has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$dataCenterEnv is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$expiryTime has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$expiryTime is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$grantToken has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$loggerFilePath has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$loggerLevel has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$loggerLevel is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$redirectUrl has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$refreshToken has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$store \(Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\) does not accept Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$tokenId has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$tokenPresistencePath has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$userName has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$userName is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Contracts\\StoreInterface\:\:findTokenByGrantToken\(\) has invalid return type Acms\\Plugins\\Zoho\\Services\\Zoho\\Contracts\\OAuthToken\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/Zoho/Contracts/StoreInterface.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:getApiName\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:getFields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:getModuleName\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:initialize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:initialize\(\) has parameter \$apiName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:initialize\(\) has parameter \$fields with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:initialize\(\) has parameter \$moduleName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:setApiName\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:setApiName\(\) has parameter \$apiName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:setFields\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:setFields\(\) has parameter \$fields with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:setModuleName\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Models\\Module\:\:setModuleName\(\) has parameter \$moduleName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Models\\Module\:\:\$apiName has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Models\\Module\:\:\$fields has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Models\\Module\:\:\$moduleName has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Models/Module.php
+
+		-
+			message: '#^Call to function is_string\(\) with non\-falsy\-string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:findTokenByGrantToken\(\) return type with generic class com\\zoho\\api\\authenticator\\OAuthToken does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:findTokenById\(\) return type with generic class com\\zoho\\api\\authenticator\\OAuthToken does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:removeTokenById\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:removeTokenByRefreshToken\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$path$#'
+			identifier: parameter.notFound
+			count: 3
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 3
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:checkCondition\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:checkCondition\(\) has parameter \$nextRecord with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:checkCondition\(\) has parameter \$oauthToken with generic class com\\zoho\\api\\authenticator\\OAuthToken but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:deleteToken\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:deleteToken\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:findTokenByGrantToken\(\) return type with generic class com\\zoho\\api\\authenticator\\OAuthToken does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:findTokenById\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:generateId\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:generateId\(\) has parameter \$allContents with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:getData\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:getTokens\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:saveToken\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setMergeData\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setMergeData\(\) has parameter \$nextRecord with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setMergeData\(\) has parameter \$oauthToken with generic class com\\zoho\\api\\authenticator\\OAuthToken but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setToken\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setToken\(\) has parameter \$oauthToken with generic class com\\zoho\\api\\authenticator\\OAuthToken but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 2
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\|null\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Parameter \#3 \$details of class com\\zoho\\crm\\api\\exception\\SDKException constructor expects array\|null, Exception given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:\$filePath has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:\$headers has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php

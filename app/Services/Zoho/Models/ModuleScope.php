@@ -39,7 +39,10 @@ class ModuleScope
     /**
      * 配列からインスタンスを作成
      *
-     * @param array|string $data 配列データまたはapiName文字列
+     * 文字列（後方互換の apiName）・連想配列・それ以外（不正値）のいずれも受け付け、
+     * 不正値は空の apiName として安全側に倒す。
+     *
+     * @param mixed $data 配列データ・apiName 文字列・不正値
      * @return self
      */
     public static function fromArray($data): self
