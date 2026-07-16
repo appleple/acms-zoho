@@ -19,20 +19,28 @@
     <source>
         <include>
             <!--
-                カバレッジ計測対象は「意味のある単体テストで検証できる層」= 純粋なドメインロジック
-                （Models / Builder / Mapper / Collections）＋ ラベル解決（Api\ApiBase）＋ トークン永続化
-                （Store：ファイル I/O）。src/ は管理画面 UI（TypeScript）なので対象外。
+                プラグインの PHP ソートは app/。ここを計測対象の起点にし、単体テストで意味のある形では
+                カバーできない通信/exit 境界を下で除外する。src/ は管理画面 UI（TypeScript）なので対象外。
             -->
-            <directory suffix=".php">app/Services</directory>
+            <directory suffix=".php">app</directory>
         </include>
         <exclude>
             <!-- プラグイン同梱のランタイム依存（zohocrm/php-sdk-8.0）。 -->
             <directory>app/vendor</directory>
             <!--
-                以下は Zoho SDK 経由の実 HTTP 通信・SDK 初期化・DB が主体で、単体テストでは意味のある形で
-                カバーできない（実機 / E2E の領域）。純粋ロジック部分は別途ユニットで検証しているが、
-                ファイル全体は通信境界が支配的なためカバレッジ計測からは除外する。
-                - RecordApi 等の *Api：Zoho SDK の *Operations を呼ぶ HTTP 層（変換ヘルパのみユニットで担保）
+                HTTP/exit 終端。GET/POST ハンドラ・Hook・ServiceProvider・Engine の送信本体（send）は
+                redirect()/exit/ResponseJson やコアのフック・DB に依存し、単体では意味のある形で検証できない
+                （実機 / E2E の領域）。Engine の純粋ロジック（依存レベル計算）は別途ユニットで担保している。
+            -->
+            <directory>app/GET</directory>
+            <directory>app/POST</directory>
+            <file>app/Hook.php</file>
+            <file>app/ServiceProvider.php</file>
+            <file>app/Engine.php</file>
+            <!--
+                Zoho SDK 経由の実 HTTP 通信・SDK 初期化・DB が主体で、単体では意味のある形でカバーできない。
+                純粋ロジック（RecordApi の値変換ヘルパ・ApiBase のラベル解決）は別途ユニットで検証している。
+                - RecordApi 等の *Api：Zoho SDK の *Operations を呼ぶ HTTP 層
                 - Api（ApiManager）：Client 依存の遅延生成 getter
                 - Client：SDK 初期化・トークン取得・config テーブル参照
             -->

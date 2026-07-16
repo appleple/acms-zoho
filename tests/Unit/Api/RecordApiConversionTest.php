@@ -30,8 +30,9 @@ final class RecordApiConversionTest extends TestCase
 
     private function invoke(object $obj, string $method, mixed ...$args): mixed
     {
+        // PHP 8.1 以降、Reflection は非公開メソッドへ setAccessible() 無しでアクセスできる
+        // （8.5 で setAccessible() は非推奨）。
         $ref = new ReflectionMethod($obj, $method);
-        $ref->setAccessible(true);
         return $ref->invoke($obj, ...$args);
     }
 

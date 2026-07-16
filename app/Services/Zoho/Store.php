@@ -91,11 +91,11 @@ class Store implements StoreInterface
     /**
      * リフレッシュトークンを元にトークンを削除
      *
-     * @param string $path 保存先のファイルパス
+     * @param string $refreshToken 削除対象のリフレッシュトークン
      */
     public function removeTokenByRefreshToken(string $refreshToken)
     {
-        if (!$refreshToken  || is_string($refreshToken)) {
+        if ($refreshToken === '') {
             return null;
         }
         $store = $this->store;

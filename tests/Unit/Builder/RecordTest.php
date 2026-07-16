@@ -498,8 +498,9 @@ final class RecordTest extends TestCase
     public function resolvesGlobalVars(): void
     {
         $builder = new RecordBuilder(new Field(), new Field());
+        // PHP 8.1 以降、Reflection は非公開メソッドへ setAccessible() 無しでアクセスできる
+        // （8.5 で setAccessible() は非推奨）。
         $ref = new \ReflectionMethod($builder, 'resolveGlobalVars');
-        $ref->setAccessible(true);
 
         // %{...} を含まない値はそのまま返す。
         $this->assertSame('plain text', $ref->invoke($builder, 'plain text'));

@@ -252,7 +252,7 @@ docker compose exec acms bash -lc "cd /workspace && ACMS_ROOT=/var/www/html \
   分離・ロールバックする。本プラグインは独自 DB テーブルを持たず、DB 依存はコア `config` テーブルの読み取り
   （`Client::getTokenIdByBid`）のみ。
 - カバレッジ目標は「意味のある単体テストで検証できる層」（`Models` / `Builder` / `Mapper` / `Collections` /
-  `Store` / `Api\ApiBase`）で **行 90% 以上**（現状 90%超）。Zoho SDK 経由の実 HTTP 通信・SDK 初期化・
+  `Store` / `Api\ApiBase`）で **行 90% 以上**（現状 91%超）。Zoho SDK 経由の実 HTTP 通信・SDK 初期化・
   GET/POST/Hook/Engine の送信本体など、単体では意味のある形でカバーできない通信/exit 境界は実機 / E2E の
   領域として計測から除外している（`phpunit.xml.dist` の `<source>` 参照）。数字合わせのための無意味なテストは置かない。
 - PHPStan は level 6。テスト済みのロジック層は本体を修正してクリーンにし、未テストの HTTP/SDK/

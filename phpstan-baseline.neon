@@ -673,12 +673,6 @@ parameters:
 			path: app/Services/Zoho/Models/Module.php
 
 		-
-			message: '#^Call to function is_string\(\) with non\-falsy\-string will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: app/Services/Zoho/Store.php
-
-		-
 			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:findTokenByGrantToken\(\) return type with generic class com\\zoho\\api\\authenticator\\OAuthToken does not specify its types\: T$#'
 			identifier: missingType.generics
 			count: 1
@@ -705,19 +699,7 @@ parameters:
 		-
 			message: '#^PHPDoc tag @param references unknown parameter\: \$path$#'
 			identifier: parameter.notFound
-			count: 3
-			path: app/Services/Zoho/Store.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: app/Services/Zoho/Store.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
+			count: 2
 			path: app/Services/Zoho/Store.php
 
 		-

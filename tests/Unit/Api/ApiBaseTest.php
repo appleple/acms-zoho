@@ -32,8 +32,9 @@ final class ApiBaseTest extends TestCase
 
     private function resolve(RecordApi $api, string $label, string $module): mixed
     {
+        // PHP 8.1 以降、Reflection は非公開メソッドへ setAccessible() 無しでアクセスできる
+        // （8.5 で setAccessible() は非推奨）。
         $ref = new ReflectionMethod($api, 'getApiNameByLabelName');
-        $ref->setAccessible(true);
         return $ref->invoke($api, $label, $module);
     }
 

@@ -28,6 +28,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # テスト基盤は検証対象の a-blog cms マイナー（現状 3.2）に手動で合わせる。3.3 以降への minor/major 昇格は
+      # CI マトリクス（acms 3.2）とずれるため Dependabot に触らせない（3.2.x のパッチ更新だけは通す）。
+      - dependency-name: "ablogcms/testing-framework"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
 
   # 管理画面 UI（React / TypeScript / Vite）の依存。package.json はリポジトリ直下。
   # pnpm-lock.yaml も npm エコシステムで扱われる（Dependabot は pnpm ロックに対応）。

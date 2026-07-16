@@ -120,6 +120,22 @@ final class StoreFileTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('removeTokenByRefreshToken はリフレッシュトークン一致の行を削除する（基底 Store の委譲）')]
+    public function removesByRefreshToken(): void
+    {
+        $store = new FileStoreWrapper($this->path);
+        $store->getStore()->saveToken($this->token('client-a')); // refresh-client-a
+        $store->getStore()->saveToken($this->token('client-b')); // refresh-client-b
+
+        $store->removeTokenByRefreshToken('refresh-client-a');
+
+        $this->assertNull($store->findTokenById('1'));
+        $found = $store->findTokenById('2');
+        $this->assertInstanceOf(OAuthToken::class, $found);
+        $this->assertSame('client-b', $found->getClientId());
+    }
+
+    #[Test]
     #[TestDox('findTokenByGrantToken は該当が無ければ null を返す')]
     public function findTokenByGrantTokenReturnsNull(): void
     {
