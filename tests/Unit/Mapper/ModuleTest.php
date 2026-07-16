@@ -38,8 +38,8 @@ final class ModuleTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('isModuleExists: 一致すれば true、無ければ問い合わせた API 名（文字列）を返す')]
-    public function isModuleExistsReturnsTrueOrTheMissingApiName(): void
+    #[TestDox('isModuleExists: 一致すれば true、無ければ false を返す')]
+    public function isModuleExistsReturnsBool(): void
     {
         $mapper = $this->mapper([
             $this->zohoModule('Leads', 'リード', 'リード'),
@@ -47,7 +47,7 @@ final class ModuleTest extends TestCase
         ]);
 
         $this->assertTrue($mapper->isModuleExists('Contacts'));
-        $this->assertSame('Deals', $mapper->isModuleExists('Deals'));
+        $this->assertFalse($mapper->isModuleExists('Deals'));
     }
 
     #[Test]

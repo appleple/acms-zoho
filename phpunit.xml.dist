@@ -19,7 +19,7 @@
     <source>
         <include>
             <!--
-                プラグインの PHP ソートは app/。ここを計測対象の起点にし、単体テストで意味のある形では
+                プラグインの PHP ソースは app/。ここを計測対象の起点にし、単体テストで意味のある形では
                 カバーできない通信/exit 境界を下で除外する。src/ は管理画面 UI（TypeScript）なので対象外。
             -->
             <directory suffix=".php">app</directory>
@@ -52,11 +52,6 @@
             <file>app/Services/Zoho/Api/NoteApi.php</file>
             <file>app/Services/Zoho/Api/TagApi.php</file>
             <file>app/Services/Zoho/Api/UserApi.php</file>
-            <!--
-                名前空間が Acms\Plugins\Zoho\Models（ディレクトリと不整合）で PSR-4 では解決されない
-                未使用のデッドコード。到達不能なため計測対象から除外する。
-            -->
-            <file>app/Services/Zoho/Models/Module.php</file>
         </exclude>
     </source>
     <php>

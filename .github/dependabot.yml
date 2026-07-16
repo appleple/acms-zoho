@@ -1,6 +1,6 @@
 # ワークフローが使う GitHub Actions・開発用 Composer 依存・フロントエンド(npm/pnpm)依存を最新に保つ。
-# patch / minor バンプは CI 通過後に .github/workflows/dependabot-auto-merge.yml が自動マージし、
-# 破壊的（major）バンプはレビューして手動でマージする。
+# patch / minor バンプは CI 通過後に .github/workflows/dependabot-auto-merge.yml が自動マージする。
+# 破壊的（major）バンプは Dependabot では提案しない（各エコシステムの ignore を参照）。必要時に手動で上げる。
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -14,6 +14,10 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # メジャー更新は自分で上げる。Dependabot からは PR を出さない。
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # ルートの composer.json（開発用: testing-framework / phpstan / phpcs / phpunit 等）。
   # ランタイム依存（app/composer.json の Zoho SDK）は配布物に同梱するため手動管理とする。
@@ -29,10 +33,13 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # テスト基盤は検証対象の a-blog cms マイナー（現状 3.2）に手動で合わせる。3.3 以降への minor/major 昇格は
-      # CI マトリクス（acms 3.2）とずれるため Dependabot に触らせない（3.2.x のパッチ更新だけは通す）。
+      # メジャー更新は自分で上げる。Dependabot からは PR を出さない。
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # テスト基盤は検証対象の a-blog cms マイナー（現状 3.2）に手動で合わせる。3.3 以降への minor 昇格は
+      # CI マトリクス（acms 3.2）とずれるため Dependabot に触らせない（3.2.x のパッチ更新だけは通す。major は上の * で無視済み）。
       - dependency-name: "ablogcms/testing-framework"
-        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+        update-types: ["version-update:semver-minor"]
 
   # 管理画面 UI（React / TypeScript / Vite）の依存。package.json はリポジトリ直下。
   # pnpm-lock.yaml も npm エコシステムで扱われる（Dependabot は pnpm ロックに対応）。
@@ -47,3 +54,7 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # メジャー更新は自分で上げる。Dependabot からは PR を出さない。
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

@@ -31,9 +31,9 @@ class Module extends Mapper
      * 指定されたAPI名がモジュールのリストに存在するかどうか
      *
      * @param string $apiName
-     * @return boolean|string 存在しなかったAPI名を返す
+     * @return bool
      */
-    public function isModuleExists(string $apiName)
+    public function isModuleExists(string $apiName): bool
     {
         if (empty($this->modules) || !is_array($this->modules)) {
             return false;
@@ -45,7 +45,7 @@ class Module extends Mapper
             }
         }
 
-        return $apiName;
+        return false;
     }
 
     /**
