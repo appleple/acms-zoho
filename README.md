@@ -229,11 +229,14 @@ composer analyse   # PHPStan（level 6、PHP 8.1-8.5 レンジ）
 composer test      # PHPUnit（Unit + Integration）
 ```
 
-カバレッジ（pcov）:
+カバレッジ:
+
+計測ドライバは **PCOV**（appleple/acms イメージ同梱。Xdebug は入っていない）。PCOV は既定で無効
+（`pcov.enabled=0`）なので、実行時に有効化して計測する。下記の `composer coverage` がその起動を
+まとめている（`php -d pcov.enabled=1 -d pcov.directory=app vendor/bin/phpunit --coverage-text` 相当）。
 
 ```bash
-docker compose exec acms bash -lc "cd /workspace && ACMS_ROOT=/var/www/html \
-  php -d pcov.enabled=1 -d pcov.directory=/workspace/app vendor/bin/phpunit --coverage-text"
+docker compose exec acms bash -lc "cd /workspace && composer coverage"
 ```
 
 ローカルで本体パスやDB接続を変えたい場合は、`*.dist` をコピーした `phpunit.xml` / `phpstan.neon` /

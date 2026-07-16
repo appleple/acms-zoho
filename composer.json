@@ -28,6 +28,7 @@
         "post-install-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/phpcompatibility/php-compatibility",
         "post-update-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/phpcompatibility/php-compatibility",
         "test": "vendor/bin/phpunit",
+        "coverage": "@php -d pcov.enabled=1 -d pcov.directory=app vendor/bin/phpunit --coverage-text",
         "lint": "vendor/bin/phpcs --standard=phpcs.xml.dist",
         "format": "vendor/bin/phpcbf --standard=phpcs.xml.dist",
         "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
