@@ -10,6 +10,11 @@
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "packageManager": "pnpm@10.29.1",
+  "pnpm": {
+    "overrides": {
+      "@babel/core": "^7.29.6"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/appleple/acms-zoho.git"
@@ -25,7 +30,7 @@
     "@types/react-dom": "^19.1.5",
     "@vitejs/plugin-react": "^4.5.0",
     "typescript": "^5.8.3",
-    "vite": "^6.4.2"
+    "vite": "^6.4.3"
   },
   "dependencies": {
     "classnames": "^2.5.1",
