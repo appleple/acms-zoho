@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Acms\Plugins\Zoho\Tests\Unit\Builder;
 
+use Acms\Plugins\Zoho\Services\Zoho\Api\RecordApi;
 use Acms\Plugins\Zoho\Services\Zoho\Builder\Record as RecordBuilder;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
 use Acms\TestingFramework\TestCase;
@@ -410,6 +411,32 @@ final class RecordTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('resolveLookupFields: 処理済みに無ければ Zoho API 検索で参照 ID を解決する')]
+    public function resolvesLookupViaApiFallback(): void
+    {
+        $config = $this->field([
+            'zoho_related_scope' => ['Cases'],
+            'zoho_related_lookup_id' => [$this->json(['apiName' => 'Contact_Id'])],
+            'zoho_related_target_scope' => ['Contacts'],
+            'zoho_related_compare_field' => [$this->json(['apiName' => 'Email'])],
+            'zoho_related_cms_field' => ['email'],
+        ]);
+        $builder = new RecordBuilder(new Field(), $config);
+
+        $case = (new RecordModel('Cases', 'insert'))->addField('Contact_Id', 'a@example.com');
+
+        // 処理済みレコードは空なので、API 検索（searchByUniqueKey）にフォールバックする。
+        $recordApi = $this->createMock(RecordApi::class);
+        $recordApi->method('searchByUniqueKey')
+            ->with('Contacts', 'Email', 'a@example.com')
+            ->willReturn(['id' => 'API-1']);
+
+        $builder->resolveLookupFields($case, [], $recordApi);
+
+        $this->assertSame('API-1', $case->getField('Contact_Id'));
+    }
+
+    #[Test]
     #[TestDox('assignModuleByPriority: 既存レコードが見つかれば update として確定する')]
     public function assignsUpdateWhenExistingRecordFound(): void
     {
@@ -464,6 +491,20 @@ final class RecordTest extends TestCase
         $this->assertSame('Leads', $records[0]->getModuleApiName());
         $this->assertSame('insert', $records[0]->getType());
         $this->assertNull($records[0]->getId());
+    }
+
+    #[Test]
+    #[TestDox('resolveGlobalVars: %{...} が無ければ素通し、未解決のグローバル変数は空に落とす')]
+    public function resolvesGlobalVars(): void
+    {
+        $builder = new RecordBuilder(new Field(), new Field());
+        $ref = new \ReflectionMethod($builder, 'resolveGlobalVars');
+        $ref->setAccessible(true);
+
+        // %{...} を含まない値はそのまま返す。
+        $this->assertSame('plain text', $ref->invoke($builder, 'plain text'));
+        // 存在しないグローバル変数は空文字に落とす（未解決プレースホルダを残さない）。
+        $this->assertSame('', $ref->invoke($builder, '%{__ZOHO_UNKNOWN_VAR__}'));
     }
 
     #[Test]

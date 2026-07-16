@@ -241,15 +241,21 @@ docker compose exec acms bash -lc "cd /workspace && ACMS_ROOT=/var/www/html \
 
 ### テスト方針
 
-- **Unit**（`Acms\TestingFramework\TestCase`）: フォーム値・拡張アプリ設定（`Field`）を注入して検証できる
-  純粋なドメインロジック（`Services/Zoho` の `Models` / `Builder` / `Mapper` / `Collections`）。
+- **Unit**（`Acms\TestingFramework\TestCase`）: 通信を伴わない検証可能なロジックを対象にする。
+  - フォーム値・拡張アプリ設定（`Field`）を注入して決定的に検証できる純粋なドメインロジック
+    （`Services/Zoho` の `Models` / `Builder` / `Mapper` / `Collections`）。
+  - ラベル → API 名の解決（`Api\ApiBase`）、トークンの CSV 永続化（`Store` / `Store\File` / `CustomFileStore`：
+    一時ファイルで往復検証）。
+  - HTTP/SDK に囲まれた純粋ヘルパ（`RecordApi` の日付/数値/時刻変換、`Engine` の依存レベル計算）は、
+    Client を要するコンストラクタを避けて Reflection で直接検証する。
 - **Integration**（`Acms\TestingFramework\DatabaseTestCase`）: DB 依存ロジック。トランザクションで各テストを
   分離・ロールバックする。本プラグインは独自 DB テーブルを持たず、DB 依存はコア `config` テーブルの読み取り
   （`Client::getTokenIdByBid`）のみ。
-- カバレッジ目標はドメインロジック層（`app/Services` の変換・モデル）で行 90% 以上。Zoho SDK を介した
-  実 HTTP 通信・トークン永続化（CSV）・GET/POST/Hook/Engine などの HTTP 終端は実機 / E2E の領域とし、
-  カバレッジ計測対象から除外している（`phpunit.xml.dist` の `<source>` 参照）。
-- PHPStan は level 6。テスト済みドメインロジック層は本体を修正してクリーンにし、未テストの HTTP/SDK/
+- カバレッジ目標は「意味のある単体テストで検証できる層」（`Models` / `Builder` / `Mapper` / `Collections` /
+  `Store` / `Api\ApiBase`）で **行 90% 以上**（現状 90%超）。Zoho SDK 経由の実 HTTP 通信・SDK 初期化・
+  GET/POST/Hook/Engine の送信本体など、単体では意味のある形でカバーできない通信/exit 境界は実機 / E2E の
+  領域として計測から除外している（`phpunit.xml.dist` の `<source>` 参照）。数字合わせのための無意味なテストは置かない。
+- PHPStan は level 6。テスト済みのロジック層は本体を修正してクリーンにし、未テストの HTTP/SDK/
   インフラ層の既存型負債は `phpstan-baseline.neon` に捕捉している。新規・変更コードは level 6 で検査される。
 
 ### CI（GitHub Actions）
