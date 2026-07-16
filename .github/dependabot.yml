@@ -1,4 +1,4 @@
-# ワークフローが使う GitHub Actions と、開発用 Composer 依存を最新に保つ。
+# ワークフローが使う GitHub Actions・開発用 Composer 依存・フロントエンド(npm/pnpm)依存を最新に保つ。
 # patch / minor バンプは CI 通過後に .github/workflows/dependabot-auto-merge.yml が自動マージし、
 # 破壊的（major）バンプはレビューして手動でマージする。
 version: 2
@@ -23,6 +23,20 @@ updates:
       interval: "weekly"
     groups:
       composer-dev:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # 管理画面 UI（React / TypeScript / Vite）の依存。package.json はリポジトリ直下。
+  # pnpm-lock.yaml も npm エコシステムで扱われる（Dependabot は pnpm ロックに対応）。
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      npm:
         patterns:
           - "*"
         update-types:
