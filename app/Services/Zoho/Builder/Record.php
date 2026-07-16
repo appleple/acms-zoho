@@ -24,7 +24,7 @@ class Record extends Builder
     public $config;
 
     /**
-     * @var array 左から優先順位の強いモジュールを指定
+     * @var list<string> 左から優先順位の強いモジュールを指定
      * ここで指定されたモジュールは、左から入力データを確認してなければ配列の次に指定してあるモジュールを確認します。
      * もし配列内にあるモジュールに追加・変更のフィールドが設定されているが、既存データが存在しない場合、配列最後のモジュールにデータが追加されます。
      * */
@@ -36,7 +36,7 @@ class Record extends Builder
     /**
      * コンストラクタ
      *
-     * @param Field $field　フォームのフィールド
+     * @param Field $field フォームのフィールド
      * @param Field $config FormIDの拡張アプリ設定
      */
     public function __construct(Field $field, Field $config)
@@ -51,7 +51,7 @@ class Record extends Builder
      * $this->fieldからレコード情報を取得し、RecordModelの配列を返す
      * 優先順位設定がある場合は、APIで検索してモジュールを確定する
      *
-     * @param ZohoApi $api ZohoApiのインスタンス（優先順位処理に必要）
+     * @param object|null $recordApi RecordApi のインスタンス（優先モジュール確定に必要。null なら pending のまま返す）
      * @return RecordModel[]
      */
     public function buildRecords($recordApi = null)
@@ -110,13 +110,13 @@ class Record extends Builder
      * トポロジカルソートの訪問処理（深さ優先探索）
      *
      * @param string $module モジュール名
-     * @param array $dependencies 依存関係マップ
-     * @param array $grouped モジュールごとにグループ化されたレコード
-     * @param array $visited 訪問完了フラグ
-     * @param array $visiting 訪問中フラグ（循環依存検出用）
-     * @param array $sorted ソート結果（参照渡し）
+     * @param array<string, list<string>> $dependencies 依存関係マップ
+     * @param array<string, list<RecordModel>> $grouped モジュールごとにグループ化されたレコード
+     * @param array<string, bool> $visited 訪問完了フラグ
+     * @param array<string, bool> $visiting 訪問中フラグ（循環依存検出用）
+     * @param list<RecordModel> $sorted ソート結果（参照渡し）
      */
-    private function topologicalSortVisit(string $module, array $dependencies, array $grouped, array &$visited, array &$visiting, array &$sorted)
+    private function topologicalSortVisit(string $module, array $dependencies, array $grouped, array &$visited, array &$visiting, array &$sorted): void
     {
         // 既に訪問完了の場合はスキップ
         if (isset($visited[$module])) {
@@ -241,9 +241,9 @@ class Record extends Builder
      * a-blog cms のフィールド値をZohoフィールド名でマッピングする
      *
      * @param RecordModel $record マッピング対象のレコード
-     * @param array|null $groupArr グループフィールドのキー配列
+     * @param array<int, string>|null $groupArr グループフィールドのキー配列
      * @param int $index グループフィールドのインデックス
-     * @return array マッピングされたフィールド配列 ['Zohoフィールド名' => '値']
+     * @return array<string, mixed> マッピングされたフィールド配列 ['Zohoフィールド名' => '値']
      */
     private function mapFields(RecordModel $record, ?array $groupArr, int $index)
     {
@@ -427,7 +427,7 @@ class Record extends Builder
      * 通常フィールドの場合: 配列の全値を"-"で連結
      *
      * @param string $key a-blog cms のフィールド名
-     * @param array|null $groupArr グループフィールドのキー配列
+     * @param array<int, string>|null $groupArr グループフィールドのキー配列
      * @param int $index グループフィールドのインデックス
      * @return mixed フィールドの値
      */
@@ -496,7 +496,7 @@ class Record extends Builder
      * insertScopeを取得
      *
      * @param int $groupIndex
-     * @return array
+     * @return list<string>
      */
     private function getInsertScopes(int $groupIndex)
     {
@@ -509,7 +509,7 @@ class Record extends Builder
      * updateScopeを取得
      *
      * @param int $groupIndex
-     * @return array
+     * @return list<string>
      */
     private function getUpdateScopes(int $groupIndex)
     {
@@ -568,7 +568,7 @@ class Record extends Builder
      * 指定モジュールのルックアップフィールド設定を取得
      *
      * @param string $moduleName モジュール名
-     * @return array ルックアップ設定の配列 [['lookupId' => '', 'targetScope' => '', 'compareField' => '', 'cmsField' => ''], ...]
+     * @return list<array<string, mixed>> ルックアップ設定の配列 [['lookupId' => '', 'targetScope' => '', 'compareField' => '', 'cmsField' => ''], ...]
      */
     private function getLookupFieldsConfig(string $moduleName): array
     {
@@ -600,7 +600,7 @@ class Record extends Builder
     /**
      * モジュール間の依存関係マップを作成
      *
-     * @return array ['Cases' => ['Accounts'], 'Contacts' => ['Accounts'], ...]
+     * @return array<string, list<string>> ['Cases' => ['Accounts'], 'Contacts' => ['Accounts'], ...]
      */
     public function getDependencyMap(): array
     {
@@ -652,9 +652,9 @@ class Record extends Builder
      *
      * @param RecordModel $record 対象レコード
      * @param RecordModel[] $processedRecords 処理済みレコード配列
-     * @param RecordApi $recordApi レコードAPI
+     * @param \Acms\Plugins\Zoho\Services\Zoho\Api\RecordApi|null $recordApi レコードAPI（null なら処理済みレコードのみで解決）
      */
-    public function resolveLookupFields(RecordModel $record, array $processedRecords, $recordApi)
+    public function resolveLookupFields(RecordModel $record, array $processedRecords, $recordApi): void
     {
         $lookupConfigs = $this->getLookupFieldsConfig($record->getModuleApiName());
 

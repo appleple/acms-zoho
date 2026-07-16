@@ -22,6 +22,18 @@ node_modules/
 vendor
 .phplint-cache
 
+# PHPUnit / PHPStan（テスト・静的解析のキャッシュとカバレッジ）
+.phpunit.cache/
+.phpunit.result.cache
+/coverage/
+.phpstan.cache/
+
+# ローカル設定上書き（*.dist をコピーして環境ごとに調整。コミットしない）
+.env
+/phpunit.xml
+/phpcs.xml
+/phpstan.neon
+
 ## app
 /Zoho
 

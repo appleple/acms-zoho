@@ -1,26 +1,82 @@
 name: CI
 
+# 本体同梱の appleple/acms オールインワンイメージ（core + composer）と MySQL を同梱の docker-compose.yml
+# で起動し、コンテナ内で各チェックを実行する。イメージタグは {acms}-php{php} 形式で、phpunit ジョブは
+# これを ACMS_IMAGE_TAG（docker-compose.yml が参照）でマトリクス展開する。
+#
+# ブランチ保護では個々のマトリクスセルではなく集約ジョブ "ci" を必須チェックにすること。対応 PHP /
+# a-blog cms バージョンを増やしてもルール側の変更が要らない。
 on: [push, pull_request]
 
 jobs:
-  # PHP 側: コーディング規約 + PHP バージョン互換チェック（PHPCompatibility testVersion 8.1-8.5）
-  lint:
-    name: PHP CodeSniffer
+  # PHP 品質チェック: phpcs（PHPCompatibility testVersion 8.1-8.5）+ PHPStan（phpVersion 8.1-8.5）。
+  # ランタイム PHP に依らずレンジ全体を解析するので 1 回でよい。PHPStan は本体コア（/var/www/html/php）と
+  # 同梱 Zoho SDK（app/vendor）のシンボル解決が要るため、イメージ内で app/vendor も入れて実行する。
+  quality:
+    name: Lint & Static analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          tools: composer
+      - name: Start a-blog cms + MySQL
+        run: docker compose up -d --wait
 
-      - name: Install dependencies
-        run: composer install --no-progress --prefer-dist
+      - name: Install dev dependencies
+        run: docker compose exec -T acms bash -lc "cd /workspace && composer install --no-interaction --no-progress"
+
+      - name: Install bundled runtime dependencies (Zoho SDK -> app/vendor)
+        run: docker compose exec -T acms bash -lc "cd /workspace && composer install --working-dir=app --no-interaction --no-progress"
 
       - name: Coding standards (PHP_CodeSniffer + PHPCompatibility)
-        run: composer lint
+        run: docker compose exec -T acms bash -lc "cd /workspace && composer lint"
+
+      - name: Static analysis (PHPStan)
+        run: docker compose exec -T acms bash -lc "cd /workspace && composer analyse"
+
+      - name: Show a-blog cms logs on failure
+        if: failure()
+        run: docker compose logs acms
+
+  # PHPUnit を対応 PHP（と a-blog cms）バージョンごとに実行する。
+  phpunit:
+    name: PHPUnit (a-blog cms ${{ matrix.acms }} / PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # a-blog cms バージョンが増えたらここに追加する（例: '3.3'）。特定の {acms}-php{php} イメージが
+        # 未公開なら exclude: でその組み合わせを外す。ablogcms/testing-framework は a-blog cms マイナーに
+        # 追従するので、各セルで {acms}.* に固定する。
+        acms: ['3.2']
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+    env:
+      ACMS_IMAGE_TAG: ${{ matrix.acms }}-php${{ matrix.php }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start a-blog cms ${{ matrix.acms }} on PHP ${{ matrix.php }}
+        run: docker compose up -d --wait
+
+      # テスト基盤を検証対象の a-blog cms バージョンに固定して導入する。composer.lock をコミットしている
+      # ため composer install だとロック済みバージョンが入り constraint 変更が無視される。composer require
+      # なら lock の有無に関わらず制約を適用できる。matrix.acms はワークフロー定義の信頼値。
+      - name: Install dev dependencies (testing-framework matched to a-blog cms ${{ matrix.acms }})
+        run: docker compose exec -T acms bash -lc "cd /workspace && composer require --dev --no-interaction --no-progress 'ablogcms/testing-framework:${{ matrix.acms }}.*'"
+
+      - name: Install bundled runtime dependencies (Zoho SDK -> app/vendor)
+        run: docker compose exec -T acms bash -lc "cd /workspace && composer install --working-dir=app --no-interaction --no-progress"
+
+      - name: Create the test database schema
+        # acms-create-database は単独 CLI で phpunit.xml の <env ACMS_ROOT> を読まないため明示的に渡す。
+        # オールインワンイメージの本体コアは /var/www/html。
+        run: docker compose exec -T acms bash -lc "cd /workspace && ACMS_ROOT=/var/www/html vendor/bin/acms-create-database"
+
+      - name: Run PHPUnit
+        run: docker compose exec -T acms bash -lc "cd /workspace && vendor/bin/phpunit"
+
+      - name: Show a-blog cms logs on failure
+        if: failure()
+        run: docker compose logs acms
 
   # JS 側: 型チェック + Vite ビルド。管理画面 UI は React/TypeScript のため CI で検証する。
   js:
@@ -35,7 +91,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: '.node-version'
           cache: pnpm
 
       - name: Install dependencies
@@ -43,3 +99,20 @@ jobs:
 
       - name: Build (tsc + vite)
         run: pnpm run build
+
+  # 単一の必須ステータスチェック。quality / phpunit（全マトリクス）/ js が全て成功したときだけ緑。
+  # ブランチ保護ではこの "ci" ジョブを必須チェックに指定する。
+  ci:
+    name: CI success
+    runs-on: ubuntu-latest
+    needs: [quality, phpunit, js]
+    if: always()
+    steps:
+      - name: Verify required jobs succeeded
+        run: |
+          echo "quality=${{ needs.quality.result }} phpunit=${{ needs.phpunit.result }} js=${{ needs.js.result }}"
+          if [ "${{ needs.quality.result }}" != "success" ] || [ "${{ needs.phpunit.result }}" != "success" ] || [ "${{ needs.js.result }}" != "success" ]; then
+            echo "::error::A required job failed."
+            exit 1
+          fi
+          echo "All required jobs passed."

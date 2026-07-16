@@ -7,7 +7,7 @@ use Acms\Plugins\Zoho\Services\Zoho\Mapper;
 
 class ModuleField extends Mapper
 {
-    /** @var array Zohoから取得したフィールドのリスト */
+    /** @var array<int, mixed> Zohoから取得したフィールドのリスト */
     public $fields;
 
     /** @var ACMSField FormIDの拡張アプリ設定 */
@@ -16,7 +16,7 @@ class ModuleField extends Mapper
     /**
      * コンストラクタ
      *
-     * @param array $fields
+     * @param array<int, mixed> $fields
      * @param ACMSField $config
      */
     public function __construct(array $fields, ACMSField $config)
@@ -28,7 +28,7 @@ class ModuleField extends Mapper
     /**
      * フィールドをフロントエンド用の形式に変換する
      *
-     * @return array フィールド情報の配列
+     * @return array<int, array<string, mixed>> フィールド情報の配列
      */
     public function toArray()
     {
@@ -88,7 +88,7 @@ class ModuleField extends Mapper
     /**
      * 必須フィールドのみを取得
      *
-     * @return array 必須フィールドの配列
+     * @return array<int, array<string, mixed>> 必須フィールドの配列
      */
     public function getRequiredFields(): array
     {

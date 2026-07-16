@@ -27,6 +27,16 @@ class RecordDependencyLevel
     }
 
     /**
+     * 依存レベルを取得
+     *
+     * @return int
+     */
+    public function getLevel(): int
+    {
+        return $this->level;
+    }
+
+    /**
      * レコードを追加
      *
      * @param Record $record

@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!-- PHP のファイルがコーディング規約に則っているかを診断するための phpcs 設定ファイル -->
+<ruleset name="phpcs rules">
+    <rule ref="PSR12">
+      <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+    </rule>
+
+    <!-- PHPCompatibility ルールセットで対象 PHP レンジの互換性を検査 -->
+    <rule ref="PHPCompatibility">
+        <!-- PHP 8.5 の __destruct-after-constructor-exit 警告。対象レンジ 8.1-8.5 では無関係。 -->
+        <exclude name="PHPCompatibility.FunctionDeclarations.RemovedCallingDestructAfterConstructorExit.NeedsInspection"/>
+        <!-- fgetcsv() の $escape 既定変更は PHP 9.0 の前方互換警告。対象レンジ外。 -->
+        <exclude name="PHPCompatibility.ParameterValues.RemovedProprietaryCSVEscaping.DeprecatedParamNotPassed"/>
+    </rule>
+    <config name="testVersion" value="8.1-8.5"/>
+
+    <!-- 行長の警告は無効化（Zoho API のフィールドマッピング等、長い行は整形すると可読性を損なうため） -->
+    <rule ref="Generic.Files.LineLength">
+        <severity>0</severity>
+    </rule>
+
+    <!-- 拡張子が php のものにだけ適用 -->
+    <arg name="extensions" value="php" />
+
+    <!-- 出力に色を適用 -->
+    <arg name="colors" />
+
+    <!-- オプション p:進捗表示  s:エラー表示時にルールを表示 -->
+    <arg value="ps" />
+
+    <!-- 適用するファイル・ディレクトリ（src/ は管理画面 UI の TypeScript なので対象外） -->
+    <file>app</file>
+    <file>tests</file>
+
+    <!-- 除外するファイル・ディレクトリ（プラグイン同梱ランタイム依存・ビルド成果物を含む） -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/dist/*</exclude-pattern>
+    <exclude-pattern>*/build/*</exclude-pattern>
+</ruleset>

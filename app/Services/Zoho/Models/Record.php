@@ -50,31 +50,31 @@ class Record
     /** @var mixed 比較フィールドの値（リレーション処理用） */
     public $compareFieldValue;
 
-    /** @var array ルックアップフィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> ルックアップフィールドのリスト [フィールド名 => true] */
     private $lookupFields = [];
 
-    /** @var array ピックリストフィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> ピックリストフィールドのリスト [フィールド名 => true] */
     private $picklistFields = [];
 
-    /** @var array 複数行テキストフィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> 複数行テキストフィールドのリスト [フィールド名 => true] */
     private $textareaFields = [];
 
-    /** @var array 日付フィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> 日付フィールドのリスト [フィールド名 => true] */
     private $dateFields = [];
 
-    /** @var array 日時フィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> 日時フィールドのリスト [フィールド名 => true] */
     private $datetimeFields = [];
 
-    /** @var array 数値フィールドのリスト [フィールド名 => データタイプ] */
+    /** @var array<string, string> 数値フィールドのリスト [フィールド名 => データタイプ] */
     private $numberFields = [];
 
-    /** @var array 時刻フィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> 時刻フィールドのリスト [フィールド名 => true] */
     private $timeFields = [];
 
-    /** @var array 複数選択ルックアップフィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> 複数選択ルックアップフィールドのリスト [フィールド名 => true] */
     private $multiselectlookupFields = [];
 
-    /** @var array オーナー/ユーザールックアップフィールドのリスト [フィールド名 => true] */
+    /** @var array<string, bool> オーナー/ユーザールックアップフィールドのリスト [フィールド名 => true] */
     private $userLookupFields = [];
 
     /** @var string|null メモのタイトル */
@@ -178,7 +178,7 @@ class Record
     /**
      * 複数のフィールドを一括追加
      *
-     * @param array $fields フィールドの配列
+     * @param array<string, mixed> $fields フィールドの配列
      * @return self
      */
     public function addFields(array $fields)
@@ -192,7 +192,7 @@ class Record
     /**
      * 全フィールドを取得
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function getFields(): array
     {
@@ -543,7 +543,7 @@ class Record
     /**
      * 配列からレコードオブジェクトを生成
      *
-     * @param array $data
+     * @param array<string, mixed> $data
      * @return self
      */
     public static function fromArray(array $data): self
