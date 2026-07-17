@@ -16,9 +16,9 @@
 declare(strict_types=1);
 
 // 本体起動より前に composer のオートローダ（ClassLoader）を確保しておく。
-$composerAutoloader = require __DIR__ . '/../vendor/autoload.php';
+$composerAutoloader = require __DIR__ . '/../../vendor/autoload.php';
 
-require_once __DIR__ . '/../vendor/ablogcms/testing-framework/bootstrap.php';
+require_once __DIR__ . '/../../vendor/ablogcms/testing-framework/bootstrap.php';
 
 // Why not コアのプラグインオートローダに任せないか:
 // 本体起動時、コアはプラグイン用オートローダを prepend 登録し、プラグインクラスを
@@ -30,7 +30,7 @@ require_once __DIR__ . '/../vendor/ablogcms/testing-framework/bootstrap.php';
 $composerAutoloader->unregister();
 $composerAutoloader->register(true);
 
-$runtimeAutoload = __DIR__ . '/../app/vendor/autoload.php';
+$runtimeAutoload = __DIR__ . '/../../app/vendor/autoload.php';
 if (is_file($runtimeAutoload)) {
     require_once $runtimeAutoload;
 } else {

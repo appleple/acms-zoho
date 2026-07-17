@@ -43,7 +43,7 @@ parameters:
         # 当該テストに限って無視する。
         -
             identifier: missingType.generics
-            path: tests/Unit/Store/CustomFileStoreTest.php
+            path: tests/phpunit/Unit/Store/CustomFileStoreTest.php
         -
             identifier: missingType.generics
-            path: tests/Unit/Store/StoreFileTest.php
+            path: tests/phpunit/Unit/Store/StoreFileTest.php
