@@ -30,7 +30,9 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_redirect_url', $redirectUrl);
             $session->save();
 
-            // accounts URL は管理画面で保存済みのデータセンター設定に連動（既定 US=accounts.zoho.com）。
+            // 認可の起点となる accounts URL。初回は既定 US（accounts.zoho.com）から開始し、
+            // 非 US ユーザーは Zoho の Multi-DC でログイン時に地域へ自動リダイレクトされる。
+            // 2 回目以降は前回のコールバックで自動判定・保存した DC の地域サーバーを使う。
             $url = ZohoClient::oauthAccountsBaseUrl(ZohoClient::getDataCenter(BID)) . '/oauth/v2/auth?' . http_build_query([
                 'scope' => $scope,
                 'client_id' => $clientId,

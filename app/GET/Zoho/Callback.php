@@ -25,10 +25,25 @@ class Callback extends Zoho
         $session->delete('zoho_redirect_url');
         $session->save();
 
+        // データセンターは Zoho の Multi-DC コールバック（location / accounts-server）から自動判定する。
+        // 手動設定は不要。接続環境（production/sandbox/developer）のみ管理画面の設定を参照する。
+        $location = $this->Get->get('location', '');
+        $accountsServer = $this->Get->get('accounts-server', '');
+
         try {
-            // 接続環境・データセンターは管理画面の設定フォーム（ACMS_POST_Config）で
-            // 事前に config へ保存済み。initialize() 内の環境解決がそれを参照する。
             $zohoClient = new ZohoClient();
+
+            // 判定できた DC は当該リクエストの初期化に反映（override）。判定不能時は既定 us で続行。
+            $dataCenter = ZohoClient::detectDataCenter($location, $accountsServer);
+            if ($dataCenter !== null) {
+                $zohoClient->setDataCenter($dataCenter);
+            } else {
+                Logger::warning('【Zoho plugin】データセンターを自動判定できませんでした。既定(us)で続行します。', [
+                    'location' => (string) $location,
+                    'accounts_server' => (string) $accountsServer,
+                ]);
+            }
+
             $zohoClientExists = $zohoClient->initialize(
                 $clientId,
                 $clientSecret,
@@ -40,12 +55,12 @@ class Callback extends Zoho
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 
-            $DB = Database::singleton(dsn());
-            $SQL = SQL::newInsert('config');
-            $SQL->addInsert('config_key', 'zoho_token_id');
-            $SQL->addInsert('config_value', $zohoClient->getTokenId());
-            $SQL->addInsert('config_blog_id', BID);
-            $DB->query($SQL->get(dsn()), 'exec');
+            // 判定した DC を config へ保存（表示・次回認証・以降の API 呼び出しで参照）。
+            if ($dataCenter !== null) {
+                $this->upsertBlogConfig(BID, 'zoho_data_center', $dataCenter);
+            }
+
+            $this->upsertBlogConfig(BID, 'zoho_token_id', (string) $zohoClient->getTokenId());
 
             $userInfo = (new ZohoApi($zohoClient))->user()->getCurrentUser();
             $userName = $userInfo['email'] ?? null;
@@ -67,5 +82,29 @@ class Callback extends Zoho
         ));
 
         redirect($base_uri);
+    }
+
+    /**
+     * ブログ基底 config（config_set_id=null）へ 1 キーを upsert する。
+     *
+     * loadBlogConfig が読むスコープ（config_blog_id=bid, config_set_id=null）へ、既存行を
+     * 削除してから挿入する。再認証で同一キーが重複しないようにするため delete→insert とする。
+     */
+    private function upsertBlogConfig(int $bid, string $key, string $value): void
+    {
+        $DB = Database::singleton(dsn());
+
+        $delete = SQL::newDelete('config');
+        $where = SQL::newWhere();
+        $where->addWhereOpr('config_blog_id', $bid);
+        $where->addWhereOpr('config_key', $key);
+        $delete->addWhere($where);
+        $DB->query($delete->get(dsn()), 'exec');
+
+        $insert = SQL::newInsert('config');
+        $insert->addInsert('config_key', $key);
+        $insert->addInsert('config_value', $value);
+        $insert->addInsert('config_blog_id', $bid);
+        $DB->query($insert->get(dsn()), 'exec');
     }
 }

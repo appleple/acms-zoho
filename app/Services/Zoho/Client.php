@@ -43,6 +43,12 @@ class Client
 
     private $dataCenterEnv = 'production';
 
+    /**
+     * @var string|null 認証コールバックで判定した DC を、当該リクエスト内の環境解決で優先させる上書き値。
+     * config への保存は同一リクエストの loadBlogConfig キャッシュに反映されないため、この上書きで確実に効かせる。
+     */
+    private $dataCenterOverride = null;
+
     private $loggerFilePath = 'php_zoho_sdk.log';
 
     private $loggerLevel = 'info';
@@ -299,7 +305,9 @@ class Client
      */
     private function resolveEnvironment(): Environment
     {
-        $dcClass = self::dataCenterClass(self::getDataCenter(BID));
+        // データセンターは認証時に Zoho から自動判定する。当該リクエスト内では override を優先し、
+        // 未設定時は config 保存値（前回認証で保存）→ 既定 us にフォールバックする。
+        $dcClass = self::dataCenterClass($this->dataCenterOverride ?? self::getDataCenter(BID));
 
         // 環境文字列 → 各 DataCenter クラスの静的メソッド
         return match (self::getEnvironment(BID)) {
@@ -328,6 +336,54 @@ class Client
         $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_data_center', 'us')));
 
         return in_array($value, self::DATA_CENTERS, true) ? $value : 'us';
+    }
+
+    /**
+     * 当該リクエスト内の環境解決で優先させる DC を設定する（認証コールバックの自動判定結果を渡す）。
+     * null を渡すと override を解除し、config 保存値／既定にフォールバックする。
+     */
+    public function setDataCenter(?string $dataCenter): void
+    {
+        if ($dataCenter === null) {
+            $this->dataCenterOverride = null;
+            return;
+        }
+        $value = strtolower(trim($dataCenter));
+        $this->dataCenterOverride = in_array($value, self::DATA_CENTERS, true) ? $value : null;
+    }
+
+    /**
+     * Zoho OAuth コールバックの location / accounts-server から、対応する DC コードを判定する。
+     *
+     * Zoho は Multi-DC 対応として、認可を共通ドメイン（accounts.zoho.com）から開始しても
+     * ユーザーの地域へリダイレクトし、コールバックに location（DC コード）と accounts-server
+     * （地域別 accounts URL）を返す。これにより DC を手動設定せずに特定できる。
+     * location は当プラグインの DATA_CENTERS と一致（us/eu/in/cn/au/jp/ca/sa）。未知（uk 等）や
+     * 欠落時は accounts-server のホストから逆引きし、それでも不明なら null（呼び出し側で既定にフォールバック）。
+     *
+     * @param string|null $location       コールバックの location パラメータ
+     * @param string|null $accountsServer  コールバックの accounts-server パラメータ
+     * @return string|null 判定した DC コード（DATA_CENTERS のいずれか）。判定不能時は null
+     */
+    public static function detectDataCenter(?string $location, ?string $accountsServer): ?string
+    {
+        $loc = strtolower(trim((string) $location));
+        if (in_array($loc, self::DATA_CENTERS, true)) {
+            return $loc;
+        }
+
+        // location が未知でも、accounts-server のホストが SDK の DC 別 accounts URL と一致すれば救済する。
+        $host = strtolower((string) parse_url((string) $accountsServer, PHP_URL_HOST));
+        if ($host !== '') {
+            foreach (self::DATA_CENTERS as $dc) {
+                $knownHost = strtolower((string) parse_url(self::oauthAccountsBaseUrl($dc), PHP_URL_HOST));
+                if ($knownHost !== '' && $knownHost === $host) {
+                    return $dc;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

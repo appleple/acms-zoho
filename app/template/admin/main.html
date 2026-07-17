@@ -58,7 +58,7 @@
             ></i>
           </th>
           <td>
-            <select name="zoho_environment" class="acms-admin-form-width-mini">
+            <select name="zoho_environment" class="acms-admin-form-width-small">
               <option value="production"{zoho_environment:selected#production}>本番 (production)</option>
               <option value="sandbox"{zoho_environment:selected#sandbox}>サンドボックス (sandbox)</option>
               <option value="developer"{zoho_environment:selected#developer}>開発者 (developer)</option>
@@ -72,21 +72,16 @@
             <span>データセンター</span>
             <i
               class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
-              data-acms-tooltip="Zoho アカウントのデータセンターです。日本アカウントは jp を選択してください。"
+              data-acms-tooltip="接続先のデータセンターです。認証時に Zoho から自動判定されるため、手動設定は不要です。"
             ></i>
           </th>
           <td>
-            <select name="zoho_data_center" class="acms-admin-form-width-mini">
-              <option value="us"{zoho_data_center:selected#us}>US (.com)</option>
-              <option value="eu"{zoho_data_center:selected#eu}>EU (.eu)</option>
-              <option value="in"{zoho_data_center:selected#in}>IN (.in)</option>
-              <option value="cn"{zoho_data_center:selected#cn}>CN (.com.cn)</option>
-              <option value="au"{zoho_data_center:selected#au}>AU (.com.au)</option>
-              <option value="jp"{zoho_data_center:selected#jp}>JP (.jp)</option>
-              <option value="ca"{zoho_data_center:selected#ca}>CA</option>
-              <option value="sa"{zoho_data_center:selected#sa}>SA</option>
-            </select>
-            <input type="hidden" name="config[]" value="zoho_data_center" />
+            <!-- 認証時に Zoho の Multi-DC コールバックから自動判定して保存する（手動選択は廃止）。 -->
+            <!-- BEGIN_IF [{zoho_data_center}/nem/] -->
+            <span>{zoho_data_center}</span><span class="acms-admin-text-helper">（認証時に自動判定）</span>
+            <!-- ELSE -->
+            <span class="acms-admin-text-helper">認証時に自動判定されます</span>
+            <!-- END_IF -->
           </td>
         </tr>
       </tbody>
