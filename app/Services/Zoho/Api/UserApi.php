@@ -5,7 +5,6 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Common;
 use com\zoho\crm\api\ParameterMap;
-use com\zoho\crm\api\util\Choice;
 use com\zoho\crm\api\users\UsersOperations;
 use com\zoho\crm\api\users\ResponseWrapper;
 use com\zoho\crm\api\users\APIException;
@@ -23,7 +22,11 @@ class UserApi extends ApiBase
         try {
             $usersOperations = new UsersOperations();
             $paramInstance = new ParameterMap();
-            $paramInstance->add(GetUsersParam::type(), new Choice('CurrentUser'));
+            // type パラメータは SDK 5.x の定義（JSONDetails.json）で String 型。
+            // Choice を渡すと型検証（HeaderParamValidator）で TYPE ERROR になるため素の文字列で渡す。
+            // add() の docblock は @param object だが実型ヒントは無く、実行時は文字列でよい（SDK 側の不整合）。
+            // @phpstan-ignore argument.type
+            $paramInstance->add(GetUsersParam::type(), 'CurrentUser');
             $response = $usersOperations->getUsers($paramInstance);
 
             if ($response != null && $response->isExpected()) {
