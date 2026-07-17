@@ -16,11 +16,12 @@ class Admin extends ACMS_GET
 
         $zohoClient = new ZohoClient();
 
-        // 接続環境の選択状態は Admin_Config モジュール側の {zoho_environment} で描画する。
-        // データセンターは認証時に自動判定して保存する値を、認証設定セクション（このモジュール）で
-        // 表示するため {dataCenter} として渡す（未認証時はテンプレート側で認証状態により出し分ける）。
+        // 接続環境・データセンターはいずれも認証時に Zoho から自動判定して保存する値。
+        // 認証設定セクション（このモジュール）で読み取り専用表示するため {environment} / {dataCenter}
+        // として渡す（未認証時はテンプレート側で認証状態により出し分ける）。
         $baseVars = [
             'authorized' => 'false',
+            'environment' => ZohoClient::getEnvironment(BID),
             'dataCenter' => ZohoClient::getDataCenter(BID),
         ];
 

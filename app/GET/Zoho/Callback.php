@@ -25,19 +25,21 @@ class Callback extends Zoho
         $session->delete('zoho_redirect_url');
         $session->save();
 
-        // データセンターは Zoho の Multi-DC コールバック（location / accounts-server）から自動判定する。
-        // 手動設定は不要。接続環境（production/sandbox/developer）のみ管理画面の設定を参照する。
+        // 接続環境（production/sandbox/developer）とデータセンターは、いずれも認証時に Zoho から
+        // 自動判定する（手動設定は不要）。DC は Multi-DC コールバックの location / accounts-server で、
+        // 環境は認証応答の api_domain（本番 www / サンドボックス sandbox / 開発者 developer）で確定する。
         $location = $this->Get->get('location', '');
         $accountsServer = $this->Get->get('accounts-server', '');
 
         try {
             $zohoClient = new ZohoClient();
 
-            // 判定できた DC は当該リクエストの初期化に反映（override）。判定不能時は既定 us で続行。
+            // 認可コード交換の accounts サーバーを正しく選ぶため、まず location から DC を判定して反映する。
             $dataCenter = ZohoClient::detectDataCenter($location, $accountsServer);
             if ($dataCenter !== null) {
                 $zohoClient->setDataCenter($dataCenter);
             } else {
+                $dataCenter = 'us';
                 Logger::warning('【Zoho plugin】データセンターを自動判定できませんでした。既定(us)で続行します。', [
                     'location' => (string) $location,
                     'accounts_server' => (string) $accountsServer,
@@ -55,12 +57,20 @@ class Callback extends Zoho
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 
-            // 判定した DC を config へ保存（表示・次回認証・以降の API 呼び出しで参照）。
-            if ($dataCenter !== null) {
-                $this->upsertBlogConfig(BID, 'zoho_data_center', $dataCenter);
-            }
+            // 認証応答の api_domain から接続環境を確定する（org 選択の結果が api_domain に表れる）。
+            $environment = ZohoClient::detectEnvironment($zohoClient->getApiDomain());
 
+            // 確定した接続環境・DC・トークンIDを config へ保存（表示・次回認証・以降の API 呼び出しで参照）。
+            $this->upsertBlogConfig(BID, 'zoho_data_center', $dataCenter);
+            $this->upsertBlogConfig(BID, 'zoho_environment', $environment);
             $this->upsertBlogConfig(BID, 'zoho_token_id', (string) $zohoClient->getTokenId());
+
+            // ユーザー名取得は、確定した環境で SDK を初期化し直してから行う。
+            // グラント交換直後は SDK 内部の環境が交換前の値のままで、選んだ org のドメインと不一致に
+            // なり得るため（例: 既定 production のままサンドボックス org を選ぶと sandbox ドメインに繋がらない）。
+            $zohoClient->setEnvironment($environment);
+            $zohoClient->setDataCenter($dataCenter);
+            $zohoClient->initialize();
 
             $userInfo = (new ZohoApi($zohoClient))->user()->getCurrentUser();
             $userName = $userInfo['email'] ?? null;
@@ -68,7 +78,10 @@ class Callback extends Zoho
                 $zohoClient->updateTokenUserName($zohoClient->getTokenId(), $userName);
             }
 
-            Logger::info('【Zoho plugin】OAuth認証が完了しました。');
+            Logger::info('【Zoho plugin】OAuth認証が完了しました。', [
+                'environment' => $environment,
+                'data_center' => $dataCenter,
+            ]);
         } catch (\RuntimeException $e) {
             Logger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', Common::exceptionArray($e));
             $this->addError($e->getMessage());

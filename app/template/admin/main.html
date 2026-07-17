@@ -11,67 +11,17 @@
 </div>
 
 <!--
-  接続環境設定は本体標準の ACMS_POST_Config で保存する。保存値（{zoho_environment} /
-  {zoho_data_center}）と保存通知（{notice_mess}）はいずれも Admin_Config モジュールが
-  供給する変数のため、config フォームはこのモジュールの中に置く。モジュール外だと
-  変数が未解決の文字列のまま残り、保存しても選択状態が更新されない／通知が出っぱなしになる。
+  接続環境（production/sandbox/developer）とデータセンターは認証時に Zoho から自動判定するため、
+  この画面に手動設定はない。認証結果は下の「Zoho 認証設定」に読み取り専用で表示する。
 -->
-<!-- BEGIN_MODULE Admin_Config -->
-<section>
-  <!-- BEGIN_IF [{notice_mess}/nem/] -->
-  <div role="alert" class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info">
-    <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
-    <button type="button" class="js-acms-alert-close acms-admin-alert-icon-after" aria-label="アラートを閉じる">×</button>
-    <!--T-->設定を保存しました<!--/T-->
-  </div>
-  <!-- END_IF -->
-
-  <!-- BEGIN_MODULE Admin_Errors -->
-  <div role="alert" class="acms-admin-alert acms-admin-alert-danger acms-admin-alert-icon">
-    <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
-    <button type="button" class="js-acms-alert-close acms-admin-alert-icon-after" aria-label="アラートを閉じる">×</button>
-    {error}
-  </div>
-  <!-- END_MODULE Admin_Errors -->
-
-  <form action="" method="post" class="acms-admin-form">
-    <div class="js-acms_fix_marker acms_fix_bg">
-      <div class="acms_fix_bg_index">
-        <input
-          type="submit"
-          name="ACMS_POST_Config"
-          value="<!--T-->保存<!--/T-->"
-          class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save js-saving-splash"
-        />
-      </div>
-    </div>
-
-    <h2 class="acms-admin-admin-title2"><!--T-->接続環境設定<!--/T--></h2>
-    <table class="acms-admin-table-admin-edit">
-      <tbody>
-        <tr>
-          <th>
-            <span>接続環境</span>
-            <i
-              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
-              data-acms-tooltip="Zoho の接続先環境です。テストはサンドボックスを選択します。トークンは環境ごとに別のため、環境を変更したら認証解除→再認証してください。"
-            ></i>
-          </th>
-          <td>
-            <select name="zoho_environment" class="acms-admin-form-width-small">
-              <option value="production"{zoho_environment:selected#production}>本番 (production)</option>
-              <option value="sandbox"{zoho_environment:selected#sandbox}>サンドボックス (sandbox)</option>
-              <option value="developer"{zoho_environment:selected#developer}>開発者 (developer)</option>
-            </select>
-            <input type="hidden" name="config[]" value="zoho_environment" />
-          </td>
-        </tr>
-
-      </tbody>
-    </table>
-  </form>
-</section>
-<!-- END_MODULE Admin_Config -->
+<!-- 認証・認証解除時のエラー表示（本体標準の Admin_Errors モジュール）。 -->
+<!-- BEGIN_MODULE Admin_Errors -->
+<div role="alert" class="acms-admin-alert acms-admin-alert-danger acms-admin-alert-icon">
+  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
+  <button type="button" class="js-acms-alert-close acms-admin-alert-icon-after" aria-label="アラートを閉じる">×</button>
+  {error}
+</div>
+<!-- END_MODULE Admin_Errors -->
 
 <!-- BEGIN_MODULE Zoho_Admin -->
 <section>
@@ -97,6 +47,24 @@
             <span>{userName}</span>
             <!-- ELSE -->
             <span>認証してください</span>
+            <!-- END_IF -->
+          </td>
+        </tr>
+
+        <tr>
+          <th>
+            <span>接続環境</span>
+            <i
+              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+              data-acms-tooltip="接続先の環境（本番／サンドボックス／開発者）です。認証時にどの組織を選んだかに応じて Zoho から自動判定されるため、手動設定は不要です。"
+            ></i>
+          </th>
+          <td>
+            <!-- 環境は認証応答の api_domain から自動判定して保存する（手動選択は廃止）。 -->
+            <!-- BEGIN_IF [{authorized}/eq/true] -->
+            <span>{environment}</span> <span class="acms-admin-text-helper">（認証時に自動判定）</span>
+            <!-- ELSE -->
+            <span class="acms-admin-text-helper">認証時に自動判定されます</span>
             <!-- END_IF -->
           </td>
         </tr>

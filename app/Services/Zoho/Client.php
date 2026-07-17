@@ -49,6 +49,12 @@ class Client
      */
     private $dataCenterOverride = null;
 
+    /**
+     * @var string|null 認証時に api_domain から確定した接続環境を、当該リクエスト内の環境解決で優先させる上書き値。
+     * DC 同様、config 保存値のキャッシュに依らず確実に効かせるために使う。
+     */
+    private $environmentOverride = null;
+
     private $loggerFilePath = 'php_zoho_sdk.log';
 
     private $loggerLevel = 'info';
@@ -305,12 +311,12 @@ class Client
      */
     private function resolveEnvironment(): Environment
     {
-        // データセンターは認証時に Zoho から自動判定する。当該リクエスト内では override を優先し、
-        // 未設定時は config 保存値（前回認証で保存）→ 既定 us にフォールバックする。
+        // 接続環境・データセンターはいずれも認証時に Zoho から自動判定する。当該リクエスト内では
+        // override を優先し、未設定時は config 保存値（前回認証で保存）→ 既定（us / production）にフォールバックする。
         $dcClass = self::dataCenterClass($this->dataCenterOverride ?? self::getDataCenter(BID));
 
         // 環境文字列 → 各 DataCenter クラスの静的メソッド
-        return match (self::getEnvironment(BID)) {
+        return match ($this->environmentOverride ?? self::getEnvironment(BID)) {
             'sandbox' => $dcClass::SANDBOX(),
             'developer' => $dcClass::DEVELOPER(),
             default => $dcClass::PRODUCTION(),
@@ -318,8 +324,8 @@ class Client
     }
 
     /**
-     * 選択中の接続環境（production / sandbox / developer）を返す。未設定・不正値は production。
-     * 値は管理画面の設定フォーム（ACMS_POST_Config）が保存したブログ設定から読む。
+     * 現在の接続環境（production / sandbox / developer）を返す。未設定・不正値は production。
+     * 値は認証時に api_domain から判定して保存したブログ設定（zoho_environment）から読む。
      */
     public static function getEnvironment(int $bid): string
     {
@@ -350,6 +356,60 @@ class Client
         }
         $value = strtolower(trim($dataCenter));
         $this->dataCenterOverride = in_array($value, self::DATA_CENTERS, true) ? $value : null;
+    }
+
+    /**
+     * 当該リクエスト内の環境解決で優先させる接続環境を設定する（認証時に api_domain から判定した値を渡す）。
+     * null を渡すと override を解除し、config 保存値／既定にフォールバックする。不正値は無視する。
+     */
+    public function setEnvironment(?string $environment): void
+    {
+        if ($environment === null) {
+            $this->environmentOverride = null;
+            return;
+        }
+        $value = strtolower(trim($environment));
+        $this->environmentOverride = in_array($value, self::ENVIRONMENTS, true) ? $value : null;
+    }
+
+    /**
+     * Zoho が認証応答で返す api_domain から接続環境（production / sandbox / developer）を判定する。
+     *
+     * どの環境で認証したかは同意画面での org 選択で決まり、その結果は api_domain に表れる
+     * （例: www.zohoapis.com → production, sandbox.zohoapis.com → sandbox, developer.zohoapis.com → developer）。
+     * そのため接続環境も手動設定なしに確定できる。判定不能・未指定時は production を返す。
+     *
+     * @param string|null $apiDomain 認証応答／保存トークンの api_domain
+     * @return string production / sandbox / developer
+     */
+    public static function detectEnvironment(?string $apiDomain): string
+    {
+        $domain = strtolower(trim((string) $apiDomain));
+        if (str_contains($domain, 'sandbox')) {
+            return 'sandbox';
+        }
+        if (str_contains($domain, 'developer')) {
+            return 'developer';
+        }
+        return 'production';
+    }
+
+    /**
+     * 現在のトークンに保存された api_domain（Zoho が認証応答で返した接続先ドメイン）を返す。
+     * 認証直後に接続環境を確定するために使う。トークン未設定・未保存時は null。
+     */
+    public function getApiDomain(): ?string
+    {
+        $tokenId = $this->tokenId ?? $this->getTokenIdByBid(BID);
+        if (!$tokenId) {
+            return null;
+        }
+        try {
+            $token = $this->store->findTokenById($tokenId);
+        } catch (SDKException $e) {
+            return null;
+        }
+        return $token !== null ? $token->getAPIDomain() : null;
     }
 
     /**
