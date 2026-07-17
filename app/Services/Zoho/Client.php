@@ -61,12 +61,6 @@ class Client
 
     private $redirectUrl;
 
-    /**
-     * @var string|null 認証/認証解除の対象環境。設定時は使用中環境より優先される
-     *                  （例: Callback で「認証中の環境」のトークン交換を正しい環境で行うため）。
-     */
-    private $environmentOverride = null;
-
     public function __construct()
     {
         $scriptDir = defined('SCRIPT_DIR') ? SCRIPT_DIR : ($_SERVER['DOCUMENT_ROOT'] ?? '');
@@ -305,34 +299,14 @@ class Client
      */
     private function resolveEnvironment(): Environment
     {
-        $environment = $this->activeEnvironment();
-        $dcClass = self::dataCenterClass(self::getDataCenter(BID, $environment));
+        $dcClass = self::dataCenterClass(self::getDataCenter(BID));
 
         // 環境文字列 → 各 DataCenter クラスの静的メソッド
-        return match ($environment) {
+        return match (self::getEnvironment(BID)) {
             'sandbox' => $dcClass::SANDBOX(),
             'developer' => $dcClass::DEVELOPER(),
             default => $dcClass::PRODUCTION(),
         };
-    }
-
-    /**
-     * 認証/認証解除の対象環境を明示指定する（使用中環境より優先）。
-     * Callback / Deauthorize が「操作対象の環境」でトークン交換・解除を行うために使う。
-     */
-    public function setEnvironment(?string $environment): void
-    {
-        $this->environmentOverride = $environment !== null && in_array($environment, self::ENVIRONMENTS, true)
-            ? $environment
-            : null;
-    }
-
-    /**
-     * 実際に使用する環境。オーバーライド（認証対象）があればそれ、無ければ使用中環境。
-     */
-    private function activeEnvironment(): string
-    {
-        return $this->environmentOverride ?? self::getEnvironment(BID);
     }
 
     /**
@@ -347,21 +321,11 @@ class Client
     }
 
     /**
-     * データセンター（us / eu / …）を返す。未設定・不正値は us。
-     *
-     * 環境ごとに `zoho_data_center_{env}` を持つ。$environment 省略時は使用中環境。
-     * 環境別キーが未設定なら、旧単一キー `zoho_data_center`（既存インストール互換）→ us の順で解決。
+     * 選択中のデータセンター（us / eu / …）を返す。未設定・不正値は us。
      */
-    public static function getDataCenter(int $bid, ?string $environment = null): string
+    public static function getDataCenter(int $bid): string
     {
-        $environment ??= self::getEnvironment($bid);
-        $config = Config::loadBlogConfig($bid);
-
-        $value = (string) $config->get('zoho_data_center_' . $environment, '');
-        if ($value === '') {
-            $value = (string) $config->get('zoho_data_center', 'us'); // 旧単一キー（後方互換）
-        }
-        $value = strtolower(trim($value));
+        $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_data_center', 'us')));
 
         return in_array($value, self::DATA_CENTERS, true) ? $value : 'us';
     }
@@ -382,52 +346,19 @@ class Client
         return (string) preg_replace('#/oauth/v2/token$#', '', $tokenUrl);
     }
 
-    /**
-     * 使用中環境のトークンIDを返す（従来 API 互換）。
-     */
     public function getTokenIdByBid(int $bid)
-    {
-        return $this->getTokenIdForEnvironment($bid, self::getEnvironment($bid));
-    }
-
-    /**
-     * 指定環境のトークンIDを config テーブルから取得する。
-     *
-     * 環境別キー `zoho_token_id_{env}` を読み、無ければ（既存インストール互換）本番環境に限り
-     * 旧単一キー `zoho_token_id` を参照する。
-     * ※ トークンIDは認証コールバックで raw SQL 保存されるため、コンフィグキャッシュの遅延を避けて
-     *   ここでも raw SQL で読む（環境/DC は ACMS_POST_Config 保存なので loadBlogConfig 側で読む）。
-     *
-     * @return string|null
-     */
-    public function getTokenIdForEnvironment(int $bid, string $environment)
-    {
-        $value = $this->configValueByBid($bid, 'zoho_token_id_' . $environment);
-        if ($value === null && $environment === 'production') {
-            $value = $this->configValueByBid($bid, 'zoho_token_id'); // 旧単一キー（後方互換）
-        }
-
-        return $value;
-    }
-
-    /**
-     * config テーブルからブログ単位の設定値を1件取得（raw SQL）。未設定なら null。
-     *
-     * @return string|null
-     */
-    private function configValueByBid(int $bid, string $key)
     {
         $sql = SQL::newSelect('config', 'config_value');
         $where = SQL::newWhere();
         $where->addWhereOpr('config_blog_id', $bid);
-        $where->addWhereOpr('config_key', $key);
+        $where->addWhereOpr('config_key', 'zoho_token_id');
         $sql->addWhere($where);
 
-        $row = Database::query($sql->get(dsn()), 'row');
-        if (is_array($row) && isset($row['config_value']) && $row['config_value'] !== '') {
-            return (string) $row['config_value'];
-        }
+        $tokenId = Database::query($sql->get(dsn()), 'row');
 
+        if ($tokenId && $tokenId['config_value']) {
+            return $tokenId['config_value'];
+        }
         return null;
     }
 }

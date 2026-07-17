@@ -29,246 +29,170 @@
 <!-- BEGIN_MODULE Zoho_Admin -->
 <section>
   <!--
-    設定は 1 つの ACMS_POST_Config フォームに集約（使用する環境＋各環境のデータセンター）。
-    認証（OAuth2 / Deauthorize）は config 保存とは別アクションのため、環境ごとの認証フォームを
-    別途定義し、各タブの入力は HTML5 の form 属性でそのフォームに関連付ける。
+    接続環境設定（本体標準の ACMS_POST_Config で保存）。設定はこのフォームに集約し、
+    項目が増えても table セクションと config[] を足すだけで、1つの「保存」で永続化できる。
+    保存ボタンは上部固定バーに置き、長い設定でも常に押せるようにする。
   -->
   <form action="" method="post" class="acms-admin-form">
-    <div class="acms-admin-form-group js-acms_fix_marker acms_fix_bg">
-      <div class="acms_fix_bg_index acms-admin-hstack acms-admin-flex-wrap">
+    <div class="js-acms_fix_marker acms_fix_bg">
+      <div class="acms_fix_bg_index">
         <input
           type="submit"
           name="ACMS_POST_Config"
           value="<!--T-->保存<!--/T-->"
           class="acms-admin-btn-admin acms-admin-btn-admin-primary acms-admin-btn-admin-save js-saving-splash"
         />
-        <span class="acms-admin-margin-left-small">
-          <!--T-->使用する環境<!--/T-->
-          <i
-            class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
-            data-acms-tooltip="実際にフォーム連携で使用する環境です。各タブで環境ごとに認証しておき、ここで使う環境を選びます。"
-          ></i>：
-          <label class="acms-admin-margin-right-small"><input type="radio" name="zoho_environment" value="production" {environment:checked#production}> <!--T-->本番<!--/T--></label>
-          <label class="acms-admin-margin-right-small"><input type="radio" name="zoho_environment" value="sandbox" {environment:checked#sandbox}> <!--T-->サンドボックス<!--/T--></label>
-          <label><input type="radio" name="zoho_environment" value="developer" {environment:checked#developer}> <!--T-->開発者<!--/T--></label>
-        </span>
-        <input type="hidden" name="config[]" value="zoho_environment" />
       </div>
     </div>
 
-    <div class="acms-admin-tabs">
-      <ul class="js-acms_admin_tabs">
-        <li><a href="#zoho_tab_production"><!--T-->本番<!--/T--></a></li>
-        <li><a href="#zoho_tab_sandbox"><!--T-->サンドボックス<!--/T--></a></li>
-        <li><a href="#zoho_tab_developer"><!--T-->開発者<!--/T--></a></li>
-      </ul>
+    <h2 class="acms-admin-admin-title2"><!--T-->接続環境設定<!--/T--></h2>
+    <table class="acms-admin-table-admin-edit">
+      <tbody>
+        <tr>
+          <th>
+            <span>接続環境</span>
+            <i
+              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+              data-acms-tooltip="Zoho の接続先環境です。テストはサンドボックスを選択します。トークンは環境ごとに別のため、環境を変更したら認証解除→再認証してください。"
+            ></i>
+          </th>
+          <td>
+            <select name="zoho_environment" class="acms-admin-form-width-full">
+              <option value="production"{environment:selected#production}>本番 (production)</option>
+              <option value="sandbox"{environment:selected#sandbox}>サンドボックス (sandbox)</option>
+              <option value="developer"{environment:selected#developer}>開発者 (developer)</option>
+            </select>
+            <input type="hidden" name="config[]" value="zoho_environment" />
+          </td>
+        </tr>
 
-      <!-- ===== 本番 ===== -->
-      <div id="zoho_tab_production" class="acms-admin-tabs-panel">
-        <table class="acms-admin-table-admin-edit">
-          <tbody>
-            <tr>
-              <th><!--T-->認証状態<!--/T--></th>
-              <td>
-                <!-- BEGIN_IF [{production_authorized}/eq/true] -->
-                <span class="acms-admin-label acms-admin-label-success"><!--T-->認証済み<!--/T--></span>
-                {production_userName}
-                <!-- ELSE -->
-                <span class="acms-admin-label"><!--T-->未認証<!--/T--></span>
-                <!-- END_IF -->
-              </td>
-            </tr>
-            <tr>
-              <th>
-                <!--T-->データセンター<!--/T-->
-                <i class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover" data-acms-tooltip="この環境のデータセンター。変更したらまず「保存」してから認証してください。"></i>
-              </th>
-              <td>
-                <select name="zoho_data_center_production" class="acms-admin-form-width-full">
-                  <option value="us" {production_dc:selected#us}>US (.com)</option>
-                  <option value="eu" {production_dc:selected#eu}>EU (.eu)</option>
-                  <option value="in" {production_dc:selected#in}>IN (.in)</option>
-                  <option value="cn" {production_dc:selected#cn}>CN (.com.cn)</option>
-                  <option value="au" {production_dc:selected#au}>AU (.com.au)</option>
-                  <option value="jp" {production_dc:selected#jp}>JP (.jp)</option>
-                  <option value="ca" {production_dc:selected#ca}>CA</option>
-                  <option value="sa" {production_dc:selected#sa}>SA</option>
-                </select>
-                <input type="hidden" name="config[]" value="zoho_data_center_production" />
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->クライアントID<!--/T--></th>
-              <td>
-                <input type="text" name="zoho_client_id" value="{production_clientId}" form="zoho_auth_production" class="acms-admin-form-width-full" <!-- BEGIN_IF [{production_authorized}/eq/true] -->readonly<!-- END_IF -->>
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->シークレットID<!--/T--></th>
-              <td>
-                <input type="text" name="zoho_client_secret" value="{production_secretId}" form="zoho_auth_production" class="acms-admin-form-width-full" <!-- BEGIN_IF [{production_authorized}/eq/true] -->readonly<!-- END_IF -->>
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->リダイレクトURL<!--/T--></th>
-              <td>
-                <span>%{BASE_URL}admin/app_zoho_callback/</span>
-                <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/" form="zoho_auth_production">
-              </td>
-            </tr>
-            <tr>
-              <th class="acms-admin-hide-visually"><!--T-->認証操作<!--/T--></th>
-              <td>
-                <!-- BEGIN_IF [{production_authorized}/eq/true] -->
-                <button type="submit" form="zoho_auth_production" name="ACMS_POST_Zoho_Deauthorize" class="acms-admin-btn-admin acms-admin-btn-admin-danger"><!--T-->認証解除<!--/T--></button>
-                <!-- ELSE -->
-                <button type="submit" form="zoho_auth_production" name="ACMS_POST_Zoho_OAuth2" class="acms-admin-btn-admin acms-admin-btn-admin-primary"><!--T-->認証<!--/T--></button>
-                <!-- END_IF -->
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ===== サンドボックス ===== -->
-      <div id="zoho_tab_sandbox" class="acms-admin-tabs-panel">
-        <table class="acms-admin-table-admin-edit">
-          <tbody>
-            <tr>
-              <th><!--T-->認証状態<!--/T--></th>
-              <td>
-                <!-- BEGIN_IF [{sandbox_authorized}/eq/true] -->
-                <span class="acms-admin-label acms-admin-label-success"><!--T-->認証済み<!--/T--></span>
-                {sandbox_userName}
-                <!-- ELSE -->
-                <span class="acms-admin-label"><!--T-->未認証<!--/T--></span>
-                <!-- END_IF -->
-              </td>
-            </tr>
-            <tr>
-              <th>
-                <!--T-->データセンター<!--/T-->
-                <i class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover" data-acms-tooltip="この環境のデータセンター。変更したらまず「保存」してから認証してください。"></i>
-              </th>
-              <td>
-                <select name="zoho_data_center_sandbox" class="acms-admin-form-width-full">
-                  <option value="us" {sandbox_dc:selected#us}>US (.com)</option>
-                  <option value="eu" {sandbox_dc:selected#eu}>EU (.eu)</option>
-                  <option value="in" {sandbox_dc:selected#in}>IN (.in)</option>
-                  <option value="cn" {sandbox_dc:selected#cn}>CN (.com.cn)</option>
-                  <option value="au" {sandbox_dc:selected#au}>AU (.com.au)</option>
-                  <option value="jp" {sandbox_dc:selected#jp}>JP (.jp)</option>
-                  <option value="ca" {sandbox_dc:selected#ca}>CA</option>
-                  <option value="sa" {sandbox_dc:selected#sa}>SA</option>
-                </select>
-                <input type="hidden" name="config[]" value="zoho_data_center_sandbox" />
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->クライアントID<!--/T--></th>
-              <td>
-                <input type="text" name="zoho_client_id" value="{sandbox_clientId}" form="zoho_auth_sandbox" class="acms-admin-form-width-full" <!-- BEGIN_IF [{sandbox_authorized}/eq/true] -->readonly<!-- END_IF -->>
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->シークレットID<!--/T--></th>
-              <td>
-                <input type="text" name="zoho_client_secret" value="{sandbox_secretId}" form="zoho_auth_sandbox" class="acms-admin-form-width-full" <!-- BEGIN_IF [{sandbox_authorized}/eq/true] -->readonly<!-- END_IF -->>
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->リダイレクトURL<!--/T--></th>
-              <td>
-                <span>%{BASE_URL}admin/app_zoho_callback/</span>
-                <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/" form="zoho_auth_sandbox">
-              </td>
-            </tr>
-            <tr>
-              <th class="acms-admin-hide-visually"><!--T-->認証操作<!--/T--></th>
-              <td>
-                <!-- BEGIN_IF [{sandbox_authorized}/eq/true] -->
-                <button type="submit" form="zoho_auth_sandbox" name="ACMS_POST_Zoho_Deauthorize" class="acms-admin-btn-admin acms-admin-btn-admin-danger"><!--T-->認証解除<!--/T--></button>
-                <!-- ELSE -->
-                <button type="submit" form="zoho_auth_sandbox" name="ACMS_POST_Zoho_OAuth2" class="acms-admin-btn-admin acms-admin-btn-admin-primary"><!--T-->認証<!--/T--></button>
-                <!-- END_IF -->
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ===== 開発者 ===== -->
-      <div id="zoho_tab_developer" class="acms-admin-tabs-panel">
-        <table class="acms-admin-table-admin-edit">
-          <tbody>
-            <tr>
-              <th><!--T-->認証状態<!--/T--></th>
-              <td>
-                <!-- BEGIN_IF [{developer_authorized}/eq/true] -->
-                <span class="acms-admin-label acms-admin-label-success"><!--T-->認証済み<!--/T--></span>
-                {developer_userName}
-                <!-- ELSE -->
-                <span class="acms-admin-label"><!--T-->未認証<!--/T--></span>
-                <!-- END_IF -->
-              </td>
-            </tr>
-            <tr>
-              <th>
-                <!--T-->データセンター<!--/T-->
-                <i class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover" data-acms-tooltip="この環境のデータセンター。変更したらまず「保存」してから認証してください。"></i>
-              </th>
-              <td>
-                <select name="zoho_data_center_developer" class="acms-admin-form-width-full">
-                  <option value="us" {developer_dc:selected#us}>US (.com)</option>
-                  <option value="eu" {developer_dc:selected#eu}>EU (.eu)</option>
-                  <option value="in" {developer_dc:selected#in}>IN (.in)</option>
-                  <option value="cn" {developer_dc:selected#cn}>CN (.com.cn)</option>
-                  <option value="au" {developer_dc:selected#au}>AU (.com.au)</option>
-                  <option value="jp" {developer_dc:selected#jp}>JP (.jp)</option>
-                  <option value="ca" {developer_dc:selected#ca}>CA</option>
-                  <option value="sa" {developer_dc:selected#sa}>SA</option>
-                </select>
-                <input type="hidden" name="config[]" value="zoho_data_center_developer" />
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->クライアントID<!--/T--></th>
-              <td>
-                <input type="text" name="zoho_client_id" value="{developer_clientId}" form="zoho_auth_developer" class="acms-admin-form-width-full" <!-- BEGIN_IF [{developer_authorized}/eq/true] -->readonly<!-- END_IF -->>
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->シークレットID<!--/T--></th>
-              <td>
-                <input type="text" name="zoho_client_secret" value="{developer_secretId}" form="zoho_auth_developer" class="acms-admin-form-width-full" <!-- BEGIN_IF [{developer_authorized}/eq/true] -->readonly<!-- END_IF -->>
-              </td>
-            </tr>
-            <tr>
-              <th><!--T-->リダイレクトURL<!--/T--></th>
-              <td>
-                <span>%{BASE_URL}admin/app_zoho_callback/</span>
-                <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/" form="zoho_auth_developer">
-              </td>
-            </tr>
-            <tr>
-              <th class="acms-admin-hide-visually"><!--T-->認証操作<!--/T--></th>
-              <td>
-                <!-- BEGIN_IF [{developer_authorized}/eq/true] -->
-                <button type="submit" form="zoho_auth_developer" name="ACMS_POST_Zoho_Deauthorize" class="acms-admin-btn-admin acms-admin-btn-admin-danger"><!--T-->認証解除<!--/T--></button>
-                <!-- ELSE -->
-                <button type="submit" form="zoho_auth_developer" name="ACMS_POST_Zoho_OAuth2" class="acms-admin-btn-admin acms-admin-btn-admin-primary"><!--T-->認証<!--/T--></button>
-                <!-- END_IF -->
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <tr>
+          <th>
+            <span>データセンター</span>
+            <i
+              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+              data-acms-tooltip="Zoho アカウントのデータセンターです。日本アカウントは jp を選択してください。"
+            ></i>
+          </th>
+          <td>
+            <select name="zoho_data_center" class="acms-admin-form-width-full">
+              <option value="us"{dataCenter:selected#us}>US (.com)</option>
+              <option value="eu"{dataCenter:selected#eu}>EU (.eu)</option>
+              <option value="in"{dataCenter:selected#in}>IN (.in)</option>
+              <option value="cn"{dataCenter:selected#cn}>CN (.com.cn)</option>
+              <option value="au"{dataCenter:selected#au}>AU (.com.au)</option>
+              <option value="jp"{dataCenter:selected#jp}>JP (.jp)</option>
+              <option value="ca"{dataCenter:selected#ca}>CA</option>
+              <option value="sa"{dataCenter:selected#sa}>SA</option>
+            </select>
+            <input type="hidden" name="config[]" value="zoho_data_center" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </form>
 
-  <!-- 認証（OAuth2 / Deauthorize）用フォーム。各タブの入力は form 属性でここに関連付ける。 -->
-  <form action="" method="post" id="zoho_auth_production"><input type="hidden" name="zoho_env" value="production"></form>
-  <form action="" method="post" id="zoho_auth_sandbox"><input type="hidden" name="zoho_env" value="sandbox"></form>
-  <form action="" method="post" id="zoho_auth_developer"><input type="hidden" name="zoho_env" value="developer"></form>
+  <!-- 認証設定（OAuth2 / Deauthorize。config 保存とは別アクションのため別フォーム） -->
+  <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-form">
+    <h2 class="acms-admin-admin-title2"><!--T-->Zoho 認証設定<!--/T--></h2>
+    <table class="acms-admin-table-admin-edit">
+      <tbody>
+        <tr>
+          <th>
+            <span>ユーザー名</span>
+            <i
+              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+              data-acms-tooltip="認証されたZohoユーザーのアカウント名です。"
+            ></i>
+          </th>
+          <td>
+            <!-- BEGIN_IF [{authorized}/eq/true] -->
+            <span>{userName}</span>
+            <!-- ELSE -->
+            <span>認証してください</span>
+            <!-- END_IF -->
+          </td>
+        </tr>
+
+        <tr>
+          <th>
+            <span>クライアントID</span>
+            <i
+              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+              data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行された Client ID を入力してください。<!--/T-->"
+            ></i>
+          </th>
+          <td>
+            <input
+              type="text"
+              name="zoho_client_id"
+              value="{clientId}"
+              class="acms-admin-form-width-full"
+              <!-- BEGIN_IF [{authorized}/eq/true] -->readonly<!-- END_IF -->>
+          </td>
+        </tr>
+
+        <tr>
+          <th>
+            <span>シークレットID</span>
+            <i
+              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+              data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行された Client Secret を入力してください。<!--/T-->"
+            ></i>
+          </th>
+          <td>
+            <input
+              type="text"
+              name="zoho_client_secret"
+              value="{secretId}"
+              class="acms-admin-form-width-full"
+              <!-- BEGIN_IF [{authorized}/eq/true] -->readonly<!-- END_IF -->>
+          </td>
+        </tr>
+
+        <tr>
+          <th>
+            <span>リダイレクトURL</span>
+            <i
+              class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+              data-acms-tooltip="<!--T--><a href='https://api-console.zoho.com/' target='_blank' rel='noopener noreferrer'>Zoho API Console</a> で発行する際にご使用ください。<!--/T-->"
+            ></i>
+          </th>
+          <td>
+            <span>%{BASE_URL}admin/app_zoho_callback/</span>
+            <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/">
+          </td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <th class="acms-admin-hide-visually">認証ボタン</th>
+          <td>
+            <input type="hidden" name="zoho_token_id" value="{tokenId}">
+
+            <!-- BEGIN_IF [{authorized}/eq/true] -->
+            <button
+              type="submit"
+              class="acms-admin-btn-admin acms-admin-btn-admin-danger"
+              value="認証解除"
+              name="ACMS_POST_Zoho_Deauthorize"
+            >
+              <!-- T -->認証解除<!-- /T -->
+            </button>
+            <!-- ELSE -->
+            <button
+              type="submit"
+              class="acms-admin-btn-admin acms-admin-btn-admin-primary"
+              value="認証"
+              name="ACMS_POST_Zoho_OAuth2"
+            >
+              <!-- T -->認証<!-- /T -->
+            </button>
+            <!-- END_IF -->
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </form>
 </section>
 <!-- END_MODULE Zoho_Admin -->
