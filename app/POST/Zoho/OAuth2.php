@@ -5,6 +5,7 @@ namespace Acms\Plugins\Zoho\POST\Zoho;
 use ACMS_POST;
 use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Session;
+use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class OAuth2 extends ACMS_POST
 {
@@ -29,7 +30,8 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_redirect_url', $redirectUrl);
             $session->save();
 
-            $url = 'https://accounts.zoho.com/oauth/v2/auth?' . http_build_query([
+            // accounts URL は env('ZOHO_DATA_CENTER') に連動（既定 US=accounts.zoho.com）。
+            $url = ZohoClient::oauthAccountsBaseUrl() . '/oauth/v2/auth?' . http_build_query([
                 'scope' => $scope,
                 'client_id' => $clientId,
                 'response_type' => 'code',

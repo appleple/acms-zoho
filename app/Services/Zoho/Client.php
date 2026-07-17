@@ -8,6 +8,14 @@ use Acms\Services\Facades\Logger;
 use com\zoho\api\authenticator\OAuthBuilder;
 use com\zoho\crm\api\InitializeBuilder;
 use com\zoho\crm\api\dc\USDataCenter;
+use com\zoho\crm\api\dc\EUDataCenter;
+use com\zoho\crm\api\dc\INDataCenter;
+use com\zoho\crm\api\dc\CNDataCenter;
+use com\zoho\crm\api\dc\AUDataCenter;
+use com\zoho\crm\api\dc\JPDataCenter;
+use com\zoho\crm\api\dc\CADataCenter;
+use com\zoho\crm\api\dc\SADataCenter;
+use com\zoho\crm\api\dc\Environment;
 use com\zoho\api\logger\LogBuilder;
 use com\zoho\api\logger\Levels;
 use com\zoho\api\authenticator\Token;
@@ -140,11 +148,9 @@ class Client
         }
 
         try {
-            /**
-             * Domain: USDataCenter、EUDataCenter、INDataCenter、CNDataCenter、AUDataCenter
-             * Enviroment: PRODUCTION()、DEVELOPER()、SANDBOX()
-            */
-            $environment = USDataCenter::PRODUCTION();
+            // 接続先の Zoho 環境（データセンター × 本番/サンドボックス/開発者）は env で切り替える。
+            // 既定は US / production（従来動作）。詳細は resolveEnvironment() を参照。
+            $environment = $this->resolveEnvironment();
 
             $logger = (new LogBuilder())
                 ->level(Levels::INFO)
@@ -249,6 +255,64 @@ class Client
         }
 
         return $token;
+    }
+
+    /**
+     * env('ZOHO_DATA_CENTER') の文字列を SDK の DataCenter クラスへ解決する。
+     * us(既定) / eu / in / cn / au / jp / ca / sa。未知の値は US にフォールバック。
+     *
+     * @return class-string<USDataCenter>|class-string<EUDataCenter>|class-string<INDataCenter>|class-string<CNDataCenter>|class-string<AUDataCenter>|class-string<JPDataCenter>|class-string<CADataCenter>|class-string<SADataCenter>
+     */
+    private static function dataCenterClass(): string
+    {
+        return match (strtolower(trim((string) env('ZOHO_DATA_CENTER', 'us')))) {
+            'eu' => EUDataCenter::class,
+            'in' => INDataCenter::class,
+            'cn' => CNDataCenter::class,
+            'au' => AUDataCenter::class,
+            'jp' => JPDataCenter::class,
+            'ca' => CADataCenter::class,
+            'sa' => SADataCenter::class,
+            default => USDataCenter::class,
+        };
+    }
+
+    /**
+     * 接続先の Zoho 環境（データセンター × 環境）を解決する。
+     *
+     * - env('ZOHO_DATA_CENTER') … us(既定) / eu / in / cn / au / jp / ca / sa
+     * - env('ZOHO_ENVIRONMENT') … production(既定) / sandbox / developer
+     *
+     * トークンは「環境 × データセンター」固有のため、ここで指定する環境と、ストアに保存された
+     * トークンを発行した環境は必ず一致させること（不一致時は SDK が SDKException を投げる）。
+     * 既定値は US / production で、従来動作と同一（後方互換）。
+     *
+     * @return Environment SDK 初期化（InitializeBuilder::environment）に渡す環境インスタンス
+     */
+    private function resolveEnvironment(): Environment
+    {
+        $dcClass = self::dataCenterClass();
+
+        // 環境文字列 → 各 DataCenter クラスの静的メソッド（未知の値は production にフォールバック）
+        return match (strtolower(trim((string) env('ZOHO_ENVIRONMENT', 'production')))) {
+            'sandbox' => $dcClass::SANDBOX(),
+            'developer' => $dcClass::DEVELOPER(),
+            default => $dcClass::PRODUCTION(),
+        };
+    }
+
+    /**
+     * OAuth 認可リダイレクトに使う accounts のベース URL（例: https://accounts.zoho.com）を、
+     * データセンターに合わせて返す。accounts URL は本番/サンドボックス/開発者で共通（DC のみで決まる）
+     * ため、SDK が持つ DC 別の accounts URL から導出する。
+     */
+    public static function oauthAccountsBaseUrl(): string
+    {
+        $dcClass = self::dataCenterClass();
+        // 例: https://accounts.zoho.com/oauth/v2/token → https://accounts.zoho.com
+        $tokenUrl = $dcClass::PRODUCTION()->getAccountsUrl();
+
+        return (string) preg_replace('#/oauth/v2/token$#', '', $tokenUrl);
     }
 
     public function getTokenIdByBid(int $bid)

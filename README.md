@@ -64,6 +64,15 @@ ZOHO_LOGGER_FILE_PATH=
 # Zoho API レスポンスのキャッシュ有効期間（秒）
 # 未設定時は3600
 ZOHO_CACHE_LIFETIME=
+
+# 接続環境: production（既定） / sandbox / developer
+# サンドボックスでテストする場合は sandbox を指定
+# （トークンは環境ごとに別。指定環境で発行したトークンを使うこと）
+ZOHO_ENVIRONMENT=
+
+# データセンター: us（既定） / eu / in / cn / au / jp / ca / sa
+# 日本データセンター（accounts.zoho.jp）の場合は jp を指定
+ZOHO_DATA_CENTER=
 ```
 
 #### 認証
