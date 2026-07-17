@@ -127,7 +127,7 @@ parameters:
 			path: app/Hook.php
 
 		-
-			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
+			message: '#^Call to an undefined static method Acms\\Services\\Facades\\Common\:\:ResponseJson\(\)\.$#'
 			identifier: staticMethod.notFound
 			count: 1
 			path: app/POST/Zoho/CacheClear.php
@@ -139,7 +139,7 @@ parameters:
 			path: app/POST/Zoho/Deauthorize.php
 
 		-
-			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
+			message: '#^Call to an undefined static method Acms\\Services\\Facades\\Common\:\:ResponseJson\(\)\.$#'
 			identifier: staticMethod.notFound
 			count: 3
 			path: app/POST/Zoho/Module.php
@@ -151,7 +151,7 @@ parameters:
 			path: app/POST/Zoho/Module.php
 
 		-
-			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
+			message: '#^Call to an undefined static method Acms\\Services\\Facades\\Common\:\:ResponseJson\(\)\.$#'
 			identifier: staticMethod.notFound
 			count: 4
 			path: app/POST/Zoho/ModuleField.php
