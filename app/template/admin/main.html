@@ -44,9 +44,9 @@
           </th>
           <td>
             <!-- BEGIN_IF [{authorized}/eq/true] -->
-            <span>{userName}</span>
+            <span>{userName}</span> <span class="acms-admin-text-helper">（認証時に自動判定）</span>
             <!-- ELSE -->
-            <span>認証してください</span>
+            <span class="acms-admin-text-helper">認証時に自動判定されます</span>
             <!-- END_IF -->
           </td>
         </tr>
