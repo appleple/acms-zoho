@@ -20,8 +20,8 @@ class Admin extends ACMS_GET
         // どの分岐で render しても選択状態を保てるよう共通の基底変数として持たせる。
         $baseVars = [
             'authorized' => 'false',
-            'environment' => $zohoClient->getEnvironment(BID),
-            'dataCenter' => $zohoClient->getDataCenter(BID),
+            'environment' => ZohoClient::getEnvironment(BID),
+            'dataCenter' => ZohoClient::getDataCenter(BID),
         ];
 
         /**

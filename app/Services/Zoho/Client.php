@@ -4,6 +4,7 @@ namespace Acms\Plugins\Zoho\Services\Zoho;
 
 use SQL;
 use Acms\Services\Facades\Database;
+use Acms\Services\Facades\Config;
 use Acms\Services\Facades\Logger;
 use com\zoho\api\authenticator\OAuthBuilder;
 use com\zoho\crm\api\InitializeBuilder;
@@ -298,10 +299,10 @@ class Client
      */
     private function resolveEnvironment(): Environment
     {
-        $dcClass = self::dataCenterClass($this->getDataCenter(BID));
+        $dcClass = self::dataCenterClass(self::getDataCenter(BID));
 
         // 環境文字列 → 各 DataCenter クラスの静的メソッド
-        return match ($this->getEnvironment(BID)) {
+        return match (self::getEnvironment(BID)) {
             'sandbox' => $dcClass::SANDBOX(),
             'developer' => $dcClass::DEVELOPER(),
             default => $dcClass::PRODUCTION(),
@@ -310,10 +311,11 @@ class Client
 
     /**
      * 選択中の接続環境（production / sandbox / developer）を返す。未設定・不正値は production。
+     * 値は管理画面の設定フォーム（ACMS_POST_Config）が保存したブログ設定から読む。
      */
-    public function getEnvironment(int $bid): string
+    public static function getEnvironment(int $bid): string
     {
-        $value = strtolower(trim($this->getConfigByBid($bid, 'zoho_environment', 'production')));
+        $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_environment', 'production')));
 
         return in_array($value, self::ENVIRONMENTS, true) ? $value : 'production';
     }
@@ -321,9 +323,9 @@ class Client
     /**
      * 選択中のデータセンター（us / eu / …）を返す。未設定・不正値は us。
      */
-    public function getDataCenter(int $bid): string
+    public static function getDataCenter(int $bid): string
     {
-        $value = strtolower(trim($this->getConfigByBid($bid, 'zoho_data_center', 'us')));
+        $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_data_center', 'us')));
 
         return in_array($value, self::DATA_CENTERS, true) ? $value : 'us';
     }
@@ -342,30 +344,6 @@ class Client
         $tokenUrl = $dcClass::PRODUCTION()->getAccountsUrl();
 
         return (string) preg_replace('#/oauth/v2/token$#', '', $tokenUrl);
-    }
-
-    /**
-     * config テーブルからブログ単位の設定値を取得する（zoho_token_id と同じ経路）。
-     *
-     * @param int $bid ブログID
-     * @param string $key config キー
-     * @param string $default 未設定時の既定値
-     * @return string 設定値（未設定なら $default）
-     */
-    private function getConfigByBid(int $bid, string $key, string $default): string
-    {
-        $sql = SQL::newSelect('config', 'config_value');
-        $where = SQL::newWhere();
-        $where->addWhereOpr('config_blog_id', $bid);
-        $where->addWhereOpr('config_key', $key);
-        $sql->addWhere($where);
-
-        $row = Database::query($sql->get(dsn()), 'row');
-        if (is_array($row) && isset($row['config_value']) && $row['config_value'] !== '') {
-            return (string) $row['config_value'];
-        }
-
-        return $default;
     }
 
     public function getTokenIdByBid(int $bid)
