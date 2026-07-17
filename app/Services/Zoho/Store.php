@@ -27,7 +27,7 @@ class Store implements StoreInterface
      * 認証時以外で使用しないでください。
      *
      * @param string $grantToken 検索するgrantToken
-     * @return OAuthToken|null 見つかったトークンまたはnull
+     * @return OAuthToken<mixed>|null 見つかったトークンまたはnull
      */
     public function findTokenByGrantToken(string $grantToken)
     {
@@ -46,8 +46,8 @@ class Store implements StoreInterface
     /**
      * IDを元にトークンを取得
      *
-     * @param string $path 保存先のファイルパス
-     * @return OAuthToken|null $token
+     * @param string $id トークンID
+     * @return OAuthToken<mixed>|null $token
      */
     public function findTokenById(string $id)
     {
@@ -66,9 +66,9 @@ class Store implements StoreInterface
         /**
      * IDを元にトークンを削除
      *
-     * @param string $path 保存先のファイルパス
+     * @param int $id トークンID
      */
-    public function removeTokenById(int $id)
+    public function removeTokenById(int $id): void
     {
         $store = $this->store;
         $store->deleteToken($id);
@@ -93,10 +93,10 @@ class Store implements StoreInterface
      *
      * @param string $refreshToken 削除対象のリフレッシュトークン
      */
-    public function removeTokenByRefreshToken(string $refreshToken)
+    public function removeTokenByRefreshToken(string $refreshToken): void
     {
         if ($refreshToken === '') {
-            return null;
+            return;
         }
         $store = $this->store;
         $tokens = $store->getTokens();

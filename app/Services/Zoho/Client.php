@@ -34,8 +34,6 @@ class Client
 
     private $tokenId;
 
-    private $userName;
-
     private $clientId;
 
     private $clientSecret;
@@ -46,11 +44,7 @@ class Client
 
     private $grantToken = null;
 
-    private $expiryTime;
-
     private $redirectUrl;
-
-    private $apiDomain;
 
     public function __construct()
     {
@@ -65,7 +59,7 @@ class Client
         $this->store = new CustomFileStore($this->tokenPresistencePath);
     }
 
-    public function getTokenStore()
+    public function getTokenStore(): string
     {
         return $this->tokenStore;
     }
@@ -85,7 +79,7 @@ class Client
         return $this->tokenId;
     }
 
-    public function setTokenId(int $tokenId)
+    public function setTokenId(int $tokenId): void
     {
         $this->tokenId = $tokenId;
     }
