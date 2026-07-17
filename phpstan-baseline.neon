@@ -127,34 +127,16 @@ parameters:
 			path: app/Hook.php
 
 		-
-			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
-			identifier: staticMethod.notFound
-			count: 1
-			path: app/POST/Zoho/CacheClear.php
-
-		-
 			message: '#^Strict comparison using \=\=\= between com\\zoho\\crm\\api\\Initializer and null will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
 			path: app/POST/Zoho/Deauthorize.php
 
 		-
-			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
-			identifier: staticMethod.notFound
-			count: 3
-			path: app/POST/Zoho/Module.php
-
-		-
 			message: '#^Method Acms\\Plugins\\Zoho\\POST\\Zoho\\Module\:\:post\(\) should return Field_Validation but return statement is missing\.$#'
 			identifier: return.missing
 			count: 1
 			path: app/POST/Zoho/Module.php
-
-		-
-			message: '#^Call to an undefined static method Common\:\:ResponseJson\(\)\.$#'
-			identifier: staticMethod.notFound
-			count: 4
-			path: app/POST/Zoho/ModuleField.php
 
 		-
 			message: '#^Variable \$moduleApiName in isset\(\) always exists and is not nullable\.$#'
@@ -433,18 +415,6 @@ parameters:
 			path: app/Services/Zoho/Client.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getTokenStore\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:setTokenId\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
 			count: 2
@@ -453,18 +423,6 @@ parameters:
 		-
 			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$accessToken has no type specified\.$#'
 			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$apiDomain has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$apiDomain is unused\.$#'
-			identifier: property.unused
 			count: 1
 			path: app/Services/Zoho/Client.php
 
@@ -489,18 +447,6 @@ parameters:
 		-
 			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$dataCenterEnv is never read, only written\.$#'
 			identifier: property.onlyWritten
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$expiryTime has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$expiryTime is unused\.$#'
-			identifier: property.unused
 			count: 1
 			path: app/Services/Zoho/Client.php
 
@@ -559,52 +505,10 @@ parameters:
 			path: app/Services/Zoho/Client.php
 
 		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$userName has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$userName is unused\.$#'
-			identifier: property.unused
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
 			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Contracts\\StoreInterface\:\:findTokenByGrantToken\(\) has invalid return type Acms\\Plugins\\Zoho\\Services\\Zoho\\Contracts\\OAuthToken\.$#'
 			identifier: class.notFound
 			count: 1
 			path: app/Services/Zoho/Contracts/StoreInterface.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:findTokenByGrantToken\(\) return type with generic class com\\zoho\\api\\authenticator\\OAuthToken does not specify its types\: T$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/Zoho/Store.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:findTokenById\(\) return type with generic class com\\zoho\\api\\authenticator\\OAuthToken does not specify its types\: T$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/Zoho/Store.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:removeTokenById\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Services/Zoho/Store.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:removeTokenByRefreshToken\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Services/Zoho/Store.php
-
-		-
-			message: '#^PHPDoc tag @param references unknown parameter\: \$path$#'
-			identifier: parameter.notFound
-			count: 2
-			path: app/Services/Zoho/Store.php
 
 		-
 			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'

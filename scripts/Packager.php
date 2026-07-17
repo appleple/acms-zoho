@@ -23,11 +23,27 @@ use ZipArchive;
 final class Packager
 {
     /**
-     * Files that must never ship inside the deployed plugin folder. `src/composer.json` /
-     * `src/composer.lock` only manage the (optional) bundled runtime dependencies at build time;
-     * they are useless — and confusing — inside the installed plugin.
+     * Stage-root paths that must never ship inside the deployed plugin folder, removed after
+     * staging. `composer.json` / `composer.lock` only manage the (optional) bundled runtime
+     * dependencies at build time; they are useless — and confusing — inside the installed plugin.
+     *
+     * The composer-patches entries are the same story: cweagans/composer-patches (and its
+     * dependency cweagans/composer-configurable-plugin under `vendor/cweagans/`), the `patches/`
+     * source directory and the generated `patches.lock.json` are all consumed only while composer
+     * vendors dependencies — the patches are already baked into `vendor/` by then, so shipping the
+     * patcher and its inputs is pure dead weight (the leftover autoload/installed.json entries for
+     * cweagans are inert because nothing references those classes at a-blog cms runtime).
+     *
+     * Paths are stage-root-anchored (removed as `<stage>/<path>`), so a nested `patches/` dir deep
+     * inside a dependency is left untouched.
      */
-    private const IGNORES = ['composer.json', 'composer.lock'];
+    private const IGNORES = [
+        'composer.json',
+        'composer.lock',
+        'patches',
+        'patches.lock.json',
+        'vendor/cweagans',
+    ];
 
     /**
      * Names never copied into the package, at any depth: dev-only dirs / VCS / OS cruft. Without

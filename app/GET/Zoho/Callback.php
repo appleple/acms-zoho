@@ -2,9 +2,10 @@
 
 namespace Acms\Plugins\Zoho\GET\Zoho;
 
-use DB;
 use SQL;
-use AcmsLogger;
+use Acms\Services\Facades\Database;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use Acms\Services\Facades\Session;
 use Acms\Plugins\Zoho\GET\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
@@ -25,6 +26,8 @@ class Callback extends Zoho
         $session->save();
 
         try {
+            // 接続環境・データセンターは管理画面の設定フォーム（ACMS_POST_Config）で
+            // 事前に config へ保存済み。initialize() 内の環境解決がそれを参照する。
             $zohoClient = new ZohoClient();
             $zohoClientExists = $zohoClient->initialize(
                 $clientId,
@@ -37,7 +40,7 @@ class Callback extends Zoho
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 
-            $DB = DB::singleton(dsn());
+            $DB = Database::singleton(dsn());
             $SQL = SQL::newInsert('config');
             $SQL->addInsert('config_key', 'zoho_token_id');
             $SQL->addInsert('config_value', $zohoClient->getTokenId());
@@ -50,16 +53,12 @@ class Callback extends Zoho
                 $zohoClient->updateTokenUserName($zohoClient->getTokenId(), $userName);
             }
 
-            AcmsLogger::info('【Zoho plugin】OAuth認証が完了しました。');
+            Logger::info('【Zoho plugin】OAuth認証が完了しました。');
         } catch (\RuntimeException $e) {
-            AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
-                'message' => $e->getMessage(),
-            ]);
+            Logger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', Common::exceptionArray($e));
             $this->addError($e->getMessage());
         } catch (\InvalidArgumentException $e) {
-            AcmsLogger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', [
-                'message' => $e->getMessage(),
-            ]);
+            Logger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', Common::exceptionArray($e));
             $this->addError($e->getMessage());
         }
         $base_uri = acmsLink(array(

@@ -3,8 +3,8 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use Field;
-use Common;
-use AcmsLogger;
+use Acms\Services\Facades\Common;
+use Acms\Services\Facades\Logger;
 use Acms\Plugins\Zoho\POST\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
@@ -16,8 +16,8 @@ class ModuleField extends Zoho
     {
         $moduleApiName = $this->Post->get('moduleApiName', '');
         if (!isset($moduleApiName) || empty($moduleApiName)) {
-            AcmsLogger::error('【Zoho plugin】モジュールのAPI名が必要です。');
-            return Common::ResponseJson(['error' => 'moduleApiName is required']);
+            Logger::error('【Zoho plugin】モジュールのAPI名が必要です。');
+            return Common::responseJson(['error' => 'moduleApiName is required']);
         }
 
         try {
@@ -25,8 +25,8 @@ class ModuleField extends Zoho
             $zohoClient->initialize();
 
             if (is_null($zohoClient->getAccessToken())) {
-                AcmsLogger::error('【Zoho plugin】認証に失敗しました。');
-                return Common::ResponseJson(['error' => 'Zoho authentication failed']);
+                Logger::error('【Zoho plugin】認証に失敗しました。');
+                return Common::responseJson(['error' => 'Zoho authentication failed']);
             }
 
             // Zoho からモジュールフィールドを取得
@@ -40,10 +40,10 @@ class ModuleField extends Zoho
             $fields[] = ['apiName' => 'Note_Title', 'fieldName' => 'メモのタイトル', 'dataType' => 'note'];
             $fields[] = ['apiName' => 'Note_Content', 'fieldName' => 'メモの本文', 'dataType' => 'note'];
 
-            return Common::ResponseJson($fields);
+            return Common::responseJson($fields);
         } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】モジュールフィールド情報の取得に失敗しました: ' . $e->getMessage());
-            return Common::ResponseJson(['error' => 'Failed to fetch module fields']);
+            Logger::error('【Zoho plugin】モジュールフィールド情報の取得に失敗しました。', Common::exceptionArray($e));
+            return Common::responseJson(['error' => 'Failed to fetch module fields']);
         }
     }
 }

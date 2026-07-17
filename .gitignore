@@ -22,6 +22,9 @@ node_modules/
 vendor
 .phplint-cache
 
+# composer-patches v2 のパッチロック（vendor と同様、ビルド時に extra.patches から自動生成・再解決される）
+app/patches.lock.json
+
 # PHPUnit / PHPStan（テスト・静的解析のキャッシュとカバレッジ）
 .phpunit.cache/
 .phpunit.result.cache

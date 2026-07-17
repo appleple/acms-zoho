@@ -2,7 +2,7 @@
 
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
-use Common;
+use Acms\Services\Facades\Common;
 use Acms\Plugins\Zoho\POST\Zoho;
 use Acms\Services\Facades\Cache;
 
@@ -26,6 +26,6 @@ class CacheClear extends Zoho
             // キャッシュクリアに失敗してもエラーにしない
         }
 
-        return Common::ResponseJson(['success' => true]);
+        return Common::responseJson(['success' => true]);
     }
 }

@@ -3,8 +3,8 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use Field;
-use Common;
-use AcmsLogger;
+use Acms\Services\Facades\Common;
+use Acms\Services\Facades\Logger;
 use Acms\Plugins\Zoho\POST\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
@@ -22,10 +22,10 @@ class Module extends Zoho
             $cache = Cache::module();
 
             if ($cache->has($cacheKey)) {
-                return Common::ResponseJson($cache->get($cacheKey));
+                return Common::responseJson($cache->get($cacheKey));
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。');
+            Logger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。');
             $cache = null;
         }
 
@@ -34,8 +34,8 @@ class Module extends Zoho
             $zohoClient->initialize();
 
             if (is_null($zohoClient->getAccessToken())) {
-                AcmsLogger::error('【Zoho plugin】認証に失敗しました。');
-                return Common::ResponseJson(['error' => 'Zoho authentication failed']);
+                Logger::error('【Zoho plugin】認証に失敗しました。');
+                return Common::responseJson(['error' => 'Zoho authentication failed']);
             }
             // Zoho からモジュールを取得、Mapperの設定
             $api = new ZohoApi($zohoClient);
@@ -48,13 +48,13 @@ class Module extends Zoho
                 try {
                     $cache->put($cacheKey, $result, ZohoApi::cacheLifetime());
                 } catch (\Exception $e) {
-                    AcmsLogger::warning('【Zoho plugin】キャッシュの保存に失敗しました。');
+                    Logger::warning('【Zoho plugin】キャッシュの保存に失敗しました。');
                 }
             }
 
-            return Common::ResponseJson($result);
+            return Common::responseJson($result);
         } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】モジュール情報の取得に失敗しました: ' . $e->getMessage());
+            Logger::error('【Zoho plugin】モジュール情報の取得に失敗しました。', Common::exceptionArray($e));
         }
     }
 }

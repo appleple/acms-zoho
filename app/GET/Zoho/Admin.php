@@ -16,15 +16,21 @@ class Admin extends ACMS_GET
 
         $zohoClient = new ZohoClient();
 
+        // フォームのセレクト初期選択に使う、現在保存されている接続環境・データセンター。
+        // どの分岐で render しても選択状態を保てるよう共通の基底変数として持たせる。
+        $baseVars = [
+            'authorized' => 'false',
+            'environment' => ZohoClient::getEnvironment(BID),
+            'dataCenter' => ZohoClient::getDataCenter(BID),
+        ];
+
         /**
          * Todo: ZohoClientを使用した実装に変更
          */
         // 現在のブログのトークンが保存されているかどうか
         $tokenId = $zohoClient->getTokenIdByBid(BID);
         if (!$tokenId) {
-            return $Tpl->render([
-                'authorized' => 'false',
-            ]);
+            return $Tpl->render($baseVars);
         }
 
         // トークンIDを元にストアからトークンを取得
@@ -42,27 +48,23 @@ class Admin extends ACMS_GET
             $token = $fileStore->findTokenById($tokenId);
         }
         if (!$token) {
-            return $Tpl->render([
-                'authorized' => 'false',
-            ]);
+            return $Tpl->render($baseVars);
         }
         $accessToken = $token->getAccessToken();
 
         if (is_null($accessToken)) {
-            return $Tpl->render([
-                'authorized' => 'false',
-            ]);
+            return $Tpl->render($baseVars);
         }
 
         $userSignature = $token->getUserSignature();
         $userName = $userSignature !== null ? $userSignature->getName() : '';
 
-        return $Tpl->render([
+        return $Tpl->render(array_merge($baseVars, [
             'authorized' => 'true',
             'tokenId' => $token->getId(),
             'clientId' => $token->getClientId(),
             'secretId' => $token->getClientSecret(),
             'userName' => $userName,
-        ]);
+        ]));
     }
 }

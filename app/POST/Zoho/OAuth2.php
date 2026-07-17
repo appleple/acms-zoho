@@ -3,8 +3,9 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Session;
+use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class OAuth2 extends ACMS_POST
 {
@@ -29,7 +30,8 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_redirect_url', $redirectUrl);
             $session->save();
 
-            $url = 'https://accounts.zoho.com/oauth/v2/auth?' . http_build_query([
+            // accounts URL は管理画面で保存済みのデータセンター設定に連動（既定 US=accounts.zoho.com）。
+            $url = ZohoClient::oauthAccountsBaseUrl(ZohoClient::getDataCenter(BID)) . '/oauth/v2/auth?' . http_build_query([
                 'scope' => $scope,
                 'client_id' => $clientId,
                 'response_type' => 'code',
@@ -45,7 +47,7 @@ class OAuth2 extends ACMS_POST
             header('Location: ' . $url, true, 302);
             exit;
         } else {
-            AcmsLogger::error('【Zoho plugin】OAuth2認証のためのパラメータが不足しています。');
+            Logger::error('【Zoho plugin】OAuth2認証のためのパラメータが不足しています。');
             $this->addError('クライアントID、クライアントシークレットを入力してください。');
             return $this->Post;
         }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="tests/bootstrap.php"
+         bootstrap="tests/phpunit/bootstrap.php"
          colors="true"
          failOnWarning="true"
          failOnRisky="true"
@@ -9,11 +9,11 @@
     <testsuites>
         <!-- DB を使わない純粋ロジック（Acms\TestingFramework\TestCase）。 -->
         <testsuite name="Unit">
-            <directory>tests/Unit</directory>
+            <directory>tests/phpunit/Unit</directory>
         </testsuite>
         <!-- DB を使う統合テスト（Acms\TestingFramework\DatabaseTestCase。トランザクションで自動ロールバック）。 -->
         <testsuite name="Integration">
-            <directory>tests/Integration</directory>
+            <directory>tests/phpunit/Integration</directory>
         </testsuite>
     </testsuites>
     <source>

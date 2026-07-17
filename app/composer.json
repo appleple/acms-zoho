@@ -7,9 +7,20 @@
   ],
   "homepage": "https://www.a-blogcms.jp",
   "require": {
-    "zohocrm/php-sdk-8.0": "^4.0"
+    "zohocrm/php-sdk-8.0": "^5.0",
+    "cweagans/composer-patches": "^2.0"
+  },
+  "extra": {
+    "patches": {
+      "zohocrm/php-sdk-8.0": {
+        "PHP 8.5: drop no-op setAccessible()/curl_close() and (double)->(float)": "patches/zohocrm-php-sdk-8.0-php85.patch"
+      }
+    }
   },
   "config": {
+    "allow-plugins": {
+      "cweagans/composer-patches": true
+    },
     "platform": {
       "php": "8.4"
     }
