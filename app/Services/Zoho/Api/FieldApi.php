@@ -2,7 +2,8 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 use Acms\Services\Facades\Cache;
 use com\zoho\crm\api\HeaderMap;
@@ -30,10 +31,9 @@ class FieldApi extends ApiBase
                 return $cache->get($cacheKey);
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。', [
+            Logger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。', Common::exceptionArray($e, [
                 'module' => $moduleApiName,
-                'message' => $e->getMessage(),
-            ]);
+            ]));
             $cache = null;
             $cacheKey = null;
         }
@@ -80,26 +80,24 @@ class FieldApi extends ApiBase
                             $cache->put($cacheKey, $result, ZohoApi::cacheLifetime());
                             $this->registerCacheKey($cache, $cacheKey);
                         } catch (\Exception $e) {
-                            AcmsLogger::warning('【Zoho plugin】キャッシュの保存に失敗しました。', [
+                            Logger::warning('【Zoho plugin】キャッシュの保存に失敗しました。', Common::exceptionArray($e, [
                                 'module' => $moduleApiName,
-                                'message' => $e->getMessage(),
-                            ]);
+                            ]));
                         }
                     }
 
                     return $result;
                 } elseif ($responseHandler instanceof APIException) {
-                    AcmsLogger::warning('【Zoho plugin】モジュールフィールドの取得でAPIエラーが発生しました。', [
+                    Logger::warning('【Zoho plugin】モジュールフィールドの取得でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
                         'message' => $responseHandler->getMessage(),
                     ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('【Zoho plugin】モジュールフィールドの取得で例外が発生しました。', [
+            Logger::warning('【Zoho plugin】モジュールフィールドの取得で例外が発生しました。', Common::exceptionArray($e, [
                 'module' => $moduleApiName,
-                'message' => $e->getMessage(),
-            ]);
+            ]));
         }
 
         return [];
@@ -165,7 +163,7 @@ class FieldApi extends ApiBase
                         return $fieldData;
                     }
                 } elseif ($responseHandler instanceof APIException) {
-                    AcmsLogger::warning('【Zoho plugin】フィールド情報の取得でAPIエラーが発生しました。', [
+                    Logger::warning('【Zoho plugin】フィールド情報の取得でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
                         'field' => $fieldApiName,
                         'message' => $responseHandler->getMessage(),
@@ -173,11 +171,10 @@ class FieldApi extends ApiBase
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('【Zoho plugin】フィールド情報の取得で例外が発生しました。', [
+            Logger::warning('【Zoho plugin】フィールド情報の取得で例外が発生しました。', Common::exceptionArray($e, [
                 'module' => $moduleApiName,
                 'field' => $fieldApiName,
-                'message' => $e->getMessage(),
-            ]);
+            ]));
         }
 
         return null;

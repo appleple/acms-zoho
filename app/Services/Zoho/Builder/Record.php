@@ -3,7 +3,7 @@
 namespace Acms\Plugins\Zoho\Services\Zoho\Builder;
 
 use Field;
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 use Acms\Plugins\Zoho\Services\Zoho\Builder;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
@@ -126,7 +126,7 @@ class Record extends Builder
         // 訪問中のノードに再到達した場合は循環依存
         // 相互にリレーショナルしている状態で、登録の順序を解決できないため、警告を出して無視する
         if (isset($visiting[$module])) {
-            AcmsLogger::warning('【Zoho plugin】モジュール間の循環依存を検出しました。依存関係を無視して処理を続行します。', [
+            Logger::warning('【Zoho plugin】モジュール間の循環依存を検出しました。依存関係を無視して処理を続行します。', [
                 'module' => $module
             ]);
             return;
@@ -272,7 +272,7 @@ class Record extends Builder
 
             // multiselectlookupは未対応
             if ($fieldType === 'multiselectlookup') {
-                AcmsLogger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                Logger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
                     'module' => $scope,
                     'apiName' => $fieldApiName,
                 ]);

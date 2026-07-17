@@ -2,9 +2,9 @@
 
 namespace Acms\Plugins\Zoho;
 
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Common;
-use Acms\Services\Common\HookFactory as ACMS_Hook;
+use Acms\Services\Common\HookFactory;
 use ACMS_POST_Form_Submit;
 use ACMS_POST_Form_Update;
 
@@ -50,7 +50,7 @@ class Hook
         };
 
         if (HOOK_ENABLE) {
-            $hook = ACMS_Hook::singleton();
+            $hook = HookFactory::singleton();
             $hook->call('beforeZohoRequest', [$thisModule]);
         }
 
@@ -59,19 +59,19 @@ class Hook
             $engine->send();
 
             if (HOOK_ENABLE) {
-                $hook = ACMS_Hook::singleton();
+                $hook = HookFactory::singleton();
                 $hook->call('afterZohoRequestSuccess', [$thisModule]);
             }
         } catch (\ZCRMException $e) {
             if (HOOK_ENABLE) {
-                $hook = ACMS_Hook::singleton();
+                $hook = HookFactory::singleton();
                 $hook->call('afterZohoRequestError', [$thisModule, $e]);
             }
 
             if ($this->isDebugMode()) {
                 throw $e;
             }
-            AcmsLogger::error(
+            Logger::error(
                 '【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。',
                 Common::exceptionArray($e, [
                     'code' => $e->getExceptionCode(),
@@ -80,18 +80,18 @@ class Hook
             );
         } catch (\Exception $e) {
             if (HOOK_ENABLE) {
-                $hook = ACMS_Hook::singleton();
+                $hook = HookFactory::singleton();
                 $hook->call('afterZohoRequestError', [$thisModule, $e]);
             }
 
             if ($this->isDebugMode()) {
                 throw $e;
             }
-            AcmsLogger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
+            Logger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
         }
 
         if (HOOK_ENABLE) {
-            $hook = ACMS_Hook::singleton();
+            $hook = HookFactory::singleton();
             $hook->call('afterZohoRequest', [$thisModule]);
         }
     }

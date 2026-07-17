@@ -2,7 +2,7 @@
 
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
-use Common;
+use Acms\Services\Facades\Common;
 use Acms\Plugins\Zoho\POST\Zoho;
 use Acms\Services\Facades\Cache;
 

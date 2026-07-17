@@ -6,7 +6,7 @@ use ACMS_App;
 use Acms\Services\Common\HookFactory;
 use Acms\Services\Common\InjectTemplate;
 use Acms\Services\Facades\Config;
-use App;
+use Acms\Services\Facades\Application;
 
 class ServiceProvider extends ACMS_App
 {
@@ -54,7 +54,7 @@ class ServiceProvider extends ACMS_App
 
         $_SERVER['user_email_id'] = $userEmailId;
 
-        App::singleton('zoho.api', Api::class);
+        Application::singleton('zoho.api', Api::class);
 
         $hook = HookFactory::singleton();
         $hook->attach('Zoho', new Hook());

@@ -2,7 +2,8 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
 use com\zoho\crm\api\modules\ModulesOperations;
@@ -34,15 +35,13 @@ class ModuleApi extends ApiBase
                     // 元のZohoモジュールオブジェクトをそのまま返す
                     return $modules;
                 } elseif ($responseHandler instanceof APIException) {
-                    AcmsLogger::warning('【Zoho plugin】モジュール一覧の取得でAPIエラーが発生しました。', [
+                    Logger::warning('【Zoho plugin】モジュール一覧の取得でAPIエラーが発生しました。', [
                         'message' => $responseHandler->getMessage(),
                     ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('【Zoho plugin】モジュール一覧の取得で例外が発生しました。', [
-                'message' => $e->getMessage(),
-            ]);
+            Logger::warning('【Zoho plugin】モジュール一覧の取得で例外が発生しました。', Common::exceptionArray($e));
         }
 
         return [];
@@ -73,17 +72,16 @@ class ModuleApi extends ApiBase
                         return $modules[0];
                     }
                 } elseif ($responseHandler instanceof APIException) {
-                    AcmsLogger::warning('【Zoho plugin】モジュール情報の取得でAPIエラーが発生しました。', [
+                    Logger::warning('【Zoho plugin】モジュール情報の取得でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
                         'message' => $responseHandler->getMessage(),
                     ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('【Zoho plugin】モジュール情報の取得で例外が発生しました。', [
+            Logger::warning('【Zoho plugin】モジュール情報の取得で例外が発生しました。', Common::exceptionArray($e, [
                 'module' => $moduleApiName,
-                'message' => $e->getMessage(),
-            ]);
+            ]));
         }
 
         return null;

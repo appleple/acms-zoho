@@ -3,8 +3,8 @@
 namespace Acms\Plugins\Zoho\Services\Zoho;
 
 use SQL;
-use DB;
-use AcmsLogger;
+use Acms\Services\Facades\Database;
+use Acms\Services\Facades\Logger;
 use com\zoho\api\authenticator\OAuthBuilder;
 use com\zoho\crm\api\InitializeBuilder;
 use com\zoho\crm\api\dc\USDataCenter;
@@ -125,17 +125,17 @@ class Client
             // tokenIdが既にセットされている場合はそれを使用、なければBIDから取得
             $tokenId = $this->tokenId ?? $this->getTokenIdByBid(BID);
             if (!$tokenId) {
-                AcmsLogger::error('【Zoho plugin】認証されていません。');
+                Logger::error('【Zoho plugin】認証されていません。');
                 return null;
             }
             $this->tokenId = $tokenId;
             if (!$this->store) {
-                AcmsLogger::error('【Zoho plugin】トークンストアが初期化されていません。環境変数 ZOHO_TOKEN_PERSISTENCE_PATH を確認してください。');
+                Logger::error('【Zoho plugin】トークンストアが初期化されていません。環境変数 ZOHO_TOKEN_PERSISTENCE_PATH を確認してください。');
                 return null;
             }
             $token = $this->store->findTokenById($tokenId);
             if (!$token) {
-                AcmsLogger::error('【Zoho plugin】トークンがストアから削除された可能性があります。再認証してください。');
+                Logger::error('【Zoho plugin】トークンがストアから削除された可能性があります。再認証してください。');
                 return null;
             }
 
@@ -265,7 +265,7 @@ class Client
         $where->addWhereOpr('config_key', 'zoho_token_id');
         $sql->addWhere($where);
 
-        $tokenId = DB::query($sql->get(dsn()), 'row');
+        $tokenId = Database::query($sql->get(dsn()), 'row');
 
         if ($tokenId && $tokenId['config_value']) {
             return $tokenId['config_value'];

@@ -2,7 +2,8 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use com\zoho\crm\api\ParameterMap;
 use com\zoho\crm\api\util\Choice;
 use com\zoho\crm\api\users\UsersOperations;
@@ -38,15 +39,13 @@ class UserApi extends ApiBase
                         ];
                     }
                 } elseif ($responseHandler instanceof APIException) {
-                    AcmsLogger::warning('【Zoho plugin】ユーザー情報の取得でAPIエラーが発生しました。', [
+                    Logger::warning('【Zoho plugin】ユーザー情報の取得でAPIエラーが発生しました。', [
                         'message' => $responseHandler->getMessage(),
                     ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::warning('【Zoho plugin】ユーザー情報の取得で例外が発生しました。', [
-                'message' => $e->getMessage(),
-            ]);
+            Logger::warning('【Zoho plugin】ユーザー情報の取得で例外が発生しました。', Common::exceptionArray($e));
         }
 
         return null;

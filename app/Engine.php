@@ -3,8 +3,8 @@
 namespace Acms\Plugins\Zoho;
 
 use Field;
-use Common;
-use AcmsLogger;
+use Acms\Services\Facades\Common;
+use Acms\Services\Facades\Logger;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Builder\Record as RecordBuilder;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
@@ -56,7 +56,7 @@ class Engine
     {
         try {
             if (is_null($this->zohoClient)) {
-                AcmsLogger::error('【Zoho plugin】Zohoクライアントの初期化に失敗しました。');
+                Logger::error('【Zoho plugin】Zohoクライアントの初期化に失敗しました。');
                 return;
             }
 
@@ -193,19 +193,19 @@ class Engine
 
             if (!empty($messages)) {
                 $summary = implode('、', $messages) . 'しました。';
-                AcmsLogger::info('【Zoho plugin】データの一括送信が完了しました。' . $summary);
+                Logger::info('【Zoho plugin】データの一括送信が完了しました。' . $summary);
             } else {
-                AcmsLogger::info('【Zoho plugin】データの一括送信が完了しました。');
+                Logger::info('【Zoho plugin】データの一括送信が完了しました。');
             }
 
             // 失敗のログ
             if (!empty($allFailures)) {
-                AcmsLogger::error('【Zoho plugin】レコードの送信に失敗しました。', [
+                Logger::error('【Zoho plugin】レコードの送信に失敗しました。', [
                     'failures' => $allFailures
                 ]);
             }
         } catch (\Exception $e) {
-            AcmsLogger::error(
+            Logger::error(
                 '【Zoho plugin】データの一括送信に失敗しました。',
                 Common::exceptionArray($e)
             );

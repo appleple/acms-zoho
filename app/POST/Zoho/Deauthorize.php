@@ -3,8 +3,8 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
-use AcmsLogger;
-use Common;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use com\zoho\crm\api\Initializer;
 
@@ -41,7 +41,7 @@ class Deauthorize extends ACMS_POST
             // トークンを削除
             $zohoClient->deauthorize();
 
-            AcmsLogger::info('【Zoho plugin】OAuth認証を解除しました。');
+            Logger::info('【Zoho plugin】OAuth認証を解除しました。');
 
             $this->addMessage('Zoho APIの認証を解除しました。');
 
@@ -50,7 +50,7 @@ class Deauthorize extends ACMS_POST
                 'admin' => 'app_zoho_index',
             ]));
         } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】OAuth認証解除に失敗しました。', Common::exceptionArray($e));
+            Logger::error('【Zoho plugin】OAuth認証解除に失敗しました。', Common::exceptionArray($e));
             $this->addError('認証解除に失敗しました: ' . $e->getMessage());
         }
 

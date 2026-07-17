@@ -2,7 +2,8 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use com\zoho\crm\api\notes\NotesOperations;
 use com\zoho\crm\api\notes\Note;
 use com\zoho\crm\api\notes\ParentId;
@@ -65,7 +66,7 @@ class NoteApi extends ApiBase
                             if ($message instanceof Choice) {
                                 $message = $message->getValue();
                             }
-                            AcmsLogger::error('【Zoho plugin】メモの作成に失敗しました。', [
+                            Logger::error('【Zoho plugin】メモの作成に失敗しました。', [
                                 'module' => $moduleApiName,
                                 'recordId' => $recordId,
                                 'message' => $message,
@@ -78,7 +79,7 @@ class NoteApi extends ApiBase
                     if ($message instanceof Choice) {
                         $message = $message->getValue();
                     }
-                    AcmsLogger::error('【Zoho plugin】メモの作成でAPIエラーが発生しました。', [
+                    Logger::error('【Zoho plugin】メモの作成でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
                         'recordId' => $recordId,
                         'message' => $message,
@@ -87,11 +88,10 @@ class NoteApi extends ApiBase
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】メモの作成で例外が発生しました。', [
+            Logger::error('【Zoho plugin】メモの作成で例外が発生しました。', Common::exceptionArray($e, [
                 'module' => $moduleApiName,
                 'recordId' => $recordId,
-                'message' => $e->getMessage()
-            ]);
+            ]));
         }
 
         return false;

@@ -2,7 +2,8 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use com\zoho\crm\api\tags\TagsOperations;
 use com\zoho\crm\api\tags\Tag;
 use com\zoho\crm\api\tags\NewTagRequestWrapper;
@@ -58,7 +59,7 @@ class TagApi extends ApiBase
                             if ($message instanceof Choice) {
                                 $message = $message->getValue();
                             }
-                            AcmsLogger::error('【Zoho plugin】タグの追加に失敗しました。', [
+                            Logger::error('【Zoho plugin】タグの追加に失敗しました。', [
                                 'module' => $moduleApiName,
                                 'recordId' => $recordId,
                                 'tags' => $tagNames,
@@ -72,7 +73,7 @@ class TagApi extends ApiBase
                     if ($message instanceof Choice) {
                         $message = $message->getValue();
                     }
-                    AcmsLogger::error('【Zoho plugin】タグの追加でAPIエラーが発生しました。', [
+                    Logger::error('【Zoho plugin】タグの追加でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
                         'recordId' => $recordId,
                         'tags' => $tagNames,
@@ -82,12 +83,11 @@ class TagApi extends ApiBase
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】タグの追加で例外が発生しました。', [
+            Logger::error('【Zoho plugin】タグの追加で例外が発生しました。', Common::exceptionArray($e, [
                 'module' => $moduleApiName,
                 'recordId' => $recordId,
                 'tags' => $tagNames,
-                'message' => $e->getMessage()
-            ]);
+            ]));
         }
 
         return false;

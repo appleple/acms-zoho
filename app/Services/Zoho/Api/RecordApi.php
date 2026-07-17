@@ -4,7 +4,8 @@ namespace Acms\Plugins\Zoho\Services\Zoho\Api;
 
 use Acms\Plugins\Zoho\Services\Zoho\Api\FieldApi;
 use Acms\Plugins\Zoho\Services\Zoho\Models\Record;
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\Common;
 use com\zoho\crm\api\record\Record as ZohoRecord;
 use com\zoho\crm\api\HeaderMap;
 use com\zoho\crm\api\ParameterMap;
@@ -69,16 +70,14 @@ class RecordApi extends ApiBase
                     if ($message instanceof Choice) {
                         $message = $message->getValue();
                     }
-                    AcmsLogger::error('【Zoho plugin】レコード検索でエラーが発生しました。', [
+                    Logger::error('【Zoho plugin】レコード検索でエラーが発生しました。', [
                         'message' => $message,
                         'code' => $responseHandler->getCode()
                     ]);
                 }
             }
         } catch (\Exception $e) {
-            AcmsLogger::error('【Zoho plugin】レコード検索で例外が発生しました。', [
-                'message' => $e->getMessage()
-            ]);
+            Logger::error('【Zoho plugin】レコード検索で例外が発生しました。', Common::exceptionArray($e));
         }
 
         return null;
@@ -426,7 +425,7 @@ class RecordApi extends ApiBase
             $isMultiArrayField = ($record->isPicklistField($apiName) && is_array($value))
                 || $dataType === 'multiselectpicklist';
             if (is_array($value) && !$isMultiArrayField) {
-                AcmsLogger::notice('【Zoho plugin】配列の値は multiselectpicklist フィールドにのみ使用できます。フィールドをスキップします。', [
+                Logger::notice('【Zoho plugin】配列の値は multiselectpicklist フィールドにのみ使用できます。フィールドをスキップします。', [
                     'module' => $scope,
                     'apiName' => $apiName,
                     'value' => $value,
@@ -445,7 +444,7 @@ class RecordApi extends ApiBase
                 }
                 // 値がレコードIDの形式（数値）かチェック
                 if (!is_numeric($value)) {
-                    AcmsLogger::warning('【Zoho plugin】ルックアップフィールドの値がレコードIDではありません。フィールドをスキップします。', [
+                    Logger::warning('【Zoho plugin】ルックアップフィールドの値がレコードIDではありません。フィールドをスキップします。', [
                         'module' => $scope,
                         'apiName' => $apiName,
                         'value' => $value,
@@ -495,7 +494,7 @@ class RecordApi extends ApiBase
                 }
             } elseif ($dataType === 'multiselectlookup') {
                 // 複数選択ルックアップフィールドは未対応
-                AcmsLogger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
+                Logger::notice('【Zoho plugin】multiselectlookup フィールドは対応していません。フィールドをスキップします。', [
                     'module' => $scope,
                     'apiName' => $apiName,
                 ]);
@@ -506,7 +505,7 @@ class RecordApi extends ApiBase
                     continue;
                 }
                 if (!is_numeric($value)) {
-                    AcmsLogger::warning('【Zoho plugin】オーナー/ユーザールックアップフィールドの値がユーザーIDではありません。フィールドをスキップします。', [
+                    Logger::warning('【Zoho plugin】オーナー/ユーザールックアップフィールドの値がユーザーIDではありません。フィールドをスキップします。', [
                         'module' => $scope,
                         'apiName' => $apiName,
                         'value' => $value,
@@ -526,7 +525,7 @@ class RecordApi extends ApiBase
                 $apiRecord->addFieldValue($field, $fieldValue);
             } catch (\Exception $e) {
                 // フィールドがモジュールに存在しない場合などのエラーをログに記録してスキップ
-                AcmsLogger::error('【Zoho plugin】フィールドの追加に失敗しました。', [
+                Logger::error('【Zoho plugin】フィールドの追加に失敗しました。', Common::exceptionArray($e, [
                     'module' => $scope,
                     'apiName' => $apiName,
                     'value' => is_string($value) && mb_strlen($value) > 100 ? mb_substr($value, 0, 100) . '...' : $value,
@@ -536,9 +535,7 @@ class RecordApi extends ApiBase
                     'isPicklist' => $record->isPicklistField($apiName),
                     'isLookup' => $isLookup,
                     'fieldValueType' => is_object($fieldValue) ? get_class($fieldValue) : gettype($fieldValue),
-                    'error' => $e->getMessage(),
-                    'exceptionClass' => get_class($e)
-                ]);
+                ]));
                 continue;
             }
         }
@@ -588,7 +585,7 @@ class RecordApi extends ApiBase
             // パース失敗時は下のwarningへ
         }
 
-        AcmsLogger::warning('【Zoho plugin】日付の変換に失敗しました。', [
+        Logger::warning('【Zoho plugin】日付の変換に失敗しました。', [
             'value' => $value,
             'expectedFormat' => 'Y-m-d'
         ]);
@@ -638,7 +635,7 @@ class RecordApi extends ApiBase
             // パース失敗時は下のwarningへ
         }
 
-        AcmsLogger::warning('【Zoho plugin】日時の変換に失敗しました。', [
+        Logger::warning('【Zoho plugin】日時の変換に失敗しました。', [
             'value' => $value,
             'expectedFormat' => 'Y-m-d H:i:s'
         ]);
@@ -665,7 +662,7 @@ class RecordApi extends ApiBase
             return substr($value, 0, 5);
         }
 
-        AcmsLogger::warning('【Zoho plugin】時刻の形式が不正です。', [
+        Logger::warning('【Zoho plugin】時刻の形式が不正です。', [
             'value' => $value,
             'expectedFormat' => 'HH:MM'
         ]);
@@ -701,7 +698,7 @@ class RecordApi extends ApiBase
             $cleanValue = trim($cleanValue);
 
             if (!is_numeric($cleanValue)) {
-                AcmsLogger::warning('【Zoho plugin】数値の変換に失敗しました。', [
+                Logger::warning('【Zoho plugin】数値の変換に失敗しました。', [
                     'value' => $value,
                     'cleanValue' => $cleanValue,
                     'numberType' => $numberType
