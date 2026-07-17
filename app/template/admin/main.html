@@ -90,6 +90,45 @@
                 <input type="hidden" name="zoho_redirect_url" value="%{BASE_URL}admin/app_zoho_callback/">
               </td>
             </tr>
+
+            <tr>
+              <th>
+                <span>接続環境</span>
+                <i
+                  class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+                  data-acms-tooltip="Zoho の接続先環境です。テストはサンドボックスを選択します。トークンは環境ごとに別のため、変更するには一度認証解除して再認証してください。"
+                ></i>
+              </th>
+              <td>
+                <select name="zoho_environment"<!-- BEGIN_IF [{authorized}/eq/true] --> disabled<!-- END_IF -->>
+                  <option value="production"{environment:selected#production}>本番 (production)</option>
+                  <option value="sandbox"{environment:selected#sandbox}>サンドボックス (sandbox)</option>
+                  <option value="developer"{environment:selected#developer}>開発者 (developer)</option>
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <th>
+                <span>データセンター</span>
+                <i
+                  class="acms-admin-icon acms-admin-icon-tooltip js-acms-tooltip-hover"
+                  data-acms-tooltip="Zoho アカウントのデータセンターです。日本アカウントは jp を選択してください。"
+                ></i>
+              </th>
+              <td>
+                <select name="zoho_data_center"<!-- BEGIN_IF [{authorized}/eq/true] --> disabled<!-- END_IF -->>
+                  <option value="us"{dataCenter:selected#us}>US (.com)</option>
+                  <option value="eu"{dataCenter:selected#eu}>EU (.eu)</option>
+                  <option value="in"{dataCenter:selected#in}>IN (.in)</option>
+                  <option value="cn"{dataCenter:selected#cn}>CN (.com.cn)</option>
+                  <option value="au"{dataCenter:selected#au}>AU (.com.au)</option>
+                  <option value="jp"{dataCenter:selected#jp}>JP (.jp)</option>
+                  <option value="ca"{dataCenter:selected#ca}>CA</option>
+                  <option value="sa"{dataCenter:selected#sa}>SA</option>
+                </select>
+              </td>
+            </tr>
           </tbody>
           <tfoot>
             <tr>

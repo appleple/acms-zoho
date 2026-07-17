@@ -16,6 +16,16 @@ class OAuth2 extends ACMS_POST
         $redirectUrl = $this->Post->get('zoho_redirect_url', '');
         $scope = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.users.READ'; // 必要なスコープに調整
 
+        // 管理画面で選択された接続環境・データセンター（許可値以外は既定へフォールバック）。
+        $environment = $this->Post->get('zoho_environment', 'production');
+        if (!in_array($environment, ZohoClient::ENVIRONMENTS, true)) {
+            $environment = 'production';
+        }
+        $dataCenter = $this->Post->get('zoho_data_center', 'us');
+        if (!in_array($dataCenter, ZohoClient::DATA_CENTERS, true)) {
+            $dataCenter = 'us';
+        }
+
         if (
             !empty($clientId) &&
             is_string($clientId) &&
@@ -28,10 +38,13 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_client_id', $clientId);
             $session->set('zoho_client_secret', $clientSecret);
             $session->set('zoho_redirect_url', $redirectUrl);
+            // 認証成功後（Callback）に config へ永続化するため、選択値をセッションに引き継ぐ。
+            $session->set('zoho_environment', $environment);
+            $session->set('zoho_data_center', $dataCenter);
             $session->save();
 
-            // accounts URL は env('ZOHO_DATA_CENTER') に連動（既定 US=accounts.zoho.com）。
-            $url = ZohoClient::oauthAccountsBaseUrl() . '/oauth/v2/auth?' . http_build_query([
+            // accounts URL は選択されたデータセンターに連動（既定 US=accounts.zoho.com）。
+            $url = ZohoClient::oauthAccountsBaseUrl($dataCenter) . '/oauth/v2/auth?' . http_build_query([
                 'scope' => $scope,
                 'client_id' => $clientId,
                 'response_type' => 'code',

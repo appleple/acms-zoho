@@ -26,6 +26,12 @@ use Acms\Plugins\Zoho\Services\Zoho\Store;
 
 class Client
 {
+    /** @var list<string> 選択可能な接続環境（config: zoho_environment） */
+    public const ENVIRONMENTS = ['production', 'sandbox', 'developer'];
+
+    /** @var list<string> 選択可能なデータセンター（config: zoho_data_center） */
+    public const DATA_CENTERS = ['us', 'eu', 'in', 'cn', 'au', 'jp', 'ca', 'sa'];
+
     /** @var string $tokenStore ストアの種類 */
     private $tokenStore = 'file';
 
@@ -258,14 +264,14 @@ class Client
     }
 
     /**
-     * env('ZOHO_DATA_CENTER') の文字列を SDK の DataCenter クラスへ解決する。
-     * us(既定) / eu / in / cn / au / jp / ca / sa。未知の値は US にフォールバック。
+     * データセンター文字列 → SDK の DataCenter クラス。未知の値は US にフォールバック。
      *
+     * @param string $dataCenter us / eu / in / cn / au / jp / ca / sa
      * @return class-string<USDataCenter>|class-string<EUDataCenter>|class-string<INDataCenter>|class-string<CNDataCenter>|class-string<AUDataCenter>|class-string<JPDataCenter>|class-string<CADataCenter>|class-string<SADataCenter>
      */
-    private static function dataCenterClass(): string
+    private static function dataCenterClass(string $dataCenter): string
     {
-        return match (strtolower(trim((string) env('ZOHO_DATA_CENTER', 'us')))) {
+        return match (strtolower(trim($dataCenter))) {
             'eu' => EUDataCenter::class,
             'in' => INDataCenter::class,
             'cn' => CNDataCenter::class,
@@ -280,21 +286,22 @@ class Client
     /**
      * 接続先の Zoho 環境（データセンター × 環境）を解決する。
      *
-     * - env('ZOHO_DATA_CENTER') … us(既定) / eu / in / cn / au / jp / ca / sa
-     * - env('ZOHO_ENVIRONMENT') … production(既定) / sandbox / developer
+     * 設定は拡張アプリ管理画面（ブログ設定）から選択され、config テーブルに保存される:
+     *   - zoho_environment  … production(既定) / sandbox / developer
+     *   - zoho_data_center  … us(既定) / eu / in / cn / au / jp / ca / sa
      *
      * トークンは「環境 × データセンター」固有のため、ここで指定する環境と、ストアに保存された
      * トークンを発行した環境は必ず一致させること（不一致時は SDK が SDKException を投げる）。
-     * 既定値は US / production で、従来動作と同一（後方互換）。
+     * 未設定時は US / production（従来動作と同一・後方互換）。
      *
      * @return Environment SDK 初期化（InitializeBuilder::environment）に渡す環境インスタンス
      */
     private function resolveEnvironment(): Environment
     {
-        $dcClass = self::dataCenterClass();
+        $dcClass = self::dataCenterClass($this->getDataCenter(BID));
 
-        // 環境文字列 → 各 DataCenter クラスの静的メソッド（未知の値は production にフォールバック）
-        return match (strtolower(trim((string) env('ZOHO_ENVIRONMENT', 'production')))) {
+        // 環境文字列 → 各 DataCenter クラスの静的メソッド
+        return match ($this->getEnvironment(BID)) {
             'sandbox' => $dcClass::SANDBOX(),
             'developer' => $dcClass::DEVELOPER(),
             default => $dcClass::PRODUCTION(),
@@ -302,17 +309,63 @@ class Client
     }
 
     /**
-     * OAuth 認可リダイレクトに使う accounts のベース URL（例: https://accounts.zoho.com）を、
-     * データセンターに合わせて返す。accounts URL は本番/サンドボックス/開発者で共通（DC のみで決まる）
-     * ため、SDK が持つ DC 別の accounts URL から導出する。
+     * 選択中の接続環境（production / sandbox / developer）を返す。未設定・不正値は production。
      */
-    public static function oauthAccountsBaseUrl(): string
+    public function getEnvironment(int $bid): string
     {
-        $dcClass = self::dataCenterClass();
+        $value = strtolower(trim($this->getConfigByBid($bid, 'zoho_environment', 'production')));
+
+        return in_array($value, self::ENVIRONMENTS, true) ? $value : 'production';
+    }
+
+    /**
+     * 選択中のデータセンター（us / eu / …）を返す。未設定・不正値は us。
+     */
+    public function getDataCenter(int $bid): string
+    {
+        $value = strtolower(trim($this->getConfigByBid($bid, 'zoho_data_center', 'us')));
+
+        return in_array($value, self::DATA_CENTERS, true) ? $value : 'us';
+    }
+
+    /**
+     * OAuth 認可リダイレクトに使う accounts のベース URL（例: https://accounts.zoho.com）を、
+     * 指定データセンターに合わせて返す。accounts URL は本番/サンドボックス/開発者で共通
+     * （DC のみで決まる）ため、SDK が持つ DC 別の accounts URL から導出する。
+     *
+     * @param string $dataCenter 認証フォームで選択されたデータセンター
+     */
+    public static function oauthAccountsBaseUrl(string $dataCenter): string
+    {
+        $dcClass = self::dataCenterClass($dataCenter);
         // 例: https://accounts.zoho.com/oauth/v2/token → https://accounts.zoho.com
         $tokenUrl = $dcClass::PRODUCTION()->getAccountsUrl();
 
         return (string) preg_replace('#/oauth/v2/token$#', '', $tokenUrl);
+    }
+
+    /**
+     * config テーブルからブログ単位の設定値を取得する（zoho_token_id と同じ経路）。
+     *
+     * @param int $bid ブログID
+     * @param string $key config キー
+     * @param string $default 未設定時の既定値
+     * @return string 設定値（未設定なら $default）
+     */
+    private function getConfigByBid(int $bid, string $key, string $default): string
+    {
+        $sql = SQL::newSelect('config', 'config_value');
+        $where = SQL::newWhere();
+        $where->addWhereOpr('config_blog_id', $bid);
+        $where->addWhereOpr('config_key', $key);
+        $sql->addWhere($where);
+
+        $row = Database::query($sql->get(dsn()), 'row');
+        if (is_array($row) && isset($row['config_value']) && $row['config_value'] !== '') {
+            return (string) $row['config_value'];
+        }
+
+        return $default;
     }
 
     public function getTokenIdByBid(int $bid)
