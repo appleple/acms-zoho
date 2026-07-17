@@ -127,34 +127,16 @@ parameters:
 			path: app/Hook.php
 
 		-
-			message: '#^Call to an undefined static method Acms\\Services\\Facades\\Common\:\:ResponseJson\(\)\.$#'
-			identifier: staticMethod.notFound
-			count: 1
-			path: app/POST/Zoho/CacheClear.php
-
-		-
 			message: '#^Strict comparison using \=\=\= between com\\zoho\\crm\\api\\Initializer and null will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
 			path: app/POST/Zoho/Deauthorize.php
 
 		-
-			message: '#^Call to an undefined static method Acms\\Services\\Facades\\Common\:\:ResponseJson\(\)\.$#'
-			identifier: staticMethod.notFound
-			count: 3
-			path: app/POST/Zoho/Module.php
-
-		-
 			message: '#^Method Acms\\Plugins\\Zoho\\POST\\Zoho\\Module\:\:post\(\) should return Field_Validation but return statement is missing\.$#'
 			identifier: return.missing
 			count: 1
 			path: app/POST/Zoho/Module.php
-
-		-
-			message: '#^Call to an undefined static method Acms\\Services\\Facades\\Common\:\:ResponseJson\(\)\.$#'
-			identifier: staticMethod.notFound
-			count: 4
-			path: app/POST/Zoho/ModuleField.php
 
 		-
 			message: '#^Variable \$moduleApiName in isset\(\) always exists and is not nullable\.$#'

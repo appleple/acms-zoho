@@ -26,6 +26,6 @@ class CacheClear extends Zoho
             // キャッシュクリアに失敗してもエラーにしない
         }
 
-        return Common::ResponseJson(['success' => true]);
+        return Common::responseJson(['success' => true]);
     }
 }

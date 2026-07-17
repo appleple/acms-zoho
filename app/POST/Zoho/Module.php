@@ -22,7 +22,7 @@ class Module extends Zoho
             $cache = Cache::module();
 
             if ($cache->has($cacheKey)) {
-                return Common::ResponseJson($cache->get($cacheKey));
+                return Common::responseJson($cache->get($cacheKey));
             }
         } catch (\Exception $e) {
             Logger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。');
@@ -35,7 +35,7 @@ class Module extends Zoho
 
             if (is_null($zohoClient->getAccessToken())) {
                 Logger::error('【Zoho plugin】認証に失敗しました。');
-                return Common::ResponseJson(['error' => 'Zoho authentication failed']);
+                return Common::responseJson(['error' => 'Zoho authentication failed']);
             }
             // Zoho からモジュールを取得、Mapperの設定
             $api = new ZohoApi($zohoClient);
@@ -52,7 +52,7 @@ class Module extends Zoho
                 }
             }
 
-            return Common::ResponseJson($result);
+            return Common::responseJson($result);
         } catch (\Exception $e) {
             Logger::error('【Zoho plugin】モジュール情報の取得に失敗しました。', Common::exceptionArray($e));
         }
