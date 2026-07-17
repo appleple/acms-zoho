@@ -11,35 +11,29 @@
 </div>
 
 <!--
-  {notice_mess} は本体の Admin_Config モジュールが供給する変数（保存直後のみ 'show'）。
-  このモジュールで囲まないと変数が未解決の文字列のまま残り、/nem/ が常に真になって
-  「設定を保存しました」が出っぱなしになるため、通知だけを Admin_Config で囲む。
+  接続環境設定は本体標準の ACMS_POST_Config で保存する。保存値（{zoho_environment} /
+  {zoho_data_center}）と保存通知（{notice_mess}）はいずれも Admin_Config モジュールが
+  供給する変数のため、config フォームはこのモジュールの中に置く。モジュール外だと
+  変数が未解決の文字列のまま残り、保存しても選択状態が更新されない／通知が出っぱなしになる。
 -->
 <!-- BEGIN_MODULE Admin_Config -->
-<!-- BEGIN_IF [{notice_mess}/nem/] -->
-<div role="alert" class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info">
-  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
-  <button type="button" class="js-acms-alert-close acms-admin-alert-icon-after" aria-label="アラートを閉じる">×</button>
-  <!--T-->設定を保存しました<!--/T-->
-</div>
-<!-- END_IF -->
-<!-- END_MODULE Admin_Config -->
-
-<!-- BEGIN_MODULE Admin_Errors -->
-<div role="alert" class="acms-admin-alert acms-admin-alert-danger acms-admin-alert-icon">
-  <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
-  <button type="button" class="js-acms-alert-close acms-admin-alert-icon-after" aria-label="アラートを閉じる">×</button>
-  {error}
-</div>
-<!-- END_MODULE Admin_Errors -->
-
-<!-- BEGIN_MODULE Zoho_Admin -->
 <section>
-  <!--
-    接続環境設定（本体標準の ACMS_POST_Config で保存）。設定はこのフォームに集約し、
-    項目が増えても table セクションと config[] を足すだけで、1つの「保存」で永続化できる。
-    保存ボタンは上部固定バーに置き、長い設定でも常に押せるようにする。
-  -->
+  <!-- BEGIN_IF [{notice_mess}/nem/] -->
+  <div role="alert" class="acms-admin-alert acms-admin-alert-icon acms-admin-alert-info">
+    <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
+    <button type="button" class="js-acms-alert-close acms-admin-alert-icon-after" aria-label="アラートを閉じる">×</button>
+    <!--T-->設定を保存しました<!--/T-->
+  </div>
+  <!-- END_IF -->
+
+  <!-- BEGIN_MODULE Admin_Errors -->
+  <div role="alert" class="acms-admin-alert acms-admin-alert-danger acms-admin-alert-icon">
+    <span class="acms-admin-icon acms-admin-icon-news acms-admin-alert-icon-before" aria-hidden="true"></span>
+    <button type="button" class="js-acms-alert-close acms-admin-alert-icon-after" aria-label="アラートを閉じる">×</button>
+    {error}
+  </div>
+  <!-- END_MODULE Admin_Errors -->
+
   <form action="" method="post" class="acms-admin-form">
     <div class="js-acms_fix_marker acms_fix_bg">
       <div class="acms_fix_bg_index">
@@ -64,10 +58,10 @@
             ></i>
           </th>
           <td>
-            <select name="zoho_environment" class="acms-admin-form-width-full">
-              <option value="production"{environment:selected#production}>本番 (production)</option>
-              <option value="sandbox"{environment:selected#sandbox}>サンドボックス (sandbox)</option>
-              <option value="developer"{environment:selected#developer}>開発者 (developer)</option>
+            <select name="zoho_environment" class="acms-admin-form-width-mini">
+              <option value="production"{zoho_environment:selected#production}>本番 (production)</option>
+              <option value="sandbox"{zoho_environment:selected#sandbox}>サンドボックス (sandbox)</option>
+              <option value="developer"{zoho_environment:selected#developer}>開発者 (developer)</option>
             </select>
             <input type="hidden" name="config[]" value="zoho_environment" />
           </td>
@@ -82,15 +76,15 @@
             ></i>
           </th>
           <td>
-            <select name="zoho_data_center" class="acms-admin-form-width-full">
-              <option value="us"{dataCenter:selected#us}>US (.com)</option>
-              <option value="eu"{dataCenter:selected#eu}>EU (.eu)</option>
-              <option value="in"{dataCenter:selected#in}>IN (.in)</option>
-              <option value="cn"{dataCenter:selected#cn}>CN (.com.cn)</option>
-              <option value="au"{dataCenter:selected#au}>AU (.com.au)</option>
-              <option value="jp"{dataCenter:selected#jp}>JP (.jp)</option>
-              <option value="ca"{dataCenter:selected#ca}>CA</option>
-              <option value="sa"{dataCenter:selected#sa}>SA</option>
+            <select name="zoho_data_center" class="acms-admin-form-width-mini">
+              <option value="us"{zoho_data_center:selected#us}>US (.com)</option>
+              <option value="eu"{zoho_data_center:selected#eu}>EU (.eu)</option>
+              <option value="in"{zoho_data_center:selected#in}>IN (.in)</option>
+              <option value="cn"{zoho_data_center:selected#cn}>CN (.com.cn)</option>
+              <option value="au"{zoho_data_center:selected#au}>AU (.com.au)</option>
+              <option value="jp"{zoho_data_center:selected#jp}>JP (.jp)</option>
+              <option value="ca"{zoho_data_center:selected#ca}>CA</option>
+              <option value="sa"{zoho_data_center:selected#sa}>SA</option>
             </select>
             <input type="hidden" name="config[]" value="zoho_data_center" />
           </td>
@@ -98,8 +92,16 @@
       </tbody>
     </table>
   </form>
+</section>
+<!-- END_MODULE Admin_Config -->
 
-  <!-- 認証設定（OAuth2 / Deauthorize。config 保存とは別アクションのため別フォーム） -->
+<!-- BEGIN_MODULE Zoho_Admin -->
+<section>
+  <!--
+    認証設定（OAuth2 / Deauthorize）。クライアントID・シークレットは config には保存せず、
+    認証時にセッション経由で Zoho に渡し、発行トークンはトークンストア（ZOHO_TOKEN_PERSISTENCE_PATH）
+    にのみ保持する。ここに表示される値は認証済みトークンから読み出したもの。
+  -->
   <form action="" method="post" enctype="multipart/form-data" id="oauthForm" class="acms-admin-form">
     <h2 class="acms-admin-admin-title2"><!--T-->Zoho 認証設定<!--/T--></h2>
     <table class="acms-admin-table-admin-edit">

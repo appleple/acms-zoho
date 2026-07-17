@@ -16,12 +16,10 @@ class Admin extends ACMS_GET
 
         $zohoClient = new ZohoClient();
 
-        // フォームのセレクト初期選択に使う、現在保存されている接続環境・データセンター。
-        // どの分岐で render しても選択状態を保てるよう共通の基底変数として持たせる。
+        // 接続環境・データセンターの選択状態は Admin_Config モジュール側の
+        // {zoho_environment} / {zoho_data_center} で描画するため、ここでは扱わない。
         $baseVars = [
             'authorized' => 'false',
-            'environment' => ZohoClient::getEnvironment(BID),
-            'dataCenter' => ZohoClient::getDataCenter(BID),
         ];
 
         /**
