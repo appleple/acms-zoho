@@ -1,0 +1,151 @@
+diff -ruN a/src/com/zoho/api/authenticator/OAuthBuilder.php b/src/com/zoho/api/authenticator/OAuthBuilder.php
+--- a/src/com/zoho/api/authenticator/OAuthBuilder.php
++++ b/src/com/zoho/api/authenticator/OAuthBuilder.php
+@@ -98,7 +98,6 @@
+         }
+         $class = new \ReflectionClass(OAuthToken::class);
+         $constructor = $class->getConstructor();
+-        $constructor->setAccessible(true);
+         $object = $class->newInstanceWithoutConstructor();
+         $constructor->invoke($object, $this->clientID, $this->clientSecret, $this->grantToken, $this->refreshToken, $this->redirectURL, $this->id, $this->accessToken, $this->userSignature,$this->findUser);
+         return $object;
+diff -ruN a/src/com/zoho/api/authenticator/OAuthToken.php b/src/com/zoho/api/authenticator/OAuthToken.php
+--- a/src/com/zoho/api/authenticator/OAuthToken.php
++++ b/src/com/zoho/api/authenticator/OAuthToken.php
+@@ -251,7 +251,6 @@
+                 $cl = get_class($initializer);
+                 $reflector = new \ReflectionClass($cl);
+                 $member = $reflector->getProperty(Constants::ENVIRONMENT_1);
+-                $member->setAccessible(true);
+                 $member->setValue($initializer, $environment);
+             }
+             catch (\Exception $e)
+@@ -336,7 +335,6 @@
+         {
+             if (in_array($field->getName(), Constants::OAUTH_TOKEN_FIELDS))
+             {
+-                $field->setAccessible(true);
+                 $value1= $field->getValue($first);
+                 $value2 = $field->getValue($second);
+                 $value = ($value1 != null ) ? $value1 : $value2;
+@@ -367,7 +365,6 @@
+             curl_setopt($curl_pointer, CURLOPT_SSL_VERIFYPEER, false);
+         }
+         $result = curl_exec($curl_pointer);
+-        curl_close($curl_pointer);
+         return $result;
+     }
+ 
+@@ -462,7 +459,7 @@
+ 
+     public function isAccessTokenExpired($expiry_time)
+     {
+-        return ((((double)$expiry_time) - $this->getCurrentTimeInMillis()) < 5000);
++        return ((((float)$expiry_time) - $this->getCurrentTimeInMillis()) < 5000);
+     }
+ 
+     public function getUrlParamsAsString($urlParams)
+diff -ruN a/src/com/zoho/api/authenticator/store/DBBuilder.php b/src/com/zoho/api/authenticator/store/DBBuilder.php
+--- a/src/com/zoho/api/authenticator/store/DBBuilder.php
++++ b/src/com/zoho/api/authenticator/store/DBBuilder.php
+@@ -120,7 +120,6 @@
+     {
+         $class = new \ReflectionClass(DBStore::class);
+         $constructor = $class->getConstructor();
+-        $constructor->setAccessible(true);
+         $object = $class->newInstanceWithoutConstructor();
+         $constructor->invoke($object, $this->host, $this->databaseName, $this->tableName, $this->userName, $this->password, $this->portNumber, $this->key, $this->certificate, $this->caCertificate, $this->caPath, $this->cipherAlgos);
+         return $object;
+diff -ruN a/src/com/zoho/crm/api/ProxyBuilder.php b/src/com/zoho/crm/api/ProxyBuilder.php
+--- a/src/com/zoho/crm/api/ProxyBuilder.php
++++ b/src/com/zoho/crm/api/ProxyBuilder.php
+@@ -44,7 +44,6 @@
+         Utility::assertNotNull($this->port, Constants::REQUEST_PROXY_ERROR, Constants::PORT_ERROR_MESSAGE);
+         $class = new \ReflectionClass(RequestProxy::class);
+         $constructor = $class->getConstructor();
+-        $constructor->setAccessible(true);
+         $object = $class->newInstanceWithoutConstructor();
+         $constructor->invoke($object, $this->host, $this->port, $this->user, $this->password);
+         return $object;
+diff -ruN a/src/com/zoho/crm/api/util/APIHTTPConnector.php b/src/com/zoho/crm/api/util/APIHTTPConnector.php
+--- a/src/com/zoho/crm/api/util/APIHTTPConnector.php
++++ b/src/com/zoho/crm/api/util/APIHTTPConnector.php
+@@ -180,7 +180,6 @@
+         $responseHeaders = substr($response[Constants::RESPONSE], 0, $header_size);
+         $content = substr($response[Constants::RESPONSE], $header_size);
+         $response[Constants::RESPONSE] = $content;
+-        curl_close($curl_pointer);
+         $responseHeaders = explode("\r\n", $responseHeaders);
+         $responseHeaders = array_filter($responseHeaders);
+         $headersArray = array();
+diff -ruN a/src/com/zoho/crm/api/util/DataTypeConverter.php b/src/com/zoho/crm/api/util/DataTypeConverter.php
+--- a/src/com/zoho/crm/api/util/DataTypeConverter.php
++++ b/src/com/zoho/crm/api/util/DataTypeConverter.php
+@@ -31,7 +31,7 @@
+         $float = function ($obj) { return floatval($obj); };
+         $long = function ($obj) { return print_r($obj, true); };
+ 		$bool = function ($obj) { return (bool)$obj; };
+-		$double = function ($obj) { return (double)$obj; };
++		$double = function ($obj) { return (float)$obj; };
+         $stringToDateTime = function ($obj) { return date_create($obj)->setTimezone(new \DateTimeZone(date_default_timezone_get())); };
+ 		$dateTimeToString = function ($obj) { return $obj->format(\Datetime::ATOM); };
+ 		$stringToDate = function ($obj) { return date('Y-m-d', strtotime($obj)); };
+diff -ruN a/src/com/zoho/crm/api/util/Downloader.php b/src/com/zoho/crm/api/util/Downloader.php
+--- a/src/com/zoho/crm/api/util/Downloader.php
++++ b/src/com/zoho/crm/api/util/Downloader.php
+@@ -56,7 +56,6 @@
+             {
+                 $reflector = new \ReflectionClass($instance);
+                 $field = $reflector->getProperty($memberName);
+-                $field->setAccessible(true);
+                 $type = $memberJsonDetails[Constants::TYPE];
+                 $instanceValue = null;
+                 if (strtolower($type) == strtolower(Constants::STREAM_WRAPPER_CLASS_PATH))
+diff -ruN a/src/com/zoho/crm/api/util/FormDataConverter.php b/src/com/zoho/crm/api/util/FormDataConverter.php
+--- a/src/com/zoho/crm/api/util/FormDataConverter.php
++++ b/src/com/zoho/crm/api/util/FormDataConverter.php
+@@ -44,7 +44,6 @@
+                 throw new SDKException(Constants::MANDATORY_VALUE_ERROR, Constants::MANDATORY_KEY_ERROR . $memberName);
+             }
+             $field = $reflector->getProperty($memberName);
+-            $field->setAccessible(true);
+             $fieldValue = $field->getValue($requestInstance);
+             if ($modification != null && $modification != 0 && $fieldValue != null && $this->valueChecker(get_class($requestInstance), $memberName, $memberDetail, $fieldValue, $this->_uniqueValuesMap, $instanceNumber))
+             {
+diff -ruN a/src/com/zoho/crm/api/util/JSONConverter.php b/src/com/zoho/crm/api/util/JSONConverter.php
+--- a/src/com/zoho/crm/api/util/JSONConverter.php
++++ b/src/com/zoho/crm/api/util/JSONConverter.php
+@@ -109,7 +109,6 @@
+             if ($modification != null && $modification != 0 )
+             {
+                 $field = $reflector->getProperty($memberName);
+-                $field->setAccessible(true);
+                 $fieldValue = $field->getValue($requestInstance);
+                 if ($fieldValue !== null)
+                 {
+@@ -260,9 +259,7 @@
+         }
+         $reflector = new \ReflectionClass($cl);
+         $keyValueField = $reflector->getProperty(Constants::KEY_VALUES);
+-        $keyValueField->setAccessible(true);
+         $keyModifiedField = $reflector->getProperty(Constants::KEY_MODIFIED);
+-        $keyModifiedField->setAccessible(true);
+         $keyValues = $keyValueField->getValue($recordInstance);
+         $keyModified = $keyModifiedField->getValue($recordInstance);
+         $requiredKeys = array();
+@@ -655,7 +652,6 @@
+                 $keyData = $responseJSON[$keyName];
+                 $reflector = new \ReflectionClass($instance);
+                 $member = $reflector->getProperty($memberName);
+-                $member->setAccessible(true);
+                 $memberValue = $this->getData($keyData, $keyDetail);
+                 $member->setValue($instance, $memberValue);
+             }
+@@ -683,7 +679,6 @@
+         }
+         $reflector = new \ReflectionClass($cl);
+         $member = $reflector->getProperty(Constants::KEY_VALUES);
+-        $member->setAccessible(true);
+         $keyValues = array();
+         foreach ($responseJSON as $keyName => $keyValue)
+         {
