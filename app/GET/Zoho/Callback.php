@@ -20,15 +20,22 @@ class Callback extends Zoho
         $clientId = $session->get('zoho_client_id');
         $clientSecret = $session->get('zoho_client_secret');
         $redirectUrl = $session->get('zoho_redirect_url');
+        $environment = $session->get('zoho_auth_env');
         $session->delete('zoho_client_id');
         $session->delete('zoho_client_secret');
         $session->delete('zoho_redirect_url');
+        $session->delete('zoho_auth_env');
         $session->save();
 
+        if (!in_array($environment, ZohoClient::ENVIRONMENTS, true)) {
+            $environment = 'production';
+        }
+
         try {
-            // 接続環境・データセンターは管理画面の設定フォーム（ACMS_POST_Config）で
-            // 事前に config へ保存済み。initialize() 内の環境解決がそれを参照する。
+            // 認証対象の環境をクライアントに指定してトークン交換する。DC・API ドメインは環境ごとに
+            // 異なるため、使用中環境ではなく「認証対象の環境」で解決する必要がある。
             $zohoClient = new ZohoClient();
+            $zohoClient->setEnvironment((string) $environment);
             $zohoClientExists = $zohoClient->initialize(
                 $clientId,
                 $clientSecret,
@@ -40,9 +47,19 @@ class Callback extends Zoho
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 
+            // 認証対象環境のトークンIDを保存（環境ごとに別キー）。再認証で重複しないよう delete → insert。
             $DB = Database::singleton(dsn());
+            $configKey = 'zoho_token_id_' . $environment;
+
+            $delete = SQL::newDelete('config');
+            $deleteWhere = SQL::newWhere();
+            $deleteWhere->addWhereOpr('config_blog_id', BID);
+            $deleteWhere->addWhereOpr('config_key', $configKey);
+            $delete->addWhere($deleteWhere);
+            $DB->query($delete->get(dsn()), 'exec');
+
             $SQL = SQL::newInsert('config');
-            $SQL->addInsert('config_key', 'zoho_token_id');
+            $SQL->addInsert('config_key', $configKey);
             $SQL->addInsert('config_value', $zohoClient->getTokenId());
             $SQL->addInsert('config_blog_id', BID);
             $DB->query($SQL->get(dsn()), 'exec');

@@ -13,58 +13,66 @@ class Admin extends ACMS_GET
     public function get()
     {
         $Tpl = new Template($this->tpl, new ACMS_Corrector());
-
         $zohoClient = new ZohoClient();
 
-        // フォームのセレクト初期選択に使う、現在保存されている接続環境・データセンター。
-        // どの分岐で render しても選択状態を保てるよう共通の基底変数として持たせる。
-        $baseVars = [
-            'authorized' => 'false',
+        // 使用中環境（実際にフォーム連携で使う環境）。ラジオの選択状態に使う。
+        $vars = [
             'environment' => ZohoClient::getEnvironment(BID),
-            'dataCenter' => ZohoClient::getDataCenter(BID),
         ];
 
-        /**
-         * Todo: ZohoClientを使用した実装に変更
-         */
-        // 現在のブログのトークンが保存されているかどうか
-        $tokenId = $zohoClient->getTokenIdByBid(BID);
-        if (!$tokenId) {
-            return $Tpl->render($baseVars);
-        }
+        // 環境（本番/サンドボックス/開発者）ごとに DC と認証状態をタブへ供給する。
+        // 変数は {環境}_{キー}（例: {sandbox_authorized} / {production_dc}）で参照する。
+        foreach (ZohoClient::ENVIRONMENTS as $environment) {
+            $vars[$environment . '_dc'] = ZohoClient::getDataCenter(BID, $environment);
 
-        // トークンIDを元にストアからトークンを取得
-        $tokenStore = $zohoClient->getTokenStore();
-        $token = null;
-        if ($tokenStore === 'file') {
-            $tokenPresistencePath = $zohoClient->getTokenPresistencePath();
-            if ($tokenPresistencePath === '' || !is_string($tokenPresistencePath)) {
-                // 永続化トークンのストアパスが未設定
-                return $Tpl->render([
-                    'authorized' => 'false',
-                ]);
+            foreach ($this->environmentStatus($zohoClient, $environment) as $key => $value) {
+                $vars[$environment . '_' . $key] = $value;
             }
-            $fileStore = new ZohoFileStore($tokenPresistencePath);
-            $token = $fileStore->findTokenById($tokenId);
         }
-        if (!$token) {
-            return $Tpl->render($baseVars);
-        }
-        $accessToken = $token->getAccessToken();
 
-        if (is_null($accessToken)) {
-            return $Tpl->render($baseVars);
+        return $Tpl->render($vars);
+    }
+
+    /**
+     * 指定環境の認証状態を返す（その環境のトークンをファイルストアから参照）。
+     *
+     * @return array{authorized: string, userName: string, clientId: string, secretId: string, tokenId: string}
+     */
+    private function environmentStatus(ZohoClient $zohoClient, string $environment): array
+    {
+        $blank = [
+            'authorized' => 'false',
+            'userName' => '',
+            'clientId' => '',
+            'secretId' => '',
+            'tokenId' => '',
+        ];
+
+        if ($zohoClient->getTokenStore() !== 'file') {
+            return $blank;
+        }
+        $tokenId = $zohoClient->getTokenIdForEnvironment(BID, $environment);
+        if (!$tokenId) {
+            return $blank;
+        }
+        $tokenPath = $zohoClient->getTokenPresistencePath();
+        if ($tokenPath === '') {
+            return $blank;
+        }
+
+        $token = (new ZohoFileStore($tokenPath))->findTokenById($tokenId);
+        if (!$token || is_null($token->getAccessToken())) {
+            return $blank;
         }
 
         $userSignature = $token->getUserSignature();
-        $userName = $userSignature !== null ? $userSignature->getName() : '';
 
-        return $Tpl->render(array_merge($baseVars, [
+        return [
             'authorized' => 'true',
-            'tokenId' => $token->getId(),
-            'clientId' => $token->getClientId(),
-            'secretId' => $token->getClientSecret(),
-            'userName' => $userName,
-        ]));
+            'userName' => $userSignature !== null ? (string) $userSignature->getName() : '',
+            'clientId' => (string) $token->getClientId(),
+            'secretId' => (string) $token->getClientSecret(),
+            'tokenId' => (string) $token->getId(),
+        ];
     }
 }

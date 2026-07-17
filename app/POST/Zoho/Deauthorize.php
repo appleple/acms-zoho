@@ -12,7 +12,15 @@ class Deauthorize extends ACMS_POST
 {
     public function post()
     {
-        $tokenId = $this->Post->get('zoho_token_id', '');
+        // 認証解除の対象環境（タブから渡る）。
+        $environment = $this->Post->get('zoho_env', 'production');
+        if (!in_array($environment, ZohoClient::ENVIRONMENTS, true)) {
+            $environment = 'production';
+        }
+
+        $zohoClient = new ZohoClient();
+        $zohoClient->setEnvironment($environment);
+        $tokenId = $zohoClient->getTokenIdForEnvironment(BID, $environment);
 
         // 必要な情報が揃っているか確認
         if (empty($tokenId)) {
@@ -21,9 +29,8 @@ class Deauthorize extends ACMS_POST
         }
 
         try {
-            // Zoho Clientの作成とトークンIDの設定
-            $zohoClient = new ZohoClient();
-            $zohoClient->setTokenId((int)$tokenId);
+            // 対象環境のトークンIDを設定して初期化（ストアからトークン情報を取得）
+            $zohoClient->setTokenId((int) $tokenId);
 
             // トークンIDから初期化（パラメータなしで呼び出すとストアからトークン情報を取得）
             $zohoClientExists = $zohoClient->initialize();
