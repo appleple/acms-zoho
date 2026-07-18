@@ -25,7 +25,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^5.9.3",
-    "vite": "^8.1.4"
+    "vite": "^8.1.5"
   },
   "dependencies": {
     "classnames": "^2.5.1",
