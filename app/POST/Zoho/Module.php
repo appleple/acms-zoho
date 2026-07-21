@@ -25,7 +25,7 @@ class Module extends Zoho
                 return Common::responseJson($cache->get($cacheKey));
             }
         } catch (\Exception $e) {
-            Logger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。');
+            Logger::warning('【Zoho plugin】キャッシュの取得に失敗しました。APIから取得します。', Common::exceptionArray($e));
             $cache = null;
         }
 
@@ -48,7 +48,7 @@ class Module extends Zoho
                 try {
                     $cache->put($cacheKey, $result, ZohoApi::cacheLifetime());
                 } catch (\Exception $e) {
-                    Logger::warning('【Zoho plugin】キャッシュの保存に失敗しました。');
+                    Logger::warning('【Zoho plugin】キャッシュの保存に失敗しました。', Common::exceptionArray($e));
                 }
             }
 
