@@ -32,7 +32,7 @@ class ModuleField extends Mapper
      */
     public function toArray()
     {
-        if (empty($this->fields) || !is_array($this->fields)) {
+        if ($this->fields === [] || !is_array($this->fields)) {
             return [];
         }
 
@@ -72,7 +72,7 @@ class ModuleField extends Mapper
      */
     public function isFieldExists(string $apiName): bool
     {
-        if (empty($this->fields) || !is_array($this->fields)) {
+        if ($this->fields === [] || !is_array($this->fields)) {
             return false;
         }
 
@@ -92,7 +92,7 @@ class ModuleField extends Mapper
      */
     public function getRequiredFields(): array
     {
-        if (empty($this->fields) || !is_array($this->fields)) {
+        if ($this->fields === [] || !is_array($this->fields)) {
             return [];
         }
 

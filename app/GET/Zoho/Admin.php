@@ -48,7 +48,7 @@ class Admin extends ACMS_GET
             $fileStore = new ZohoFileStore($tokenPresistencePath);
             $token = $fileStore->findTokenById($tokenId);
         }
-        if (!$token) {
+        if ($token === null) {
             return $Tpl->render($baseVars);
         }
         $accessToken = $token->getAccessToken();

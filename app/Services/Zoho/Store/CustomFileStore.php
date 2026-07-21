@@ -21,6 +21,7 @@ use com\zoho\crm\api\util\Constants;
 class CustomFileStore extends FileStore
 {
     private $filePath = null;
+    /** @var list<string> */
     private $headers = array(Constants::ID, Constants::USER_NAME, Constants::CLIENT_ID, Constants::CLIENT_SECRET, Constants::REFRESH_TOKEN, Constants::ACCESS_TOKEN, Constants::GRANT_TOKEN, Constants::EXPIRY_TIME, Constants::REDIRECT_URL, Constants::API_DOMAIN);
 
     public function __construct($filePath)
@@ -28,7 +29,7 @@ class CustomFileStore extends FileStore
         $this->filePath = trim($filePath);
         $csvWriter = fopen($this->filePath, 'a');
         $isCreate = false;
-        if (trim(file_get_contents($this->filePath)) == false) {
+        if (trim(file_get_contents($this->filePath)) === '') {
             $isCreate = true;
             fwrite($csvWriter, implode(",", $this->headers));
         }
@@ -37,7 +38,7 @@ class CustomFileStore extends FileStore
             $allContents = [];
             $csvReader = file($this->filePath, FILE_IGNORE_NEW_LINES);
             $headers = str_getcsv($csvReader[0], ',', '"', '\\');
-            if (sizeof($headers) == 9) {
+            if (sizeof($headers) === 9) {
                 $allContents[0] = implode(",", $this->headers) . "\n";
                 for ($index = 1; $index < sizeof($csvReader); $index++) {
                     $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
@@ -143,7 +144,7 @@ class CustomFileStore extends FileStore
                 $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
                 if (sizeof($nextRecord) > 1) {
                     $recordId = $this->getData($nextRecord[0]);
-                    if ($recordId != null && $recordId == $id) {
+                    if ($recordId !== null && $recordId == $id) {
                         $isRowPresent = true;
                         unset($csvReader[$index]);
                     }
@@ -223,6 +224,10 @@ class CustomFileStore extends FileStore
     }
 
     // Copy private methods from parent class
+    /**
+     * @param array<int, mixed> $nextRecord
+     * @return bool
+     */
     private function checkCondition(OAuthToken $oauthToken, array $nextRecord)
     {
         $isRowPresent = false;
@@ -251,9 +256,13 @@ class CustomFileStore extends FileStore
 
     private function getData(string $value)
     {
-        return ($value != null && !empty($value) && strlen($value) > 0) ? $value : null;
+        return ($value !== '' && $value !== '0') ? $value : null;
     }
 
+    /**
+     * @param array<int, mixed> $nextRecord
+     * @return void
+     */
     private function setMergeData(OAuthToken $oauthToken, array $nextRecord)
     {
         if ($oauthToken->getId() == null) {
@@ -283,7 +292,7 @@ class CustomFileStore extends FileStore
         if ($oauthToken->getExpiresIn() == null) {
             $expiresIn = $this->getData($nextRecord[7]);
             if ($expiresIn != null) {
-                $oauthToken->setExpiresIn(StrVal($expiresIn));
+                $oauthToken->setExpiresIn(strval($expiresIn));
             }
         }
         if ($oauthToken->getRedirectURL() == null) {
@@ -294,11 +303,14 @@ class CustomFileStore extends FileStore
         }
     }
 
+    /**
+     * @return array<int, mixed>
+     */
     private function setToken(OAuthToken $oauthToken)
     {
         $data = array();
         $data[0] = $oauthToken->getId();
-        $data[1] = $oauthToken->getUserSignature() != null ? $oauthToken->getUserSignature()->getName() : null;
+        $data[1] = $oauthToken->getUserSignature() !== null ? $oauthToken->getUserSignature()->getName() : null;
         $data[2] = $oauthToken->getClientId();
         $data[3] = $oauthToken->getClientSecret();
         $data[4] = $oauthToken->getRefreshToken();

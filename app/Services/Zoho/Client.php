@@ -41,8 +41,6 @@ class Client
     /** @var Store $store ストア情報 */
     private $store;
 
-    private $dataCenterEnv = 'production';
-
     /**
      * @var string|null 認証コールバックで判定した DC を、当該リクエスト内の環境解決で優先させる上書き値。
      * config への保存は同一リクエストの loadBlogConfig キャッシュに反映されないため、この上書きで確実に効かせる。
@@ -56,8 +54,6 @@ class Client
     private $environmentOverride = null;
 
     private $loggerFilePath = 'php_zoho_sdk.log';
-
-    private $loggerLevel = 'info';
 
     private $tokenId;
 
@@ -137,7 +133,7 @@ class Client
         ?string $redirectUrl = null,
         ?string $grantToken = null
     ) {
-        if ($clientId && $clientSecret && $redirectUrl && $grantToken) {
+        if ((bool) $clientId && (bool) $clientSecret && (bool) $redirectUrl && (bool) $grantToken) {
             $this->clientId = $clientId;
             $this->clientSecret = $clientSecret;
             $this->redirectUrl = $redirectUrl;
@@ -155,14 +151,14 @@ class Client
                 return null;
             }
             $token = $this->store->findTokenById($tokenId);
-            if (!$token) {
+            if ($token === null) {
                 Logger::error('【Zoho plugin】トークンがストアから削除された可能性があります。再認証してください。');
                 return null;
             }
 
             $this->clientId = $token->getClientId();
             $this->clientSecret = $token->getClientSecret();
-            $this->redirectUrl = $token->getRedirectUrl();
+            $this->redirectUrl = $token->getRedirectURL();
             $this->refreshToken = $token->getRefreshToken();
         }
 
@@ -193,7 +189,7 @@ class Client
                 ->initialize();
 
             $authorizedToken = '';
-            if (!!$grantToken && $authorizedToken = $this->store->findTokenByGrantToken($this->grantToken)) {
+            if ((bool) $grantToken && ($authorizedToken = $this->store->findTokenByGrantToken($this->grantToken)) !== null) {
                 $this->tokenId = $authorizedToken->getId();
                 $this->refreshToken = $authorizedToken->getRefreshToken();
                 $this->accessToken = $authorizedToken->getAccessToken();
@@ -472,7 +468,7 @@ class Client
 
         $tokenId = Database::query($sql->get(dsn()), 'row');
 
-        if ($tokenId && $tokenId['config_value']) {
+        if ((bool) $tokenId && (bool) $tokenId['config_value']) {
             return $tokenId['config_value'];
         }
         return null;

@@ -40,7 +40,7 @@ class Builder
      */
     protected function isJson(string $string): bool
     {
-        if (empty($string)) {
+        if (!(bool) $string) {
             return false;
         }
         json_decode($string);

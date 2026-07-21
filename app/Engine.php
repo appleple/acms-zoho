@@ -25,8 +25,8 @@ class Engine
     private $zohoClient;
 
     /**
-     * @param $field Postされたフォームのデータ
-     * @param $config フォームIDのconfigデータ
+     * @param Field $field Postされたフォームのデータ
+     * @param Field $config フォームIDのconfigデータ
      */
     public function __construct($field, $config)
     {
@@ -51,6 +51,8 @@ class Engine
      *
      * Lookupフィールドの依存関係を正しく処理するため、
      * 参照先のレコードを先に送信してIDを取得してから、参照元のレコードを送信します。
+     *
+     * @return void
      */
     public function send()
     {
@@ -96,7 +98,7 @@ class Engine
                 $levelRecords = $level->getRecords();
                 // このレベルのレコードのLookupフィールドを解決
                 foreach ($levelRecords as $record) {
-                    if (empty($record->getFields())) {
+                    if ($record->getFields() === []) {
                         continue;
                     }
                     $recordBuilder->resolveLookupFields($record, $processedRecords, $recordApi);
@@ -105,7 +107,7 @@ class Engine
                 // モジュール・タイプごとにグループ化
                 $recordGroups = [];
                 foreach ($levelRecords as $record) {
-                    if (empty($record->getFields())) {
+                    if ($record->getFields() === []) {
                         continue;
                     }
 
@@ -148,7 +150,7 @@ class Engine
                             $processedRecords[] = $record;
 
                             // メモの作成（レコードのIDが確定し、かつNote_Contentが設定されている場合）
-                            if ($record->hasNote() && $record->getId()) {
+                            if ($record->hasNote() && $record->getId() !== null) {
                                 $success = $noteApi->createNote(
                                     $record->getId(),
                                     $record->getModuleApiName(),
@@ -161,7 +163,7 @@ class Engine
                             }
 
                             // タグの追加（レコードのIDが確定し、かつTagが設定されている場合）
-                            if ($record->hasTags() && $record->getId()) {
+                            if ($record->hasTags() && $record->getId() !== null) {
                                 $success = $tagApi->addTagsToRecord(
                                     $record->getId(),
                                     $record->getModuleApiName(),
@@ -191,7 +193,7 @@ class Engine
                 $messages[] = "タグを{$tagCount}件追加";
             }
 
-            if (!empty($messages)) {
+            if ($messages !== []) {
                 $summary = implode('、', $messages) . 'しました。';
                 Logger::info('【Zoho plugin】データの一括送信が完了しました。' . $summary);
             } else {
@@ -199,7 +201,7 @@ class Engine
             }
 
             // 失敗のログ
-            if (!empty($allFailures)) {
+            if ($allFailures !== []) {
                 Logger::error('【Zoho plugin】レコードの送信に失敗しました。', [
                     'failures' => $allFailures
                 ]);
@@ -216,7 +218,7 @@ class Engine
      * レコードを依存関係のレベルごとにグループ化
      *
      * @param RecordBuilder $recordBuilder
-     * @param array $records ソート済みのレコード配列
+     * @param array<int, mixed> $records ソート済みのレコード配列
      * @return RecordDependencyLevel[] レベルごとにグループ化されたレコード配列（レベル順）
      */
     private function groupRecordsByDependencyLevel(RecordBuilder $recordBuilder, array $records): array
@@ -251,8 +253,8 @@ class Engine
      * モジュールの依存レベルを計算
      *
      * @param string $module モジュール名
-     * @param array $dependencies 依存関係マップ
-     * @param array $visiting 循環参照チェック用
+     * @param array<string, list<string>> $dependencies 依存関係マップ
+     * @param array<string, bool> $visiting 循環参照チェック用
      * @return int 依存レベル（0=依存なし、1以上=依存あり）
      */
     private function calculateModuleLevel(string $module, array $dependencies, array $visiting = []): int
@@ -263,7 +265,7 @@ class Engine
         }
 
         // 依存先がない場合はレベル0
-        if (!isset($dependencies[$module]) || empty($dependencies[$module])) {
+        if (!isset($dependencies[$module]) || $dependencies[$module] === []) {
             return 0;
         }
 

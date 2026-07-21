@@ -505,7 +505,7 @@ class Record
      */
     public function hasNote(): bool
     {
-        return !empty($this->noteContent);
+        return $this->noteContent !== null && $this->noteContent !== '';
     }
 
     /**
@@ -537,7 +537,7 @@ class Record
      */
     public function hasTags(): bool
     {
-        return !empty($this->tags);
+        return $this->tags !== [];
     }
 
     /**

@@ -53,7 +53,7 @@ class Callback extends Zoho
                 $grantToken
             );
             // 初期化
-            if (!$zohoClientExists) {
+            if ($zohoClientExists === null) {
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 
@@ -74,7 +74,7 @@ class Callback extends Zoho
 
             $userInfo = (new ZohoApi($zohoClient))->user()->getCurrentUser();
             $userName = $userInfo['email'] ?? null;
-            if ($userName) {
+            if ($userName !== null) {
                 $zohoClient->updateTokenUserName($zohoClient->getTokenId(), $userName);
             }
 

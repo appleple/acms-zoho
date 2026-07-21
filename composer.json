@@ -11,6 +11,7 @@
         "ablogcms/testing-framework": "3.2.*",
         "phpcompatibility/php-compatibility": "^10.0@dev",
         "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
         "squizlabs/php_codesniffer": "^4.0"
     },
     "autoload": {

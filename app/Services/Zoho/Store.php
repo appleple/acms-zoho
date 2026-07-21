@@ -55,7 +55,7 @@ class Store implements StoreInterface
         $tokens = $store->getTokens();
 
         foreach ($tokens as $token) {
-            if ($token->getId() == $id) {
+            if ($token->getId() === $id) {
                 return $token;
             }
         }

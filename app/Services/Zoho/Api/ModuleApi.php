@@ -16,7 +16,7 @@ class ModuleApi extends ApiBase
      * モジュール一覧を取得する
      *
      * @param bool $includeFields フィールド情報も含めるかどうか
-     * @return array モジュール情報の配列
+     * @return array<int, mixed> モジュール情報の配列（要素は Zoho SDK の Modules オブジェクト）
      */
     public function getModules(bool $includeFields = false): array
     {
@@ -26,7 +26,7 @@ class ModuleApi extends ApiBase
             $headerInstance = new HeaderMap();
             $response = $moduleOperations->getModules($paramInstance, $headerInstance);
 
-            if ($response != null && $response->isExpected()) {
+            if ($response->isExpected()) {
                 $responseHandler = $response->getObject();
 
                 if ($responseHandler instanceof ResponseWrapper) {
@@ -61,13 +61,13 @@ class ModuleApi extends ApiBase
             $headerInstance = new HeaderMap();
             $response = $moduleOperations->getModule($moduleApiName, $paramInstance, $headerInstance);
 
-            if ($response != null && $response->isExpected()) {
+            if ($response->isExpected()) {
                 $responseHandler = $response->getObject();
 
                 if ($responseHandler instanceof ResponseWrapper) {
                     $modules = $responseHandler->getModules();
 
-                    if (!empty($modules)) {
+                    if ($modules !== []) {
                         // 元のZohoモジュールオブジェクトをそのまま返す
                         return $modules[0];
                     }

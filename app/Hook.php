@@ -16,7 +16,7 @@ class Hook
      *
      * @param ACMS_POST $thisModule
      */
-    public function afterPostFire($thisModule)
+    public function afterPostFire($thisModule): void
     {
         // Hook処理動作条件
         if (($thisModule instanceof ACMS_POST_Form_Submit)) {
@@ -26,13 +26,13 @@ class Hook
         }
     }
 
-    public function zohoFormSubmit($thisModule)
+    public function zohoFormSubmit($thisModule): void
     {
         if (!$thisModule->Post->isValidAll()) {
             return;
         }
         $step = $thisModule->Post->get('error');
-        if (empty($step)) {
+        if (!(bool) $step) {
             $step = $thisModule->Get->get('step');
         }
         $step = $thisModule->Post->get('step', $step);
@@ -42,14 +42,14 @@ class Hook
 
         $id = $thisModule->Post->get('id');
         $info = $thisModule->loadForm($id);
-        if (empty($info)) {
+        if (!(bool) $info) {
             return;
         }
         if ($info['data']->getChild('mail')->get('zoho_void') !== 'on') {
             return;
         };
 
-        if (HOOK_ENABLE) {
+        if ((bool) HOOK_ENABLE) {
             $hook = HookFactory::singleton();
             $hook->call('beforeZohoRequest', [$thisModule]);
         }
@@ -58,12 +58,12 @@ class Hook
             $engine = new Engine($thisModule->Post->getChild('field'), $info['data']->getChild('mail'));
             $engine->send();
 
-            if (HOOK_ENABLE) {
+            if ((bool) HOOK_ENABLE) {
                 $hook = HookFactory::singleton();
                 $hook->call('afterZohoRequestSuccess', [$thisModule]);
             }
         } catch (\ZCRMException $e) {
-            if (HOOK_ENABLE) {
+            if ((bool) HOOK_ENABLE) {
                 $hook = HookFactory::singleton();
                 $hook->call('afterZohoRequestError', [$thisModule, $e]);
             }
@@ -79,7 +79,7 @@ class Hook
                 ]),
             );
         } catch (\Exception $e) {
-            if (HOOK_ENABLE) {
+            if ((bool) HOOK_ENABLE) {
                 $hook = HookFactory::singleton();
                 $hook->call('afterZohoRequestError', [$thisModule, $e]);
             }
@@ -90,13 +90,13 @@ class Hook
             Logger::error('【Zoho plugin】Zoho CRM へのデータ登録処理でエラーが発生しました。', Common::exceptionArray($e));
         }
 
-        if (HOOK_ENABLE) {
+        if ((bool) HOOK_ENABLE) {
             $hook = HookFactory::singleton();
             $hook->call('afterZohoRequest', [$thisModule]);
         }
     }
 
-    public function zohoFormUpdate($thisModule)
+    public function zohoFormUpdate($thisModule): void
     {
     }
 
@@ -110,7 +110,7 @@ class Hook
         if (function_exists('isDebugMode')) {
             return isDebugMode();
         }
-        if (defined('DEBUG_MODE') && DEBUG_MODE) {
+        if (defined('DEBUG_MODE') && (bool) DEBUG_MODE) {
             return true;
         }
 
@@ -123,7 +123,7 @@ class Hook
      *
      * @param \Field &$globalVars
      */
-    public function extendsGlobalVars(&$globalVars)
+    public function extendsGlobalVars(&$globalVars): void
     {
         $globalVars->set(
             'ZOHO_JS',

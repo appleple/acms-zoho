@@ -15,7 +15,7 @@ class Deauthorize extends ACMS_POST
         $tokenId = $this->Post->get('zoho_token_id', '');
 
         // 必要な情報が揃っているか確認
-        if (empty($tokenId)) {
+        if (!(bool) $tokenId) {
             $this->addError('認証情報が不足しています。');
             return $this->Post;
         }
@@ -29,7 +29,7 @@ class Deauthorize extends ACMS_POST
             $zohoClientExists = $zohoClient->initialize();
 
             // 初期化
-            if (!$zohoClientExists) {
+            if ($zohoClientExists === null) {
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 

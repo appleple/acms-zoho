@@ -59,7 +59,7 @@ class Record extends Builder
         $records = $this->getRecordsByForm();
 
         // 優先順位設定がある場合、APIで検索してモジュールを確定
-        if ($recordApi !== null && !empty($this->modulePriority)) {
+        if ($recordApi !== null && $this->modulePriority !== []) {
             $this->assignModuleByPriority($recordApi, $records);
         }
 
@@ -79,7 +79,7 @@ class Record extends Builder
         $dependencies = $this->getDependencyMap();
 
         // 依存関係がない場合はそのまま返す
-        if (empty($dependencies)) {
+        if ($dependencies === []) {
             return $records;
         }
 
@@ -182,7 +182,7 @@ class Record extends Builder
 
             // このグループのモジュールがmodulePriorityに含まれているか確認
             $allScopes = array_merge($insertScopes, $updateScopes);
-            $hasModulePriority = !empty($modulePriority) &&
+            $hasModulePriority = $modulePriority !== [] &&
                 count(array_intersect($allScopes, $modulePriority)) > 0;
 
             // 優先順位設定があり、かつmodulePriorityに含まれるモジュールの場合は仮レコードを生成
@@ -258,8 +258,8 @@ class Record extends Builder
             $scopesJson = $this->config->get('zoho_link_field_module', '', $i);
             $moduleScopes = ModuleScope::parseJsonArray($scopesJson);
             $scopes = ModuleScope::toApiNames($moduleScopes);
-            $canInsert = $this->config->get('zoho_link_field_insert', '', $i);
-            $canUpdate = $this->config->get('zoho_link_field_update', '', $i);
+            $canInsert = (bool) $this->config->get('zoho_link_field_insert', '', $i);
+            $canUpdate = (bool) $this->config->get('zoho_link_field_update', '', $i);
 
             // fieldKeyがJSON形式の場合はデコード
             $fieldApiName = $fieldKey;
@@ -307,7 +307,7 @@ class Record extends Builder
                 if ($isTagAllowed) {
                     $rawValues = $isFixed ? [$this->resolveGlobalVars($key)] : $this->field->getArray($key);
                     $tags = $this->parseTagValue($rawValues);
-                    if (!empty($tags)) {
+                    if ($tags !== []) {
                         $record->setTags($tags);
                     }
                 }
@@ -401,7 +401,7 @@ class Record extends Builder
                 }
 
                 // a-blog cmsのフィールド名が設定されていない場合はスキップ
-                if (empty($cmsField)) {
+                if (!(bool) $cmsField) {
                     continue;
                 }
 
@@ -410,7 +410,7 @@ class Record extends Builder
                 $normalizedCompareValue = $this->normalizeValue($compareValue);
 
                 // 値が空でない場合のみ追加
-                if (!empty($normalizedCompareValue)) {
+                if ((bool) $normalizedCompareValue) {
                     $item[$lookupId] = $normalizedCompareValue;
                     $record->markAsLookupField($lookupId);
                 }
@@ -433,7 +433,7 @@ class Record extends Builder
      */
     private function getFieldValue(string $key, ?array $groupArr, int $index)
     {
-        if ($groupArr && in_array($key, $groupArr, true)) {
+        if ($groupArr !== null && in_array($key, $groupArr, true)) {
             return $this->field->get($key, '', $index);
         } else {
             return implode("-", $this->field->getArray($key));
@@ -527,7 +527,7 @@ class Record extends Builder
     private function getUniqueKey(int $groupIndex)
     {
         $uniqueKey = $this->config->get('zoho_form_unique_key', '', $groupIndex);
-        return $uniqueKey ?: 'Email';
+        return $uniqueKey !== '' ? $uniqueKey : 'Email';
     }
 
     /**
@@ -682,9 +682,9 @@ class Record extends Builder
             );
 
             // 2. 見つからなければZoho APIで検索
-            if (!$recordId && $recordApi) {
+            if ($recordId === null && $recordApi !== null) {
                 $foundRecord = $recordApi->searchByUniqueKey($targetScope, $compareField, $lookupValue);
-                if ($foundRecord) {
+                if ($foundRecord !== null) {
                     $recordId = $foundRecord['id'];
                 }
             }
@@ -710,7 +710,7 @@ class Record extends Builder
         }
 
         // 見つかった候補がある場合、優先順位の高いものを設定
-        if (!empty($lookupCandidates)) {
+        if ($lookupCandidates !== []) {
             // 優先順位でソート
             usort($lookupCandidates, function ($a, $b) {
                 return $b['priority'] - $a['priority'];
@@ -745,7 +745,7 @@ class Record extends Builder
         $modulePriority = $this->modulePriority;
 
         // 優先順位設定がない場合は何もしない
-        if (empty($modulePriority)) {
+        if ($modulePriority === []) {
             return;
         }
 
@@ -762,9 +762,9 @@ class Record extends Builder
             $uniqueKey = $this->getUniqueKey($groupIndex);
             $uniqueValue = $record->getField($uniqueKey);
 
-            if (empty($uniqueValue)) {
+            if (!(bool) $uniqueValue) {
                 // uniqueKey値がない場合は最初のinsertScopeモジュールでinsertとする
-                $firstInsertModule = !empty($insertScopes) ? $insertScopes[0] : $modulePriority[0];
+                $firstInsertModule = $insertScopes !== [] ? $insertScopes[0] : $modulePriority[0];
                 $this->updateRecordProperties($record, $firstInsertModule, 'insert', null);
                 continue;
             }
@@ -788,7 +788,7 @@ class Record extends Builder
             }
 
             // どのモジュールにも存在しない場合は、insertScopeの最初のモジュールでinsert
-            if (!$assigned && !empty($insertScopes)) {
+            if (!$assigned && $insertScopes !== []) {
                 $this->updateRecordProperties($record, $insertScopes[0], 'insert', null);
             }
         }
@@ -808,7 +808,7 @@ class Record extends Builder
         $record->setModuleApiName($moduleApiName);
         $record->setType($type);
 
-        if ($id) {
+        if ($id !== null) {
             $record->setId($id);
         }
 
@@ -842,8 +842,8 @@ class Record extends Builder
             $moduleScopes = ModuleScope::parseJsonArray($scopesJson);
             $scopes = ModuleScope::toApiNames($moduleScopes);
 
-            $canInsert = $this->config->get('zoho_link_field_insert', '', $i);
-            $canUpdate = $this->config->get('zoho_link_field_update', '', $i);
+            $canInsert = (bool) $this->config->get('zoho_link_field_insert', '', $i);
+            $canUpdate = (bool) $this->config->get('zoho_link_field_update', '', $i);
 
             // スコープが一致しない場合、このフィールドを削除
             if (!in_array($moduleApiName, $scopes, true)) {

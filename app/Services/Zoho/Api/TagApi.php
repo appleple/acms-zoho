@@ -24,7 +24,7 @@ class TagApi extends ApiBase
      */
     public function addTagsToRecord(string $recordId, string $moduleApiName, array $tagNames): bool
     {
-        if (empty($tagNames)) {
+        if ($tagNames === []) {
             return false;
         }
 

@@ -28,11 +28,14 @@ final class Packager
      * dependencies at build time; they are useless — and confusing — inside the installed plugin.
      *
      * The composer-patches entries are the same story: cweagans/composer-patches (and its
-     * dependency cweagans/composer-configurable-plugin under `vendor/cweagans/`), the `patches/`
-     * source directory and the generated `patches.lock.json` are all consumed only while composer
-     * vendors dependencies — the patches are already baked into `vendor/` by then, so shipping the
-     * patcher and its inputs is pure dead weight (the leftover autoload/installed.json entries for
-     * cweagans are inert because nothing references those classes at a-blog cms runtime).
+     * dependency cweagans/composer-configurable-plugin under `vendor/cweagans/`) and the generated
+     * `patches.lock.json` are consumed only while composer vendors dependencies — the patches are
+     * already baked into `vendor/` by then, so shipping the patcher and its inputs is pure dead
+     * weight (the leftover autoload/installed.json entries for cweagans are inert because nothing
+     * references those classes at a-blog cms runtime). The patch source files themselves live in
+     * `patches/` at the REPO ROOT (outside sourceDir), so they never enter the stage and need no
+     * stripping — the `'patches'` entry below is a defensive no-op kept in case a patch dir is ever
+     * placed back under the source dir.
      *
      * Paths are stage-root-anchored (removed as `<stage>/<path>`), so a nested `patches/` dir deep
      * inside a dependency is left untouched.

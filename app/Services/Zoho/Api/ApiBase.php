@@ -9,7 +9,7 @@ abstract class ApiBase
     /** @var Client */
     protected $client;
 
-    /** @var array ラベル名からAPI名への変換用マップデータ */
+    /** @var array<int, array<string, mixed>> ラベル名からAPI名への変換用マップデータ */
     protected $labelNameToApiNameMap = [];
 
     /**
@@ -25,7 +25,7 @@ abstract class ApiBase
     /**
      * ラベル名からAPI名へのマッピング情報を設定
      *
-     * @param array $map マッピング情報
+     * @param array<int, array<string, mixed>> $map マッピング情報
      * @return self
      */
     public function setLabelToApiNameMap(array $map)
@@ -43,7 +43,7 @@ abstract class ApiBase
      */
     protected function getApiNameByLabelName(string $labelName, string $moduleName)
     {
-        if (empty($this->labelNameToApiNameMap)) {
+        if ($this->labelNameToApiNameMap === []) {
             return $labelName;
         }
 

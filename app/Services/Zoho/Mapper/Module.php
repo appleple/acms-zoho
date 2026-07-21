@@ -35,7 +35,7 @@ class Module extends Mapper
      */
     public function isModuleExists(string $apiName): bool
     {
-        if (empty($this->modules) || !is_array($this->modules)) {
+        if ($this->modules === [] || !is_array($this->modules)) {
             return false;
         }
 
@@ -55,7 +55,7 @@ class Module extends Mapper
      */
     public function toArray()
     {
-        if (empty($this->modules) || !is_array($this->modules)) {
+        if ($this->modules === [] || !is_array($this->modules)) {
             return [];
         }
 

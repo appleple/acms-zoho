@@ -41,7 +41,7 @@ class NoteApi extends ApiBase
             $note->setNoteContent($content);
             $note->setParentId($parentId);
 
-            if (!empty($title)) {
+            if ((bool) $title) {
                 $note->setNoteTitle($title);
             }
 

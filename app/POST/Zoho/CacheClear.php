@@ -17,7 +17,8 @@ class CacheClear extends Zoho
             $cache->forget('zoho-modules');
 
             // フィールドキャッシュのキー一覧を使って個別にクリア
-            $fieldKeys = $cache->get('zoho-cached-field-keys') ?: [];
+            $cachedFieldKeys = $cache->get('zoho-cached-field-keys');
+            $fieldKeys = is_array($cachedFieldKeys) ? $cachedFieldKeys : [];
             foreach ($fieldKeys as $key) {
                 $cache->forget($key);
             }

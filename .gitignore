@@ -44,3 +44,6 @@ app/patches.lock.json
 # CI 成果物 / ビルド生成物（配布 zip は Release/pipeline が生成）
 /build/
 app/dist
+
+# 作業ログ（ローカルの経緯メモ。リリース物には含めず、リポジトリでも追跡しない）
+/PHP85_MIGRATION.md

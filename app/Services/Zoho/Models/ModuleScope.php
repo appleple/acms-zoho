@@ -73,7 +73,7 @@ class ModuleScope
      */
     public static function parseJsonArray(string $json): array
     {
-        if (empty($json)) {
+        if ($json === '') {
             return [];
         }
 

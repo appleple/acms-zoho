@@ -7,52 +7,16 @@ parameters:
 			path: app/Engine.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:__construct\(\) has parameter \$config with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: app/Engine.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:__construct\(\) has parameter \$field with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: app/Engine.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:calculateModuleLevel\(\) has parameter \$dependencies with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Engine.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:calculateModuleLevel\(\) has parameter \$visiting with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Engine.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:groupRecordsByDependencyLevel\(\) has parameter \$records with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Engine.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Engine\:\:send\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Engine.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\GET\\Zoho\:\:addError\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/GET/Zoho.php
-
-		-
 			message: '#^Call to function is_null\(\) with string will always evaluate to false\.$#'
 			identifier: function.impossibleType
 			count: 1
 			path: app/GET/Zoho/Admin.php
+
+		-
+			message: '#^Casting to string something that''s already string\.$#'
+			identifier: cast.useless
+			count: 2
+			path: app/GET/Zoho/Callback.php
 
 		-
 			message: '#^Call to method getExceptionCode\(\) on an unknown class ZCRMException\.$#'
@@ -85,32 +49,8 @@ parameters:
 			path: app/Hook.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:afterPostFire\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Hook.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:extendsGlobalVars\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Hook.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:zohoFormSubmit\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Hook.php
-
-		-
 			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:zohoFormSubmit\(\) has parameter \$thisModule with no type specified\.$#'
 			identifier: missingType.parameter
-			count: 1
-			path: app/Hook.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Hook\:\:zohoFormUpdate\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: app/Hook.php
 
@@ -139,21 +79,9 @@ parameters:
 			path: app/POST/Zoho/Module.php
 
 		-
-			message: '#^Variable \$moduleApiName in isset\(\) always exists and is not nullable\.$#'
-			identifier: isset.variable
-			count: 1
-			path: app/POST/Zoho/ModuleField.php
-
-		-
-			message: '#^Call to function is_string\(\) with non\-falsy\-string will always evaluate to true\.$#'
+			message: '#^Call to function is_string\(\) with non\-empty\-string will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 3
-			path: app/POST/Zoho/OAuth2.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
 			path: app/POST/Zoho/OAuth2.php
 
 		-
@@ -163,68 +91,20 @@ parameters:
 			path: app/ServiceProvider.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\ServiceProvider\:\:init\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/ServiceProvider.php
-
-		-
-			message: '#^PHPDoc type bool\|string of property Acms\\Plugins\\Zoho\\ServiceProvider\:\:\$module is not covariant with PHPDoc type bool of overridden property ACMS_App\:\:\$module\.$#'
+			message: '#^PHPDoc type bool\|string of property Acms\\Plugins\\Zoho\\ServiceProvider\:\:\$module is not the same as PHPDoc type bool of overridden property ACMS_App\:\:\$module\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: app/ServiceProvider.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\:\:setLabelToApiNameMap\(\) has parameter \$map with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^PHPDoc type string of property Acms\\Plugins\\Zoho\\ServiceProvider\:\:\$menu is not the same as PHPDoc type string\|false of overridden property ACMS_App\:\:\$menu\.$#'
+			identifier: property.phpDocType
 			count: 1
-			path: app/Services/Zoho/Api.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\:\:\$labelNameToApiNameMap type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\ApiBase\:\:setLabelToApiNameMap\(\) has parameter \$map with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/ApiBase.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\ApiBase\:\:\$labelNameToApiNameMap type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/ApiBase.php
+			path: app/ServiceProvider.php
 
 		-
 			message: '#^Class com\\zoho\\crm\\api\\fields\\FieldsOperations does not have a constructor and must be instantiated without any parameters\.$#'
 			identifier: new.noConstructor
-			count: 1
-			path: app/Services/Zoho/Api/FieldApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:createLabelToApiNameMap\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/FieldApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:createMultiModuleLabelToApiNameMap\(\) has parameter \$moduleApiNames with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/FieldApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:createMultiModuleLabelToApiNameMap\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/FieldApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\FieldApi\:\:getField\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
 			count: 1
 			path: app/Services/Zoho/Api/FieldApi.php
 
@@ -259,12 +139,6 @@ parameters:
 			path: app/Services/Zoho/Api/FieldApi.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\ModuleApi\:\:getModules\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/ModuleApi.php
-
-		-
 			message: '#^Method com\\zoho\\crm\\api\\modules\\ModulesOperations\:\:getModule\(\) invoked with 3 parameters, 1 required\.$#'
 			identifier: arguments.count
 			count: 1
@@ -277,10 +151,10 @@ parameters:
 			path: app/Services/Zoho/Api/NoteApi.php
 
 		-
-			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
-			identifier: greater.alwaysTrue
+			message: '#^Loose comparison via "\!\=" is not allowed\.$#'
+			identifier: notEqual.notAllowed
 			count: 1
-			path: app/Services/Zoho/Api/RecordApi.php
+			path: app/Services/Zoho/Api/NoteApi.php
 
 		-
 			message: '#^Instanceof between Acms\\Plugins\\Zoho\\Services\\Zoho\\Models\\Record and Acms\\Plugins\\Zoho\\Services\\Zoho\\Models\\Record will always evaluate to true\.$#'
@@ -295,9 +169,9 @@ parameters:
 			path: app/Services/Zoho/Api/RecordApi.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:createFailureFromAPIException\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
+			message: '#^Loose comparison via "\!\=" is not allowed\.$#'
+			identifier: notEqual.notAllowed
+			count: 2
 			path: app/Services/Zoho/Api/RecordApi.php
 
 		-
@@ -307,43 +181,7 @@ parameters:
 			path: app/Services/Zoho/Api/RecordApi.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:handleActionResponses\(\) has parameter \$actionResponses with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/RecordApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:handleActionResponses\(\) has parameter \$result with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/RecordApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:handleActionResponses\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/RecordApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:insertRecords\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/RecordApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:processRecords\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/RecordApi.php
-
-		-
 			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:searchByUniqueKey\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Api/RecordApi.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Api\\RecordApi\:\:updateRecords\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: app/Services/Zoho/Api/RecordApi.php
@@ -377,6 +215,18 @@ parameters:
 			identifier: instanceof.alwaysTrue
 			count: 2
 			path: app/Services/Zoho/Api/TagApi.php
+
+		-
+			message: '#^Loose comparison via "\!\=" is not allowed\.$#'
+			identifier: notEqual.notAllowed
+			count: 1
+			path: app/Services/Zoho/Api/TagApi.php
+
+		-
+			message: '#^Casting to string something that''s already string\.$#'
+			identifier: cast.useless
+			count: 2
+			path: app/Services/Zoho/Client.php
 
 		-
 			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:getAccessToken\(\) has no return type specified\.$#'
@@ -421,6 +271,18 @@ parameters:
 			path: app/Services/Zoho/Client.php
 
 		-
+			message: '#^Only booleans are allowed in a negated boolean, Acms\\Plugins\\Zoho\\Services\\Zoho\\Store given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
+			message: '#^Only booleans are allowed in a negated boolean, com\\zoho\\crm\\api\\Initializer given\.$#'
+			identifier: booleanNot.exprNotBoolean
+			count: 1
+			path: app/Services/Zoho/Client.php
+
+		-
 			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$accessToken has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -439,18 +301,6 @@ parameters:
 			path: app/Services/Zoho/Client.php
 
 		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$dataCenterEnv has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$dataCenterEnv is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
 			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$grantToken has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
@@ -459,18 +309,6 @@ parameters:
 		-
 			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$loggerFilePath has no type specified\.$#'
 			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$loggerLevel has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Client.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Client\:\:\$loggerLevel is never read, only written\.$#'
-			identifier: property.onlyWritten
 			count: 1
 			path: app/Services/Zoho/Client.php
 
@@ -511,21 +349,33 @@ parameters:
 			path: app/Services/Zoho/Contracts/StoreInterface.php
 
 		-
+			message: '#^Return type \(com\\zoho\\api\\authenticator\\OAuthToken\<mixed\>\|null\) of method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\:\:findTokenByGrantToken\(\) should be covariant with return type \(Acms\\Plugins\\Zoho\\Services\\Zoho\\Contracts\\OAuthToken\|null\) of method Acms\\Plugins\\Zoho\\Services\\Zoho\\Contracts\\StoreInterface\:\:findTokenByGrantToken\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: app/Services/Zoho/Store.php
+
+		-
+			message: '#^Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:__construct\(\) does not call parent constructor from com\\zoho\\api\\authenticator\\store\\FileStore\.$#'
+			identifier: constructor.missingParentCall
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
 			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
 			identifier: greater.alwaysTrue
-			count: 3
+			count: 2
 			path: app/Services/Zoho/Store/CustomFileStore.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:checkCondition\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
+			message: '#^Loose comparison via "\!\=" is not allowed\.$#'
+			identifier: notEqual.notAllowed
+			count: 21
 			path: app/Services/Zoho/Store/CustomFileStore.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:checkCondition\(\) has parameter \$nextRecord with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
+			message: '#^Loose comparison via "\=\=" is not allowed\.$#'
+			identifier: equal.notAllowed
+			count: 26
 			path: app/Services/Zoho/Store/CustomFileStore.php
 
 		-
@@ -589,26 +439,8 @@ parameters:
 			path: app/Services/Zoho/Store/CustomFileStore.php
 
 		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setMergeData\(\) has no return type specified\.$#'
-			identifier: missingType.return
-			count: 1
-			path: app/Services/Zoho/Store/CustomFileStore.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setMergeData\(\) has parameter \$nextRecord with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Zoho/Store/CustomFileStore.php
-
-		-
 			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setMergeData\(\) has parameter \$oauthToken with generic class com\\zoho\\api\\authenticator\\OAuthToken but does not specify its types\: T$#'
 			identifier: missingType.generics
-			count: 1
-			path: app/Services/Zoho/Store/CustomFileStore.php
-
-		-
-			message: '#^Method Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:setToken\(\) has no return type specified\.$#'
-			identifier: missingType.return
 			count: 1
 			path: app/Services/Zoho/Store/CustomFileStore.php
 
@@ -631,6 +463,12 @@ parameters:
 			path: app/Services/Zoho/Store/CustomFileStore.php
 
 		-
+			message: '#^Only booleans are allowed in &&, int\<1, max\> given on the right side\.$#'
+			identifier: booleanAnd.rightNotBoolean
+			count: 1
+			path: app/Services/Zoho/Store/CustomFileStore.php
+
+		-
 			message: '#^Parameter \#3 \$details of class com\\zoho\\crm\\api\\exception\\SDKException constructor expects array\|null, Exception given\.$#'
 			identifier: argument.type
 			count: 3
@@ -638,12 +476,6 @@ parameters:
 
 		-
 			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:\$filePath has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: app/Services/Zoho/Store/CustomFileStore.php
-
-		-
-			message: '#^Property Acms\\Plugins\\Zoho\\Services\\Zoho\\Store\\CustomFileStore\:\:\$headers has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
 			path: app/Services/Zoho/Store/CustomFileStore.php

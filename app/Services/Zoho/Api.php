@@ -23,7 +23,7 @@ class Api
     /** @var Client */
     private $client;
 
-    /** @var array ラベル名からAPI名への変換用マップデータ */
+    /** @var array<int, array<string, mixed>> ラベル名からAPI名への変換用マップデータ */
     private $labelNameToApiNameMap = [];
 
     /** @var RecordApi|null */
@@ -57,7 +57,7 @@ class Api
     /**
      * ラベル名からAPI名へのマッピング情報を設定
      *
-     * @param array $map マッピング情報
+     * @param array<int, array<string, mixed>> $map マッピング情報
      * @return self
      */
     public function setLabelToApiNameMap(array $map)

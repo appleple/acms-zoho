@@ -29,12 +29,12 @@ class UserApi extends ApiBase
             $paramInstance->add(GetUsersParam::type(), 'CurrentUser');
             $response = $usersOperations->getUsers($paramInstance);
 
-            if ($response != null && $response->isExpected()) {
+            if ($response->isExpected()) {
                 $responseHandler = $response->getObject();
 
                 if ($responseHandler instanceof ResponseWrapper) {
                     $users = $responseHandler->getUsers();
-                    if (!empty($users)) {
+                    if ($users !== []) {
                         $user = $users[0];
                         return [
                             'email'    => $user->getEmail(),

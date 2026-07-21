@@ -37,7 +37,7 @@ class RecordApi extends ApiBase
             // フィールドのAPI名を取得
             $apiName = $this->getApiNameByLabelName($fieldName, $moduleApiName);
 
-            if (empty($apiName)) {
+            if ($apiName === '') {
                 return null;
             }
 
@@ -58,7 +58,7 @@ class RecordApi extends ApiBase
                 if ($responseHandler instanceof \com\zoho\crm\api\record\ResponseWrapper) {
                     $records = $responseHandler->getData();
 
-                    if (!empty($records) && count($records) > 0) {
+                    if ($records !== []) {
                         $record = $records[0]; // 最初のレコードを返す
                         return [
                             'id' => $record->getId(),
@@ -87,7 +87,7 @@ class RecordApi extends ApiBase
      * レコードを挿入する
      *
      * @param Record[] $records 挿入するRecordModelの配列
-     * @return array ['success' => int, 'failures' => array] 成功数と失敗情報の配列
+     * @return array<string, mixed> ['success' => int, 'failures' => array] 成功数と失敗情報の配列
      */
     public function insertRecords(array $records)
     {
@@ -98,7 +98,7 @@ class RecordApi extends ApiBase
      * レコードを更新する
      *
      * @param Record[] $records 更新するRecordModelの配列
-     * @return array ['success' => int, 'failures' => array] 成功数と失敗情報の配列
+     * @return array<string, mixed> ['success' => int, 'failures' => array] 成功数と失敗情報の配列
      */
     public function updateRecords(array $records)
     {
@@ -110,13 +110,13 @@ class RecordApi extends ApiBase
      *
      * @param Record[] $records 処理するRecordModelの配列
      * @param string $operationType 操作タイプ ('create' または 'update')
-     * @return array ['success' => int, 'failures' => array] 成功数と失敗情報の配列
+     * @return array<string, mixed> ['success' => int, 'failures' => array] 成功数と失敗情報の配列
      */
     private function processRecords(array $records, string $operationType)
     {
         $result = ['success' => 0, 'failures' => []];
 
-        if (empty($records)) {
+        if ($records === []) {
             return $result;
         }
 
@@ -130,11 +130,11 @@ class RecordApi extends ApiBase
 
             // updateの場合のみ、IDの設定を確認
             if ($operationType === 'update') {
-                if (!$record->getId()) {
+                if ($record->getId() === null) {
                     $this->setIdByUniqueKey($record, 'Email');
                 }
 
-                if (!$record->getId()) {
+                if ($record->getId() === null) {
                     continue;
                 }
             }
@@ -146,7 +146,7 @@ class RecordApi extends ApiBase
             $recordsList[] = $this->createZohoRecord($record);
         }
 
-        if (empty($recordsList) || $moduleApiName === null) {
+        if ($recordsList === [] || $moduleApiName === null) {
             return $result;
         }
 
@@ -196,7 +196,7 @@ class RecordApi extends ApiBase
             $result['failures'][] = [
                 'module' => $moduleApiName,
                 'type' => $operationType,
-                'message' => $e->getMessage() ?: 'エラーメッセージが取得できませんでした',
+                'message' => $e->getMessage() !== '' ? $e->getMessage() : 'エラーメッセージが取得できませんでした',
                 'exception' => get_class($e),
                 'trace' => $e->getTraceAsString()
             ];
@@ -208,12 +208,12 @@ class RecordApi extends ApiBase
     /**
      * ActionResponsesを処理する
      *
-     * @param array $actionResponses アクションレスポンスの配列
+     * @param array<int, mixed> $actionResponses アクションレスポンスの配列
      * @param Record[] $records 処理したレコードの配列
      * @param string $moduleApiName モジュールAPI名
      * @param string $operationType 操作タイプ
-     * @param array $result 結果配列
-     * @return array 更新された結果配列
+     * @param array<string, mixed> $result 結果配列
+     * @return array<string, mixed> 更新された結果配列
      */
     private function handleActionResponses(
         array $actionResponses,
@@ -228,7 +228,7 @@ class RecordApi extends ApiBase
                 if ($operationType === 'create') {
                     $details = $actionResponse->getDetails();
                     $createdRecordId = $this->extractRecordId($details);
-                    if ($createdRecordId) {
+                    if ($createdRecordId !== null) {
                         $records[$index]->setId($createdRecordId);
                     }
                 }
@@ -266,7 +266,7 @@ class RecordApi extends ApiBase
      * @param APIException $exception API例外
      * @param string $moduleApiName モジュールAPI名
      * @param string $operationType 操作タイプ
-     * @return array 失敗情報
+     * @return array<string, mixed> 失敗情報
      */
     private function createFailureFromAPIException(
         APIException $exception,
@@ -279,7 +279,7 @@ class RecordApi extends ApiBase
         return [
             'module' => $moduleApiName,
             'type' => $operationType,
-            'message' => $message ?: 'エラーメッセージが取得できませんでした',
+            'message' => (bool) $message ? $message : 'エラーメッセージが取得できませんでした',
             'code' => $code,
             'details' => $exception->getDetails()
         ];
@@ -327,7 +327,7 @@ class RecordApi extends ApiBase
         $scope = $record->getModuleApiName();
         $fields = $record->getFields();
 
-        if (!isset($fields[$uniqueKey]) || empty($fields[$uniqueKey])) {
+        if (!isset($fields[$uniqueKey]) || !(bool) $fields[$uniqueKey]) {
             return false;
         }
 
@@ -336,7 +336,7 @@ class RecordApi extends ApiBase
         // searchByUniqueKeyメソッドを使って既存レコードを検索
         $existingRecord = $this->searchByUniqueKey($scope, $uniqueKey, $uniqueValue);
 
-        if ($existingRecord && isset($existingRecord['id'])) {
+        if ($existingRecord !== null && isset($existingRecord['id'])) {
             $record->setId($existingRecord['id']);
             return true;
         }
@@ -399,13 +399,13 @@ class RecordApi extends ApiBase
 
         $apiRecord = new ZohoRecord();
 
-        if ($record->getId()) {
+        if ($record->getId() !== null) {
             $apiRecord->setId($record->getId());
         }
 
         // フィールドのキーは既にAPI名なので、変換不要
         foreach ($record->getFields() as $apiName => $value) {
-            if (empty($apiName)) {
+            if (!(bool) $apiName) {
                 continue;
             }
 
@@ -439,7 +439,7 @@ class RecordApi extends ApiBase
 
             // ルックアップフィールドの場合、ZohoRecordオブジェクトに変換
             if ($isLookup) {
-                if (empty($value)) {
+                if (!(bool) $value) {
                     continue;
                 }
                 // 値がレコードIDの形式（数値）かチェック
@@ -501,7 +501,7 @@ class RecordApi extends ApiBase
                 continue;
             } elseif ($record->isUserLookupField($apiName) || in_array($dataType, ['ownerlookup', 'userlookup'], true)) {
                 // オーナー/ユーザールックアップ：ユーザーIDのZohoRecordとして送信
-                if (empty($value)) {
+                if (!(bool) $value) {
                     continue;
                 }
                 if (!is_numeric($value)) {

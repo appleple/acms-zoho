@@ -17,11 +17,11 @@ class OAuth2 extends ACMS_POST
         $scope = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.users.READ'; // 必要なスコープに調整
 
         if (
-            !empty($clientId) &&
+            $clientId !== '' &&
             is_string($clientId) &&
-            !empty($clientSecret) &&
+            $clientSecret !== '' &&
             is_string($clientSecret) &&
-            !empty($redirectUrl) &&
+            $redirectUrl !== '' &&
             is_string($redirectUrl)
         ) {
             $session = Session::handle();
@@ -53,7 +53,5 @@ class OAuth2 extends ACMS_POST
             $this->addError('クライアントID、クライアントシークレットを入力してください。');
             return $this->Post;
         }
-
-        return $this->Post;
     }
 }

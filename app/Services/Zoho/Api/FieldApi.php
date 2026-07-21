@@ -45,7 +45,7 @@ class FieldApi extends ApiBase
             $headerInstance = new HeaderMap();
             $response = $fieldsOperations->getFields($paramInstance, $headerInstance);
 
-            if ($response != null && $response->isExpected()) {
+            if ($response->isExpected()) {
                 $responseHandler = $response->getObject();
 
                 if ($responseHandler instanceof FieldsResponseWrapper) {
@@ -108,7 +108,7 @@ class FieldApi extends ApiBase
      *
      * @param string $moduleApiName モジュールAPI名
      * @param string $fieldApiName フィールドAPI名
-     * @return array|null フィールド情報、失敗時はnull
+     * @return array<string, mixed>|null フィールド情報、失敗時はnull
      */
     public function getField(string $moduleApiName, string $fieldApiName): ?array
     {
@@ -118,13 +118,13 @@ class FieldApi extends ApiBase
             $headerInstance = new HeaderMap();
             $response = $fieldsOperations->getField($fieldApiName, $paramInstance, $headerInstance);
 
-            if ($response != null && $response->isExpected()) {
+            if ($response->isExpected()) {
                 $responseHandler = $response->getObject();
 
                 if ($responseHandler instanceof FieldsResponseWrapper) {
                     $fields = $responseHandler->getFields();
 
-                    if (!empty($fields)) {
+                    if ($fields !== []) {
                         $field = $fields[0];
                         $fieldData = [
                             'api_name' => $field->getAPIName(),
@@ -148,7 +148,7 @@ class FieldApi extends ApiBase
 
                         // 選択肢フィールドの場合
                         $pickListValues = $field->getPickListValues();
-                        if (!empty($pickListValues)) {
+                        if ($pickListValues !== null && $pickListValues !== []) {
                             $fieldData['pick_list_values'] = [];
                             foreach ($pickListValues as $pickListValue) {
                                 $fieldData['pick_list_values'][] = [
@@ -184,7 +184,7 @@ class FieldApi extends ApiBase
      * ラベル名からAPI名への変換マップを生成する
      *
      * @param string $moduleApiName モジュールAPI名
-     * @return array ラベル名 => API名 のマップ
+     * @return array<array-key, mixed> ラベル名 => API名 のマップ
      */
     public function createLabelToApiNameMap(string $moduleApiName): array
     {
@@ -195,7 +195,7 @@ class FieldApi extends ApiBase
             $fieldLabel = $field['field_label'];
             $apiName = $field['api_name'];
 
-            if (!empty($fieldLabel) && !empty($apiName)) {
+            if ((bool) $fieldLabel && (bool) $apiName) {
                 $map[$fieldLabel] = $apiName;
             }
         }
@@ -206,8 +206,8 @@ class FieldApi extends ApiBase
     /**
      * 複数モジュールのラベル名からAPI名への変換マップを生成する
      *
-     * @param array $moduleApiNames モジュールAPI名の配列
-     * @return array モジュール別のマップ情報
+     * @param array<array-key, mixed> $moduleApiNames モジュールAPI名の配列
+     * @return array<int, array<string, mixed>> モジュール別のマップ情報
      */
     public function createMultiModuleLabelToApiNameMap(array $moduleApiNames): array
     {
@@ -215,7 +215,7 @@ class FieldApi extends ApiBase
 
         foreach ($moduleApiNames as $moduleApiName) {
             $map = $this->createLabelToApiNameMap($moduleApiName);
-            if (!empty($map)) {
+            if ($map !== []) {
                 $result[] = [
                     'moduleName' => $moduleApiName,
                     'map' => $map
@@ -236,7 +236,8 @@ class FieldApi extends ApiBase
     private function registerCacheKey($cache, string $cacheKey): void
     {
         $registryKey = 'zoho-cached-field-keys';
-        $keys = $cache->get($registryKey) ?: [];
+        $cached = $cache->get($registryKey);
+        $keys = is_array($cached) ? $cached : [];
         if (!in_array($cacheKey, $keys, true)) {
             $keys[] = $cacheKey;
             $cache->put($registryKey, $keys, 0);

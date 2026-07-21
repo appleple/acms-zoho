@@ -1,16 +1,26 @@
 includes:
     # ablogcms/testing-framework 同梱。a-blog cms コアのシンボル（スタブ・短縮ファサード・request 定数）を供給する。
     - vendor/ablogcms/testing-framework/phpstan/extension.neon
-    # 既存の未テスト層（HTTP/SDK 通信・トークン永続化・GET/POST/Hook/Engine/ServiceProvider・
-    # 名前空間不整合のデッドコード）の型負債を捕捉するベースライン。テスト済みドメインロジック層
-    # （Models/Builder/Mapper/Collections）は本体を修正して level 6 クリーンにしてあり、ここには含めない。
-    # 新規・変更コードは level 6 で検査される。負債は段階的に解消していく。
+    # phpstan/phpstan-strict-rules。empty()/loose 比較/短絡三項/条件式の非 bool など、level では拾わない
+    # 「厳格さ」の追加ルール群。既存の負債はベースラインで吸収し、新規・変更コードに適用する。
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    # 既存の型負債（level 6）＋ strict-rules 導入時点の残存違反を捕捉するベースライン。level 6 の負債は
+    # 主に未テスト層（HTTP/SDK 通信・トークン永続化・GET/POST/Hook/Engine/ServiceProvider・名前空間不整合の
+    # デッドコード）に集中する。strict-rules 分は、型が確実に安全なもの（配列の empty()→=== [] など）は本体を
+    # 修正済みで、残りの loose 比較・条件式の非 bool・SDK/リクエスト由来で型が不確実な empty() 等（一部は
+    # ドメイン層も含む）を吸収する。新規・変更コードは level 6 + strict-rules で検査される。負債は段階的に解消する。
     - phpstan-baseline.neon
 parameters:
     # a-blog cms コアは型付けが緩く（Config::get / DB::query など多くの API が mixed を返す）、level 9 相当の
     # strict-mixed 検査は本体側の型に由来するノイズ（cast mixed to string 等）が大量に出る。プラグイン向けの
     # 実用水準として 6 を採用する（未定義メソッド・引数型・戻り値型・デッドコード・型ヒント欠落までを検出）。
     level: 6
+    strictRules:
+        # PHPUnit の静的アサーション（Assert::assertSame 等）を $this->assertSame() と書くのは PHPUnit の
+        # 標準記法。strict-rules の dynamicCallOnStaticMethod はこれを一律「静的メソッドの動的呼び出し」と
+        # 誤検出する（app 側の実コードには該当なし＝ほぼテストのアサーションのみ）。このサブルールだけを
+        # 無効化し、他の厳格ルールは有効に保つ。
+        dynamicCallOnStaticMethod: false
     # 本番の対応 PHP は 8.1〜8.5。全レンジで解析する。
     phpVersion:
         min: 80100

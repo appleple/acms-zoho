@@ -15,7 +15,7 @@ class Zoho extends ACMS_GET
      *
      * @param string $detail エラーの詳細（例外メッセージなど）
      */
-    protected function addError(string $detail = '')
+    protected function addError(string $detail = ''): void
     {
         $errors = new Field();
         $errors->addField('error', '【Zoho plugin】' . $detail);
