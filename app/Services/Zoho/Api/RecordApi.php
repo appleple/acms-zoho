@@ -16,6 +16,7 @@ use com\zoho\crm\api\record\APIException;
 use com\zoho\crm\api\record\BodyWrapper;
 use com\zoho\crm\api\record\SuccessResponse;
 use com\zoho\crm\api\util\Choice;
+use com\zoho\crm\api\exception\SDKException;
 use DateTime;
 
 class RecordApi extends ApiBase
@@ -193,16 +194,43 @@ class RecordApi extends ApiBase
                 }
             }
         } catch (\Exception $e) {
-            $result['failures'][] = [
-                'module' => $moduleApiName,
-                'type' => $operationType,
-                'message' => $e->getMessage() !== '' ? $e->getMessage() : 'エラーメッセージが取得できませんでした',
-                'exception' => get_class($e),
-                'trace' => $e->getTraceAsString()
-            ];
+            $result['failures'][] = $this->createFailureFromException($e, $moduleApiName, $operationType);
         }
 
         return $result;
+    }
+
+    /**
+     * 例外から失敗情報を作成する
+     *
+     * SDKException（Zoho PHP SDKがリクエスト構築時に投げる例外。例: Converter::valueChecker()のTYPE ERROR）は
+     * getMessage()が常に空文字列になる実装上の欠陥があり、実際の原因はgetErrorCode()/getDetails()にしか
+     * 入らない。これを拾わないと「エラーメッセージが取得できませんでした」しか分からず原因調査ができない。
+     *
+     * @param \Exception $e 発生した例外
+     * @param string $moduleApiName モジュールAPI名
+     * @param string $operationType 操作タイプ
+     * @return array<string, mixed> 失敗情報
+     */
+    private function createFailureFromException(\Exception $e, string $moduleApiName, string $operationType): array
+    {
+        $add = [
+            'module' => $moduleApiName,
+            'type' => $operationType,
+            'exception' => get_class($e),
+        ];
+
+        if ($e instanceof SDKException) {
+            $add['code'] = $e->getErrorCode();
+            $add['details'] = $e->getDetails();
+        }
+
+        $failure = Common::exceptionArray($e, $add);
+        if ($failure['message'] === '') {
+            $failure['message'] = 'エラーメッセージが取得できませんでした';
+        }
+
+        return $failure;
     }
 
     /**

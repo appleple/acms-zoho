@@ -6,6 +6,7 @@ namespace Acms\Plugins\Zoho\Tests\Unit\Api;
 
 use Acms\Plugins\Zoho\Services\Zoho\Api\RecordApi;
 use Acms\TestingFramework\TestCase;
+use com\zoho\crm\api\exception\SDKException;
 use com\zoho\crm\api\util\Choice;
 use DateTime;
 use PHPUnit\Framework\Attributes\Test;
@@ -143,5 +144,69 @@ final class RecordApiConversionTest extends TestCase
             }
         };
         $this->assertSame('777', $this->invoke($api, 'extractRecordId', $obj));
+    }
+
+    #[Test]
+    #[TestDox('createFailureFromException: 通常のExceptionはmessageのみ、SDKExceptionはcode/detailsも含める')]
+    public function createFailureFromExceptionWithPlainException(): void
+    {
+        $api = $this->api();
+
+        $e = new \RuntimeException('通信に失敗しました');
+        $failure = $this->invoke($api, 'createFailureFromException', $e, 'Leads', 'update');
+
+        $this->assertSame('Leads', $failure['module']);
+        $this->assertSame('update', $failure['type']);
+        $this->assertSame('通信に失敗しました', $failure['message']);
+        $this->assertSame(\RuntimeException::class, $failure['exception']);
+        $this->assertArrayNotHasKey('code', $failure);
+        $this->assertArrayNotHasKey('details', $failure);
+    }
+
+    #[Test]
+    #[TestDox('createFailureFromException: メッセージが空のExceptionはフォールバック文言になる')]
+    public function createFailureFromExceptionWithEmptyMessage(): void
+    {
+        $api = $this->api();
+
+        $e = new \RuntimeException('');
+        $failure = $this->invoke($api, 'createFailureFromException', $e, 'Cases', 'create');
+
+        $this->assertSame('エラーメッセージが取得できませんでした', $failure['message']);
+    }
+
+    #[Test]
+    #[TestDox('createFailureFromException: SDKExceptionはgetMessage()が空でもgetErrorCode()/getDetails()を拾う')]
+    public function createFailureFromExceptionWithSDKException(): void
+    {
+        $api = $this->api();
+
+        // Zoho PHP SDK の Converter::valueChecker() が投げる TYPE ERROR はメッセージが常に空文字列。
+        // 実際の原因（フィールド名・期待型・実際の型）は getErrorCode()/getDetails() にしか入らない。
+        $details = [
+            'field' => 'Some_Field',
+            'expectedType' => 'string',
+            'givenType' => 'array',
+        ];
+        $e = new SDKException('TYPE ERROR', '', $details, null);
+        $failure = $this->invoke($api, 'createFailureFromException', $e, 'Leads', 'update');
+
+        $this->assertSame('エラーメッセージが取得できませんでした', $failure['message']);
+        $this->assertSame('TYPE ERROR', $failure['code']);
+        $this->assertSame($details, $failure['details']);
+    }
+
+    #[Test]
+    #[TestDox('createFailureFromException: SDKExceptionでmessageがあればそのまま使う')]
+    public function createFailureFromExceptionWithSDKExceptionMessage(): void
+    {
+        $api = $this->api();
+
+        $e = new SDKException('INVALID_DATA', '不正なデータです', ['field' => 'X'], null);
+        $failure = $this->invoke($api, 'createFailureFromException', $e, 'Cases', 'create');
+
+        $this->assertSame('不正なデータです', $failure['message']);
+        $this->assertSame('INVALID_DATA', $failure['code']);
+        $this->assertSame(['field' => 'X'], $failure['details']);
     }
 }
