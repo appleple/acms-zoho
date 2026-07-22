@@ -24,15 +24,11 @@ use com\zoho\crm\api\Initializer;
 use com\zoho\crm\api\exception\SDKException;
 use Acms\Plugins\Zoho\Services\Zoho\Store\CustomFileStore;
 use Acms\Plugins\Zoho\Services\Zoho\Store;
+use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoEnvironment;
+use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoDataCenter;
 
 class Client
 {
-    /** @var list<string> 選択可能な接続環境（config: zoho_environment） */
-    public const ENVIRONMENTS = ['production', 'sandbox', 'developer'];
-
-    /** @var list<string> 選択可能なデータセンター（config: zoho_data_center） */
-    public const DATA_CENTERS = ['us', 'eu', 'in', 'cn', 'au', 'jp', 'ca', 'sa'];
-
     /** @var string $tokenStore ストアの種類 */
     private $tokenStore = 'file';
 
@@ -42,16 +38,16 @@ class Client
     private $store;
 
     /**
-     * @var string|null 認証コールバックで判定した DC を、当該リクエスト内の環境解決で優先させる上書き値。
+     * @var ZohoDataCenter|null 認証コールバックで判定した DC を、当該リクエスト内の環境解決で優先させる上書き値。
      * config への保存は同一リクエストの loadBlogConfig キャッシュに反映されないため、この上書きで確実に効かせる。
      */
-    private $dataCenterOverride = null;
+    private ?ZohoDataCenter $dataCenterOverride = null;
 
     /**
-     * @var string|null 認証時に api_domain から確定した接続環境を、当該リクエスト内の環境解決で優先させる上書き値。
-     * DC 同様、config 保存値のキャッシュに依らず確実に効かせるために使う。
+     * @var ZohoEnvironment|null Organizations API の type から確定した接続環境を、当該リクエスト内の
+     * 環境解決で優先させる上書き値。DC 同様、config 保存値のキャッシュに依らず確実に効かせるために使う。
      */
-    private $environmentOverride = null;
+    private ?ZohoEnvironment $environmentOverride = null;
 
     private $loggerFilePath = 'php_zoho_sdk.log';
 
@@ -160,6 +156,9 @@ class Client
             $this->clientSecret = $token->getClientSecret();
             $this->redirectUrl = $token->getRedirectURL();
             $this->refreshToken = $token->getRefreshToken();
+            // grant token は一度しか使用できない。直前に grant token 経由で初期化していても、
+            // 保存済みトークンでの再初期化（この分岐）では必ず refreshToken を使わせるため破棄する。
+            $this->grantToken = null;
         }
 
         try {
@@ -172,7 +171,7 @@ class Client
                 ->filePath($this->loggerFilePath)
                 ->build();
 
-            $token = $this->buildToken(!!$this->grantToken);
+            $token = $this->buildToken((bool) $this->grantToken);
 
             /**
              * トークンの初期化
@@ -273,29 +272,32 @@ class Client
     }
 
     /**
-     * データセンター文字列 → SDK の DataCenter クラス。未知の値は US にフォールバック。
+     * データセンター enum → SDK の DataCenter クラス。
      *
-     * @param string $dataCenter us / eu / in / cn / au / jp / ca / sa
+     * match は enum の全ケースを網羅する必要があり、default 節を持たない。これにより
+     * ZohoDataCenter に新しいケースが追加された際、対応漏れがあれば実行時に
+     * UnhandledMatchError で即座に検知できる。
+     *
      * @return class-string<USDataCenter>|class-string<EUDataCenter>|class-string<INDataCenter>|class-string<CNDataCenter>|class-string<AUDataCenter>|class-string<JPDataCenter>|class-string<CADataCenter>|class-string<SADataCenter>
      */
-    private static function dataCenterClass(string $dataCenter): string
+    private static function dataCenterClass(ZohoDataCenter $dataCenter): string
     {
-        return match (strtolower(trim($dataCenter))) {
-            'eu' => EUDataCenter::class,
-            'in' => INDataCenter::class,
-            'cn' => CNDataCenter::class,
-            'au' => AUDataCenter::class,
-            'jp' => JPDataCenter::class,
-            'ca' => CADataCenter::class,
-            'sa' => SADataCenter::class,
-            default => USDataCenter::class,
+        return match ($dataCenter) {
+            ZohoDataCenter::US => USDataCenter::class,
+            ZohoDataCenter::EU => EUDataCenter::class,
+            ZohoDataCenter::IN => INDataCenter::class,
+            ZohoDataCenter::CN => CNDataCenter::class,
+            ZohoDataCenter::AU => AUDataCenter::class,
+            ZohoDataCenter::JP => JPDataCenter::class,
+            ZohoDataCenter::CA => CADataCenter::class,
+            ZohoDataCenter::SA => SADataCenter::class,
         };
     }
 
     /**
      * 接続先の Zoho 環境（データセンター × 環境）を解決する。
      *
-     * 設定は拡張アプリ管理画面（ブログ設定）から選択され、config テーブルに保存される:
+     * 設定は認証時に自動判定され、config テーブルに保存される:
      *   - zoho_environment  … production(既定) / sandbox / developer
      *   - zoho_data_center  … us(既定) / eu / in / cn / au / jp / ca / sa
      *
@@ -311,130 +313,97 @@ class Client
         // override を優先し、未設定時は config 保存値（前回認証で保存）→ 既定（us / production）にフォールバックする。
         $dcClass = self::dataCenterClass($this->dataCenterOverride ?? self::getDataCenter(BID));
 
-        // 環境文字列 → 各 DataCenter クラスの静的メソッド
         return match ($this->environmentOverride ?? self::getEnvironment(BID)) {
-            'sandbox' => $dcClass::SANDBOX(),
-            'developer' => $dcClass::DEVELOPER(),
-            default => $dcClass::PRODUCTION(),
+            ZohoEnvironment::Sandbox => $dcClass::SANDBOX(),
+            ZohoEnvironment::Developer => $dcClass::DEVELOPER(),
+            ZohoEnvironment::Production => $dcClass::PRODUCTION(),
         };
     }
 
     /**
-     * 現在の接続環境（production / sandbox / developer）を返す。未設定・不正値は production。
-     * 値は認証時に api_domain から判定して保存したブログ設定（zoho_environment）から読む。
+     * 現在の接続環境を返す。未設定・不正値は Production。
+     * 値は Organizations API の type から判定して保存したブログ設定（zoho_environment）から読む。
      */
-    public static function getEnvironment(int $bid): string
+    public static function getEnvironment(int $bid): ZohoEnvironment
     {
-        $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_environment', 'production')));
+        $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_environment', ZohoEnvironment::Production->value)));
 
-        return in_array($value, self::ENVIRONMENTS, true) ? $value : 'production';
+        return ZohoEnvironment::tryFrom($value) ?? ZohoEnvironment::Production;
     }
 
     /**
-     * 選択中のデータセンター（us / eu / …）を返す。未設定・不正値は us。
+     * 選択中のデータセンターを返す。未設定・不正値は US。
      */
-    public static function getDataCenter(int $bid): string
+    public static function getDataCenter(int $bid): ZohoDataCenter
     {
-        $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_data_center', 'us')));
+        $value = strtolower(trim((string) Config::loadBlogConfig($bid)->get('zoho_data_center', ZohoDataCenter::US->value)));
 
-        return in_array($value, self::DATA_CENTERS, true) ? $value : 'us';
+        return ZohoDataCenter::tryFrom($value) ?? ZohoDataCenter::US;
     }
 
     /**
      * 当該リクエスト内の環境解決で優先させる DC を設定する（認証コールバックの自動判定結果を渡す）。
      * null を渡すと override を解除し、config 保存値／既定にフォールバックする。
      */
-    public function setDataCenter(?string $dataCenter): void
+    public function setDataCenter(?ZohoDataCenter $dataCenter): void
     {
-        if ($dataCenter === null) {
-            $this->dataCenterOverride = null;
-            return;
-        }
-        $value = strtolower(trim($dataCenter));
-        $this->dataCenterOverride = in_array($value, self::DATA_CENTERS, true) ? $value : null;
+        $this->dataCenterOverride = $dataCenter;
     }
 
     /**
-     * 当該リクエスト内の環境解決で優先させる接続環境を設定する（認証時に api_domain から判定した値を渡す）。
-     * null を渡すと override を解除し、config 保存値／既定にフォールバックする。不正値は無視する。
+     * 当該リクエスト内の環境解決で優先させる接続環境を設定する
+     * （Organizations API の type から判定した値、または一時的に Production へ固定する用途で使う）。
+     * null を渡すと override を解除し、config 保存値／既定にフォールバックする。
      */
-    public function setEnvironment(?string $environment): void
+    public function setEnvironment(?ZohoEnvironment $environment): void
     {
-        if ($environment === null) {
-            $this->environmentOverride = null;
-            return;
-        }
-        $value = strtolower(trim($environment));
-        $this->environmentOverride = in_array($value, self::ENVIRONMENTS, true) ? $value : null;
+        $this->environmentOverride = $environment;
     }
 
     /**
-     * Zoho が認証応答で返す api_domain から接続環境（production / sandbox / developer）を判定する。
+     * Organizations API（GET /crm/v8/org）が返す type フィールドの値を検証・正規化する。
      *
-     * どの環境で認証したかは同意画面での org 選択で決まり、その結果は api_domain に表れる
-     * （例: www.zohoapis.com → production, sandbox.zohoapis.com → sandbox, developer.zohoapis.com → developer）。
-     * そのため接続環境も手動設定なしに確定できる。判定不能・未指定時は production を返す。
+     * Zoho 公式仕様上、この API はアクセストークンの実際の環境に関わらず常に本番ドメイン
+     * （www.zohoapis.{domain}）に対して呼び出す必要がある（呼び出し側で SDK を production
+     * に固定してから呼ぶ）。レスポンスの type フィールドが、そのアクセストークンに紐づく
+     * 実際の環境を示す。bigin や未知の値・取得失敗（null）時は Production にフォールバックする。
      *
-     * @param string|null $apiDomain 認証応答／保存トークンの api_domain
-     * @return string production / sandbox / developer
+     * @param string|null $type Organizations API レスポンスの type（Choice::getValue()）
      */
-    public static function detectEnvironment(?string $apiDomain): string
+    public static function sanitizeEnvironment(?string $type): ZohoEnvironment
     {
-        $domain = strtolower(trim((string) $apiDomain));
-        if (str_contains($domain, 'sandbox')) {
-            return 'sandbox';
-        }
-        if (str_contains($domain, 'developer')) {
-            return 'developer';
-        }
-        return 'production';
+        $value = strtolower(trim((string) $type));
+        return ZohoEnvironment::tryFrom($value) ?? ZohoEnvironment::Production;
     }
 
     /**
-     * 現在のトークンに保存された api_domain（Zoho が認証応答で返した接続先ドメイン）を返す。
-     * 認証直後に接続環境を確定するために使う。トークン未設定・未保存時は null。
-     */
-    public function getApiDomain(): ?string
-    {
-        $tokenId = $this->tokenId ?? $this->getTokenIdByBid(BID);
-        if (!$tokenId) {
-            return null;
-        }
-        try {
-            $token = $this->store->findTokenById($tokenId);
-        } catch (SDKException $e) {
-            return null;
-        }
-        return $token !== null ? $token->getAPIDomain() : null;
-    }
-
-    /**
-     * Zoho OAuth コールバックの location / accounts-server から、対応する DC コードを判定する。
+     * Zoho OAuth コールバックの location / accounts-server から、対応する DC を判定する。
      *
      * Zoho は Multi-DC 対応として、認可を共通ドメイン（accounts.zoho.com）から開始しても
      * ユーザーの地域へリダイレクトし、コールバックに location（DC コード）と accounts-server
      * （地域別 accounts URL）を返す。これにより DC を手動設定せずに特定できる。
-     * location は当プラグインの DATA_CENTERS と一致（us/eu/in/cn/au/jp/ca/sa）。未知（uk 等）や
+     * location は ZohoDataCenter の値と一致（us/eu/in/cn/au/jp/ca/sa）。未知（uk 等）や
      * 欠落時は accounts-server のホストから逆引きし、それでも不明なら null（呼び出し側で既定にフォールバック）。
      *
      * @param string|null $location       コールバックの location パラメータ
      * @param string|null $accountsServer  コールバックの accounts-server パラメータ
-     * @return string|null 判定した DC コード（DATA_CENTERS のいずれか）。判定不能時は null
+     * @return ZohoDataCenter|null 判定した DC。判定不能時は null
      */
-    public static function detectDataCenter(?string $location, ?string $accountsServer): ?string
+    public static function detectDataCenter(?string $location, ?string $accountsServer): ?ZohoDataCenter
     {
         $loc = strtolower(trim((string) $location));
-        if (in_array($loc, self::DATA_CENTERS, true)) {
-            return $loc;
+        $dataCenter = ZohoDataCenter::tryFrom($loc);
+        if ($dataCenter !== null) {
+            return $dataCenter;
         }
 
         // location が未知でも、accounts-server のホストが SDK の DC 別 accounts URL と一致すれば救済する。
         $host = strtolower((string) parse_url((string) $accountsServer, PHP_URL_HOST));
         if ($host !== '') {
-            foreach (self::DATA_CENTERS as $dc) {
-                $knownHost = strtolower((string) parse_url(self::oauthAccountsBaseUrl($dc), PHP_URL_HOST));
+            foreach (ZohoDataCenter::cases() as $candidate) {
+                $knownHost = strtolower((string) parse_url(self::oauthAccountsBaseUrl($candidate), PHP_URL_HOST));
                 if ($knownHost !== '' && $knownHost === $host) {
-                    return $dc;
+                    return $candidate;
                 }
             }
         }
@@ -446,10 +415,8 @@ class Client
      * OAuth 認可リダイレクトに使う accounts のベース URL（例: https://accounts.zoho.com）を、
      * 指定データセンターに合わせて返す。accounts URL は本番/サンドボックス/開発者で共通
      * （DC のみで決まる）ため、SDK が持つ DC 別の accounts URL から導出する。
-     *
-     * @param string $dataCenter 認証フォームで選択されたデータセンター
      */
-    public static function oauthAccountsBaseUrl(string $dataCenter): string
+    public static function oauthAccountsBaseUrl(ZohoDataCenter $dataCenter): string
     {
         $dcClass = self::dataCenterClass($dataCenter);
         // 例: https://accounts.zoho.com/oauth/v2/token → https://accounts.zoho.com

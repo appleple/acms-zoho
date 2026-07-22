@@ -21,8 +21,8 @@ class Admin extends ACMS_GET
         // として渡す（未認証時はテンプレート側で認証状態により出し分ける）。
         $baseVars = [
             'authorized' => 'false',
-            'environment' => ZohoClient::getEnvironment(BID),
-            'dataCenter' => ZohoClient::getDataCenter(BID),
+            'environment' => ZohoClient::getEnvironment(BID)->value,
+            'dataCenter' => ZohoClient::getDataCenter(BID)->value,
         ];
 
         /**

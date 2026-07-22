@@ -7,9 +7,12 @@ use Acms\Services\Facades\Database;
 use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Common;
 use Acms\Services\Facades\Session;
+use Acms\Services\Facades\Config;
 use Acms\Plugins\Zoho\GET\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
+use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoDataCenter;
+use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoEnvironment;
 
 class Callback extends Zoho
 {
@@ -25,9 +28,13 @@ class Callback extends Zoho
         $session->delete('zoho_redirect_url');
         $session->save();
 
-        // 接続環境（production/sandbox/developer）とデータセンターは、いずれも認証時に Zoho から
-        // 自動判定する（手動設定は不要）。DC は Multi-DC コールバックの location / accounts-server で、
-        // 環境は認証応答の api_domain（本番 www / サンドボックス sandbox / 開発者 developer）で確定する。
+        // データセンターは Multi-DC コールバックの location / accounts-server から自動判定する
+        // （Zoho公式のMulti-DC対応で、判定の正確性が確認済み）。
+        // 接続環境（production/sandbox/developer）は Organizations API（GET /crm/v8/org）の
+        // type フィールドで確定する。Zoho公式仕様上、この API はアクセストークンの実際の環境に
+        // 関わらず常に本番ドメイン（www.zohoapis.{domain}）に対して呼び出す必要があるため、
+        // 判定用に一度 SDK を明示的に production 環境で初期化し直してから呼び出す
+        // （config 由来の値のまま呼ぶと、前回の認証結果次第でドメインがぶれるため）。
         $location = $this->Get->get('location', '');
         $accountsServer = $this->Get->get('accounts-server', '');
 
@@ -39,7 +46,7 @@ class Callback extends Zoho
             if ($dataCenter !== null) {
                 $zohoClient->setDataCenter($dataCenter);
             } else {
-                $dataCenter = 'us';
+                $dataCenter = ZohoDataCenter::US;
                 Logger::warning('【Zoho plugin】データセンターを自動判定できませんでした。既定(us)で続行します。', [
                     'location' => (string) $location,
                     'accounts_server' => (string) $accountsServer,
@@ -57,17 +64,23 @@ class Callback extends Zoho
                 throw new \RuntimeException('Zohoクライアントの初期化に失敗しました。');
             }
 
-            // 認証応答の api_domain から接続環境を確定する（org 選択の結果が api_domain に表れる）。
-            $environment = ZohoClient::detectEnvironment($zohoClient->getApiDomain());
+            // Organizations API は環境に関わらず必ず production ドメインに対して呼ぶ（Zoho公式仕様）。
+            $zohoClient->setEnvironment(ZohoEnvironment::Production);
+            $zohoClient->initialize();
+            $orgType = (new ZohoApi($zohoClient))->org()->getEnvironmentType();
+            $environment = ZohoClient::sanitizeEnvironment($orgType);
 
             // 確定した接続環境・DC・トークンIDを config へ保存（表示・次回認証・以降の API 呼び出しで参照）。
-            $this->upsertBlogConfig(BID, 'zoho_data_center', $dataCenter);
-            $this->upsertBlogConfig(BID, 'zoho_environment', $environment);
+            // upsertBlogConfig は config テーブルを直接書き換えるだけで、a-blog cms コアの
+            // 永続コンフィグキャッシュ（Cache::config()、config-bid-{BID} タグ）は更新されない。
+            // forgetCache を呼ばないと、このリクエスト以降に発行される別プロセスのリクエスト
+            // （管理画面のモジュール一覧取得など）が古いキャッシュを読み続けてしまう。
+            $this->upsertBlogConfig(BID, 'zoho_data_center', $dataCenter->value);
+            $this->upsertBlogConfig(BID, 'zoho_environment', $environment->value);
             $this->upsertBlogConfig(BID, 'zoho_token_id', (string) $zohoClient->getTokenId());
+            Config::forgetCache(BID);
 
-            // ユーザー名取得は、確定した環境で SDK を初期化し直してから行う。
-            // グラント交換直後は SDK 内部の環境が交換前の値のままで、選んだ org のドメインと不一致に
-            // なり得るため（例: 既定 production のままサンドボックス org を選ぶと sandbox ドメインに繋がらない）。
+            // ユーザー名取得は、確定した環境で SDK を明示的に初期化し直してから行う。
             $zohoClient->setEnvironment($environment);
             $zohoClient->setDataCenter($dataCenter);
             $zohoClient->initialize();
@@ -79,8 +92,8 @@ class Callback extends Zoho
             }
 
             Logger::info('【Zoho plugin】OAuth認証が完了しました。', [
-                'environment' => $environment,
-                'data_center' => $dataCenter,
+                'environment' => $environment->value,
+                'data_center' => $dataCenter->value,
             ]);
         } catch (\RuntimeException $e) {
             Logger::error('【Zoho plugin】OAuth認証処理でエラーが発生しました。', Common::exceptionArray($e));

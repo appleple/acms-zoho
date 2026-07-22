@@ -9,6 +9,7 @@ use Acms\Plugins\Zoho\Services\Zoho\Api\FieldApi;
 use Acms\Plugins\Zoho\Services\Zoho\Api\NoteApi;
 use Acms\Plugins\Zoho\Services\Zoho\Api\TagApi;
 use Acms\Plugins\Zoho\Services\Zoho\Api\UserApi;
+use Acms\Plugins\Zoho\Services\Zoho\Api\OrgApi;
 
 /**
  * Zoho CRM APIとの通信を行うエントリーポイントクラス（ApiManagerパターン）
@@ -43,6 +44,9 @@ class Api
 
     /** @var UserApi|null */
     private $userApi = null;
+
+    /** @var OrgApi|null */
+    private $orgApi = null;
 
     /**
      * コンストラクタ
@@ -165,6 +169,19 @@ class Api
             $this->userApi = new UserApi($this->client);
         }
         return $this->userApi;
+    }
+
+    /**
+     * OrgApiインスタンスを取得
+     *
+     * @return OrgApi
+     */
+    public function org(): OrgApi
+    {
+        if ($this->orgApi === null) {
+            $this->orgApi = new OrgApi($this->client);
+        }
+        return $this->orgApi;
     }
 
     /**

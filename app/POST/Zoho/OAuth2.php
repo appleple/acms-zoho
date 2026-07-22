@@ -14,7 +14,8 @@ class OAuth2 extends ACMS_POST
         $clientId = $this->Post->get('zoho_client_id', '');
         $clientSecret = $this->Post->get('zoho_client_secret', '');
         $redirectUrl = $this->Post->get('zoho_redirect_url', '');
-        $scope = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.users.READ'; // 必要なスコープに調整
+        // ZohoCRM.org.READ は Organizations API（接続環境の自動判定）に必要
+        $scope = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.users.READ,ZohoCRM.org.READ';
 
         if (
             $clientId !== '' &&
