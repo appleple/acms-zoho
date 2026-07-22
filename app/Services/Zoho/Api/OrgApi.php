@@ -44,7 +44,9 @@ class OrgApi extends ApiBase
                     }
                 } elseif ($responseHandler instanceof APIException) {
                     Logger::warning('【Zoho plugin】組織情報の取得でAPIエラーが発生しました。', [
+                        'code' => $responseHandler->getCode(),
                         'message' => $responseHandler->getMessage(),
+                        'details' => $responseHandler->getDetails(),
                     ]);
                 }
             }

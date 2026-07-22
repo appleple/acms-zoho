@@ -73,7 +73,8 @@ class RecordApi extends ApiBase
                     }
                     Logger::error('【Zoho plugin】レコード検索でエラーが発生しました。', [
                         'message' => $message,
-                        'code' => $this->extractChoiceValue($responseHandler->getCode())
+                        'code' => $this->extractChoiceValue($responseHandler->getCode()),
+                        'details' => $responseHandler->getDetails()
                     ]);
                 }
             }

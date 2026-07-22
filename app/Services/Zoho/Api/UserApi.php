@@ -43,7 +43,9 @@ class UserApi extends ApiBase
                     }
                 } elseif ($responseHandler instanceof APIException) {
                     Logger::warning('【Zoho plugin】ユーザー情報の取得でAPIエラーが発生しました。', [
+                        'code' => $responseHandler->getCode(),
                         'message' => $responseHandler->getMessage(),
+                        'details' => $responseHandler->getDetails()
                     ]);
                 }
             }

@@ -36,7 +36,9 @@ class ModuleApi extends ApiBase
                     return $modules;
                 } elseif ($responseHandler instanceof APIException) {
                     Logger::warning('【Zoho plugin】モジュール一覧の取得でAPIエラーが発生しました。', [
+                        'code' => $responseHandler->getCode(),
                         'message' => $responseHandler->getMessage(),
+                        'details' => $responseHandler->getDetails(),
                     ]);
                 }
             }
@@ -74,7 +76,9 @@ class ModuleApi extends ApiBase
                 } elseif ($responseHandler instanceof APIException) {
                     Logger::warning('【Zoho plugin】モジュール情報の取得でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
+                        'code' => $responseHandler->getCode(),
                         'message' => $responseHandler->getMessage(),
+                        'details' => $responseHandler->getDetails(),
                     ]);
                 }
             }

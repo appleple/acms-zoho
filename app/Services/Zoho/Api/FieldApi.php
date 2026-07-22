@@ -96,7 +96,9 @@ class FieldApi extends ApiBase
                 } elseif ($responseHandler instanceof APIException) {
                     Logger::warning('【Zoho plugin】モジュールフィールドの取得でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
+                        'code' => $responseHandler->getCode(),
                         'message' => $responseHandler->getMessage(),
+                        'details' => $responseHandler->getDetails(),
                     ]);
                 }
             }
@@ -172,7 +174,9 @@ class FieldApi extends ApiBase
                     Logger::warning('【Zoho plugin】フィールド情報の取得でAPIエラーが発生しました。', [
                         'module' => $moduleApiName,
                         'field' => $fieldApiName,
+                        'code' => $responseHandler->getCode(),
                         'message' => $responseHandler->getMessage(),
+                        'details' => $responseHandler->getDetails(),
                     ]);
                 }
             }

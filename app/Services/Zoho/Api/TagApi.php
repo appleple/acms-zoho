@@ -78,7 +78,8 @@ class TagApi extends ApiBase
                         'recordId' => $recordId,
                         'tags' => $tagNames,
                         'message' => $message,
-                        'code' => $responseHandler->getCode()
+                        'code' => $responseHandler->getCode(),
+                        'details' => $responseHandler->getDetails()
                     ]);
                 }
             }

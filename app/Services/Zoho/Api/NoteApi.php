@@ -83,7 +83,8 @@ class NoteApi extends ApiBase
                         'module' => $moduleApiName,
                         'recordId' => $recordId,
                         'message' => $message,
-                        'code' => $responseHandler->getCode()
+                        'code' => $responseHandler->getCode(),
+                        'details' => $responseHandler->getDetails()
                     ]);
                 }
             }
