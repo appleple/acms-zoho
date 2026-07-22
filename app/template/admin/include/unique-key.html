@@ -1,29 +1,19 @@
 <h2 class="acms-admin-admin-title2">
-  タブのユニークキー設定
+  送信ルール（タブごとの追加・更新）
   <i
     class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-    data-acms-tooltip="<!--T-->ユニークキーを設定してフォームの権限を作成します。<!--/T-->"
+    data-acms-tooltip="<!--T-->どのZohoタブに、新規追加・既存更新・その両方（upsert）を行うかを設定します。<!--/T-->"
   ></i>
 </h2>
+<p class="acms-admin-mb-2 acms-admin-text-info">
+  <!--T-->各行で「追加するZohoタブ」と「更新するZohoタブ」を指定します。両方に同じタブを入れると追加＋更新（upsert）になります。見込み客・連絡先だけは特別扱いされており、両方を「更新するタブ」に入れると、どちらかに既に登録されている人を見つけて更新するため、同じ人が両方のタブに重複登録されるのを防げます。それ以外のタブの組み合わせでは、指定した各タブへ個別に更新を試みるだけで、重複は防げません。<!--/T-->
+</p>
 <table class="js-fieldgroup-sortable" id="js-acms-zoho-unique-key">
   <thead class="acms-admin-hide-sp">
     <tr>
       <th class="acms-admin-table-left acms-admin-admin-config-table-item-handle">&nbsp;</th>
-      <th class="acms-admin-table-left">
-        ユニークキーにする項目のAPI名
-        <i
-        class="acms-admin-icon-tooltip js-acms-tooltip js-acms-tooltip-hover"
-        data-acms-tooltip="<!--T-->InsertまたはUpdateを許可するタブのZohoCRMの項目のラベルを設定します。<!--/T-->"
-      ></i>
-
-      </th>
-      <th class="acms-admin-table-left">
-        追加を許可するタブ名
-      </th>
-      <th class="acms-admin-table-left">
-        更新を許可するタブ名
-      </th>
-      <th class="acms-admin-table-left acms-admin-admin-config-table-action">削除</th>
+      <th class="acms-admin-table-left"><!--T-->送信ルール<!--/T--></th>
+      <th class="acms-admin-table-left acms-admin-admin-config-table-action"><!--T-->削除<!--/T--></th>
     </tr>
   </thead>
   <tbody>
@@ -32,25 +22,20 @@
       <td class="item-handle">
         <i class="acms-admin-icon-sort"></i>
       </td>
-      <td>
+      <td class="js-acms-zoho-unique-key-row">
+        <div data-acms-zoho-unique-key-root></div>
         <input
-          type="text"
+          type="hidden"
           name="zoho_form_unique_key[]"
           value="{zoho_form_unique_key}"
-          class="acms-admin-form-width-full"
+          data-acms-zoho-unique-key-value
         />
-      </td>
-      <td class="js-acms-zoho-unique-key-row">
-        <div data-acms-zoho-unique-key-insert-root></div>
         <input
           type="hidden"
           name="zoho_form_insert_scope[{i}]"
           value="{zoho_form_insert_scope}"
           data-acms-zoho-unique-key-insert-scope
         />
-      </td>
-      <td class="js-acms-zoho-unique-key-row">
-        <div data-acms-zoho-unique-key-update-root></div>
         <input
           type="hidden"
           name="zoho_form_update_scope[{i}]"
@@ -68,20 +53,20 @@
       <td class="item-handle">
         <i class="acms-admin-icon-sort"></i>
       </td>
-      <td>
-        <input type="text" name="zoho_form_unique_key[]" value="" class="acms-admin-form-width-full" />
-      </td>
       <td class="js-acms-zoho-unique-key-row">
-        <div data-acms-zoho-unique-key-insert-root></div>
+        <div data-acms-zoho-unique-key-root></div>
+        <input
+          type="hidden"
+          name="zoho_form_unique_key[]"
+          value=""
+          data-acms-zoho-unique-key-value
+        />
         <input
           type="hidden"
           name="zoho_form_insert_scope[]"
           value=""
           data-acms-zoho-unique-key-insert-scope
         />
-      </td>
-      <td class="js-acms-zoho-unique-key-row">
-        <div data-acms-zoho-unique-key-update-root></div>
         <input
           type="hidden"
           name="zoho_form_update_scope[]"
@@ -97,7 +82,7 @@
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="5">
+      <td colspan="3">
         <input type="button" class="item-insert acms-admin-btn-admin" value="追加" />
       </td>
     </tr>

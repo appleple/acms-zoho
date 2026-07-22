@@ -73,6 +73,7 @@ export const ModuleSelect = ({
   return (
     <RichSelect<ModuleWithFields, true>
       ref={ref}
+      inputId={props.inputId}
       isClearable
       value={value}
       onChange={handleChange}

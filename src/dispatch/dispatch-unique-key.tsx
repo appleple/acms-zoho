@@ -1,12 +1,16 @@
 import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ModuleScopeSelect } from '../features/unique-key/unique-key-row';
+import { UniqueKeyRow } from '../features/unique-key/unique-key-row';
 
 const uniqueKeyContainerSelector = '#js-acms-zoho-unique-key';
 const uniqueKeyRowSelector = '.js-acms-zoho-unique-key-row';
 
 // マウント済み要素を追跡
 const mountedElements = new WeakSet<Element>();
+
+// 各行は独立した React root として mount されるため、React の useId() はルートをまたいだ
+// 一意性を持たない（行ごとに同じ値を返す）。ページ全体で一意な行IDをここで発番して渡す。
+let rowIdCounter = 0;
 
 export default function DispatchUniqueKey() {
   useEffect(() => {
@@ -58,51 +62,39 @@ export default function DispatchUniqueKey() {
   };
 
   /**
-   * 単一セルのReactコンポーネントをマウント
+   * 行全体を1つの UniqueKeyRow としてマウントする。
+   * insert/update スコープと重複判定キーの3 hidden を渡し、React 側で値を書き戻す。
    */
   const mountUniqueKeyCell = (cell: Element) => {
-    // 既にマウント済みの行はスキップ
     if (mountedElements.has(cell)) {
       return;
     }
 
-    // Insert Scope
-    const insertRoot = cell.querySelector('[data-acms-zoho-unique-key-insert-root]') as HTMLElement;
-    const insertInput = cell.querySelector('[data-acms-zoho-unique-key-insert-scope]') as HTMLInputElement;
+    const root = cell.querySelector('[data-acms-zoho-unique-key-root]') as HTMLElement | null;
+    const uniqueKeyInput = cell.querySelector('[data-acms-zoho-unique-key-value]') as HTMLInputElement | null;
+    const insertInput = cell.querySelector('[data-acms-zoho-unique-key-insert-scope]') as HTMLInputElement | null;
+    const updateInput = cell.querySelector('[data-acms-zoho-unique-key-update-scope]') as HTMLInputElement | null;
 
-    // Update Scope
-    const updateRoot = cell.querySelector('[data-acms-zoho-unique-key-update-root]') as HTMLElement;
-    const updateInput = cell.querySelector('[data-acms-zoho-unique-key-update-scope]') as HTMLInputElement;
+    if (!root || !uniqueKeyInput || !insertInput || !updateInput) {
+      return;
+    }
 
     try {
-      // Insert Scopeをマウント
-      if (insertRoot && insertInput) {
-        const insertValue = insertInput.value || insertInput.getAttribute('value') || '';
-        const insertReactRoot = createRoot(insertRoot);
-        insertReactRoot.render(
-          <ModuleScopeSelect
-            inputRef={insertInput}
-            value={insertValue}
-          />
-        );
-      }
-
-      // Update Scopeをマウント
-      if (updateRoot && updateInput) {
-        const updateValue = updateInput.value || updateInput.getAttribute('value') || '';
-        const updateReactRoot = createRoot(updateRoot);
-        updateReactRoot.render(
-          <ModuleScopeSelect
-            inputRef={updateInput}
-            value={updateValue}
-          />
-        );
-      }
-
-      // マウント完了後にセルを追跡リストに追加
+      const reactRoot = createRoot(root);
+      reactRoot.render(
+        <UniqueKeyRow
+          rowId={rowIdCounter++}
+          insertInputRef={insertInput}
+          updateInputRef={updateInput}
+          uniqueKeyInputRef={uniqueKeyInput}
+          insertValue={insertInput.value || insertInput.getAttribute('value') || ''}
+          updateValue={updateInput.value || updateInput.getAttribute('value') || ''}
+          uniqueKeyValue={uniqueKeyInput.value || uniqueKeyInput.getAttribute('value') || ''}
+        />
+      );
       mountedElements.add(cell);
     } catch (error) {
-      console.error('Error rendering ModuleScopeSelect:', error);
+      console.error('Error rendering UniqueKeyRow:', error);
     }
   };
 
