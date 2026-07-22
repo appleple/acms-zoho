@@ -73,7 +73,7 @@ class RecordApi extends ApiBase
                     }
                     Logger::error('【Zoho plugin】レコード検索でエラーが発生しました。', [
                         'message' => $message,
-                        'code' => $responseHandler->getCode()
+                        'code' => $this->extractChoiceValue($responseHandler->getCode())
                     ]);
                 }
             }
@@ -88,7 +88,7 @@ class RecordApi extends ApiBase
      * レコードを挿入する
      *
      * @param Record[] $records 挿入するRecordModelの配列
-     * @return array<string, mixed> ['success' => int, 'failures' => array] 成功数と失敗情報の配列
+     * @return array<string, mixed> ['success' => int, 'failures' => array, 'succeeded' => Record[]] 成功数・失敗情報・成功レコードの配列
      */
     public function insertRecords(array $records)
     {
@@ -99,7 +99,7 @@ class RecordApi extends ApiBase
      * レコードを更新する
      *
      * @param Record[] $records 更新するRecordModelの配列
-     * @return array<string, mixed> ['success' => int, 'failures' => array] 成功数と失敗情報の配列
+     * @return array<string, mixed> ['success' => int, 'failures' => array, 'succeeded' => Record[]] 成功数・失敗情報・成功レコードの配列
      */
     public function updateRecords(array $records)
     {
@@ -111,17 +111,22 @@ class RecordApi extends ApiBase
      *
      * @param Record[] $records 処理するRecordModelの配列
      * @param string $operationType 操作タイプ ('create' または 'update')
-     * @return array<string, mixed> ['success' => int, 'failures' => array] 成功数と失敗情報の配列
+     * @return array<string, mixed> ['success' => int, 'failures' => array, 'succeeded' => Record[]] 成功数・失敗情報・成功レコードの配列
      */
     private function processRecords(array $records, string $operationType)
     {
-        $result = ['success' => 0, 'failures' => []];
+        $result = ['success' => 0, 'failures' => [], 'succeeded' => []];
 
         if ($records === []) {
             return $result;
         }
 
         $recordsList = [];
+        // Zohoへ実際に送信するRecordModelのみを、$recordsListと同じ順序で保持する。
+        // $records（引数）にはRecordインスタンスでないものやID解決できず送信対象から
+        // 除外されたものが混在し得るため、Zohoのレスポンス（$recordsListに対して
+        // 位置対応する）と紐付けるにはこちらを使う必要がある。
+        $sentRecords = [];
         $moduleApiName = null;
 
         foreach ($records as $record) {
@@ -145,6 +150,7 @@ class RecordApi extends ApiBase
             }
 
             $recordsList[] = $this->createZohoRecord($record);
+            $sentRecords[] = $record;
         }
 
         if ($recordsList === [] || $moduleApiName === null) {
@@ -171,14 +177,15 @@ class RecordApi extends ApiBase
 
                 // HTTP 204 (No Content) は更新成功だがレスポンスボディが空
                 if ($statusCode === 204) {
-                    $result['success'] = count($records);
+                    $result['success'] = count($sentRecords);
+                    $result['succeeded'] = $sentRecords;
                     return $result;
                 }
 
                 if ($responseHandler instanceof ActionWrapper) {
                     $result = $this->handleActionResponses(
                         $responseHandler->getData(),
-                        $records,
+                        $sentRecords,
                         $moduleApiName,
                         $operationType,
                         $result
@@ -237,7 +244,7 @@ class RecordApi extends ApiBase
      * ActionResponsesを処理する
      *
      * @param array<int, mixed> $actionResponses アクションレスポンスの配列
-     * @param Record[] $records 処理したレコードの配列
+     * @param Record[] $records 実際にZohoへ送信したレコードの配列（$actionResponsesと同じ順序であること）
      * @param string $moduleApiName モジュールAPI名
      * @param string $operationType 操作タイプ
      * @param array<string, mixed> $result 結果配列
@@ -261,6 +268,7 @@ class RecordApi extends ApiBase
                     }
                 }
                 $result['success']++;
+                $result['succeeded'][] = $records[$index];
             } elseif ($actionResponse instanceof APIException) {
                 $message = $this->extractChoiceValue($actionResponse->getMessage());
 
@@ -268,7 +276,7 @@ class RecordApi extends ApiBase
                     'module' => $moduleApiName,
                     'type' => $operationType,
                     'message' => $message,
-                    'code' => $actionResponse->getCode()
+                    'code' => $this->extractChoiceValue($actionResponse->getCode())
                 ];
 
                 // updateの場合はIDを含める

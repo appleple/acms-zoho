@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Acms\Plugins\Zoho\Tests\Unit\Api;
 
 use Acms\Plugins\Zoho\Services\Zoho\Api\RecordApi;
+use Acms\Plugins\Zoho\Services\Zoho\Models\Record as RecordModel;
 use Acms\TestingFramework\TestCase;
 use com\zoho\crm\api\exception\SDKException;
+use com\zoho\crm\api\record\APIException as ZohoAPIException;
+use com\zoho\crm\api\record\SuccessResponse;
 use com\zoho\crm\api\util\Choice;
 use DateTime;
 use PHPUnit\Framework\Attributes\Test;
@@ -208,5 +211,151 @@ final class RecordApiConversionTest extends TestCase
         $this->assertSame('不正なデータです', $failure['message']);
         $this->assertSame('INVALID_DATA', $failure['code']);
         $this->assertSame(['field' => 'X'], $failure['details']);
+    }
+
+    #[Test]
+    #[TestDox('handleActionResponses: create成功時は succeeded にレコードが積まれ、IDが設定される')]
+    public function handleActionResponsesTracksSucceededRecordsForCreate(): void
+    {
+        $api = $this->api();
+
+        $record = new RecordModel('Leads', 'insert');
+        $success = new SuccessResponse();
+        $success->setDetails(['id' => '999']);
+
+        $result = $this->invoke(
+            $api,
+            'handleActionResponses',
+            [$success],
+            [$record],
+            'Leads',
+            'create',
+            ['success' => 0, 'failures' => [], 'succeeded' => []]
+        );
+
+        $this->assertSame(1, $result['success']);
+        $this->assertSame([], $result['failures']);
+        $this->assertCount(1, $result['succeeded']);
+        $this->assertSame($record, $result['succeeded'][0]);
+        $this->assertSame('999', $record->getId());
+    }
+
+    #[Test]
+    #[TestDox('handleActionResponses: update成功時も succeeded に積まれる（IDは変更しない）')]
+    public function handleActionResponsesTracksSucceededRecordsForUpdate(): void
+    {
+        $api = $this->api();
+
+        $record = new RecordModel('Contacts', 'update');
+        $record->setId('existing-id');
+        $success = new SuccessResponse();
+
+        $result = $this->invoke(
+            $api,
+            'handleActionResponses',
+            [$success],
+            [$record],
+            'Contacts',
+            'update',
+            ['success' => 0, 'failures' => [], 'succeeded' => []]
+        );
+
+        $this->assertSame(1, $result['success']);
+        $this->assertCount(1, $result['succeeded']);
+        $this->assertSame('existing-id', $result['succeeded'][0]->getId());
+    }
+
+    #[Test]
+    #[TestDox('handleActionResponses: 失敗したレコードは succeeded に積まれない')]
+    public function handleActionResponsesExcludesFailedRecordsFromSucceeded(): void
+    {
+        $api = $this->api();
+
+        $record = new RecordModel('Leads', 'insert');
+        $exception = new ZohoAPIException();
+        $exception->setMessage(new Choice('INVALID_DATA'));
+        $exception->setCode(new Choice('INVALID_DATA'));
+
+        $result = $this->invoke(
+            $api,
+            'handleActionResponses',
+            [$exception],
+            [$record],
+            'Leads',
+            'create',
+            ['success' => 0, 'failures' => [], 'succeeded' => []]
+        );
+
+        $this->assertSame(0, $result['success']);
+        $this->assertSame([], $result['succeeded']);
+        $this->assertCount(1, $result['failures']);
+    }
+
+    #[Test]
+    #[TestDox('handleActionResponses: 複数レコードでは actionResponses と records を同じ位置で対応付ける')]
+    public function handleActionResponsesMapsMultipleResponsesByIndex(): void
+    {
+        $api = $this->api();
+
+        // Zohoのレスポンス配列は、実際に送信したレコード配列（processRecordsの$sentRecords）と
+        // 同じ順序・件数であることが前提。ここでは3件中2番目だけ失敗するケースで、
+        // 各成功/失敗が正しいレコードに紐付くこと（インデックスがずれないこと）を確認する。
+        $recordA = new RecordModel('Leads', 'insert');
+        $recordB = new RecordModel('Leads', 'insert');
+        $recordC = new RecordModel('Leads', 'insert');
+
+        $successA = new SuccessResponse();
+        $successA->setDetails(['id' => 'id-a']);
+
+        $failureB = new ZohoAPIException();
+        $failureB->setMessage(new Choice('INVALID_DATA'));
+        $failureB->setCode(new Choice('INVALID_DATA'));
+
+        $successC = new SuccessResponse();
+        $successC->setDetails(['id' => 'id-c']);
+
+        $result = $this->invoke(
+            $api,
+            'handleActionResponses',
+            [$successA, $failureB, $successC],
+            [$recordA, $recordB, $recordC],
+            'Leads',
+            'create',
+            ['success' => 0, 'failures' => [], 'succeeded' => []]
+        );
+
+        $this->assertSame(2, $result['success']);
+        $this->assertCount(2, $result['succeeded']);
+        $this->assertSame($recordA, $result['succeeded'][0]);
+        $this->assertSame('id-a', $recordA->getId());
+        $this->assertSame($recordC, $result['succeeded'][1]);
+        $this->assertSame('id-c', $recordC->getId());
+        $this->assertCount(1, $result['failures']);
+        $this->assertNull($recordB->getId());
+    }
+
+    #[Test]
+    #[TestDox('handleActionResponses: failures の code は Choice オブジェクトではなく文字列に展開される')]
+    public function handleActionResponsesExtractsChoiceValueFromCode(): void
+    {
+        $api = $this->api();
+
+        $record = new RecordModel('Leads', 'insert');
+        $exception = new ZohoAPIException();
+        $exception->setMessage(new Choice('required field not found'));
+        $exception->setCode(new Choice('MANDATORY_NOT_FOUND'));
+
+        $result = $this->invoke(
+            $api,
+            'handleActionResponses',
+            [$exception],
+            [$record],
+            'Leads',
+            'create',
+            ['success' => 0, 'failures' => [], 'succeeded' => []]
+        );
+
+        // Choice のまま json_encode すると非公開プロパティのため "{}" になり、ログから実際のエラーコードが失われる。
+        $this->assertSame('MANDATORY_NOT_FOUND', $result['failures'][0]['code']);
     }
 }

@@ -89,6 +89,9 @@ class Engine
             $noteCount = 0;
             $tagCount = 0;
             $allFailures = [];
+            // 完了ログの第二引数に載せる「何を作成/更新したか」（モジュール名＋ZohoレコードID）
+            $createdRecords = [];
+            $updatedRecords = [];
 
             // 依存関係レベルごとにグループ化
             $dependencyLevels = $this->groupRecordsByDependencyLevel($recordBuilder, $records);
@@ -139,10 +142,22 @@ class Engine
                             $result = $recordApi->updateRecords($chunk);
                             $updatedCount += $result['success'];
                             $allFailures = array_merge($allFailures, $result['failures']);
+                            foreach ($result['succeeded'] as $succeededRecord) {
+                                $updatedRecords[] = [
+                                    'module' => $succeededRecord->getModuleApiName(),
+                                    'id' => $succeededRecord->getId(),
+                                ];
+                            }
                         } else {
                             $result = $recordApi->insertRecords($chunk);
                             $createdCount += $result['success'];
                             $allFailures = array_merge($allFailures, $result['failures']);
+                            foreach ($result['succeeded'] as $succeededRecord) {
+                                $createdRecords[] = [
+                                    'module' => $succeededRecord->getModuleApiName(),
+                                    'id' => $succeededRecord->getId(),
+                                ];
+                            }
                         }
 
                         // 処理済みレコードに追加し、メモがあれば作成
@@ -193,10 +208,22 @@ class Engine
                 $messages[] = "タグを{$tagCount}件追加";
             }
 
+            // どのレコードを作成/更新したか（モジュール名＋ZohoレコードID）。フィールド値はPIIになり得るため含めない。
+            $context = [];
+            if ($createdRecords !== []) {
+                $context['created'] = $createdRecords;
+            }
+            if ($updatedRecords !== []) {
+                $context['updated'] = $updatedRecords;
+            }
+
             if ($messages !== []) {
                 $summary = implode('、', $messages) . 'しました。';
-                Logger::info('【Zoho plugin】データの一括送信が完了しました。' . $summary);
+                Logger::info('【Zoho plugin】データの一括送信が完了しました。' . $summary, $context);
             } else {
+                // 送信対象が0件（例: 更新のみ設定で既存レコードが見つからなかった等）でも、
+                // 正常終了したことをログに残す。ここが無いと「呼ばれたが何もしなかった」のか
+                // 「そもそも呼ばれていない」のか障害調査時に区別できなくなる。
                 Logger::info('【Zoho plugin】データの一括送信が完了しました。');
             }
 
