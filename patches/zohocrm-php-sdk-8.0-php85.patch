@@ -56,6 +56,91 @@ diff -ruN a/src/com/zoho/api/authenticator/store/DBBuilder.php b/src/com/zoho/ap
          $object = $class->newInstanceWithoutConstructor();
          $constructor->invoke($object, $this->host, $this->databaseName, $this->tableName, $this->userName, $this->password, $this->portNumber, $this->key, $this->certificate, $this->caCertificate, $this->caPath, $this->cipherAlgos);
          return $object;
+diff -ruN a/src/com/zoho/api/authenticator/store/FileStore.php b/src/com/zoho/api/authenticator/store/FileStore.php
+--- a/src/com/zoho/api/authenticator/store/FileStore.php
++++ b/src/com/zoho/api/authenticator/store/FileStore.php
+@@ -37,13 +37,13 @@
+ 		{
+             $allContents = [];
+             $csvReader = file($this->filePath, FILE_IGNORE_NEW_LINES);
+-            $headers = str_getcsv($csvReader[0]);
++            $headers = str_getcsv($csvReader[0], ',', '"', '\\');
+             if(sizeof($headers) == 9)
+             {
+                 $allContents[0] = implode(",", $this->headers) . "\n";
+                 for($index = 1; $index < sizeof($csvReader); $index++)
+                 {
+-                    $nextRecord = str_getcsv($csvReader[$index]);
++                    $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
+                     array_push($nextRecord, null);
+                     $allContents[$index] = implode(",", $nextRecord) . "\n";
+                 }
+@@ -73,7 +73,7 @@
+             for($index = 1; $index < sizeof($csvReader); $index++)
+             {
+                 $allContents = $csvReader[$index];
+-                $nextRecord = str_getcsv($allContents);
++                $nextRecord = str_getcsv($allContents, ',', '"', '\\');
+                 if (sizeof($nextRecord) > 1)
+                 {
+                     $isRowPresent = $this->checkCondition($oauthToken, $nextRecord);
+@@ -109,7 +109,7 @@
+             $isRowPresent = false;
+             for ($index = 1; $index < sizeof($allContents); $index++)
+             {
+-                $nextRecord = str_getcsv($allContents[$index]);
++                $nextRecord = str_getcsv($allContents[$index], ',', '"', '\\');
+                 if (sizeof($nextRecord) > 1) 
+                 {
+                     if ($oauthToken->getId() != null) 
+@@ -173,7 +173,7 @@
+             $isRowPresent = false;
+             for ($index = 1; $index < sizeof($csvReader); $index++) 
+             {
+-                $nextRecord = str_getcsv($csvReader[$index]);
++                $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
+                 if (sizeof($nextRecord) > 1) 
+                 {
+                     $recordId = $this->getData($nextRecord[0]);
+@@ -211,7 +211,7 @@
+             $allContents = file($this->filePath, FILE_IGNORE_NEW_LINES);
+             for ($index = 1; $index < sizeof($allContents); $index++)
+             {
+-                $nextRecord = str_getcsv($allContents[$index]);
++                $nextRecord = str_getcsv($allContents[$index], ',', '"', '\\');
+                 if(sizeof($nextRecord) > 1)
+                 {
+                     $class = new \ReflectionClass(OAuthToken::class);
+@@ -250,7 +250,7 @@
+             $isRowPresent = false;
+             for ($index = 1; $index < sizeof($csvReader); $index++) 
+             {
+-                $nextRecord = str_getcsv($csvReader[$index]);
++                $nextRecord = str_getcsv($csvReader[$index], ',', '"', '\\');
+                 if (sizeof($nextRecord) > 1 && $nextRecord[0] == $id) 
+                 {
+                     $isRowPresent = true;
+@@ -393,7 +393,7 @@
+         {
+             for ($index = 1; $index < sizeof($allContents); $index++)
+             {
+-                $nextRecord = str_getcsv($allContents[$index]);
++                $nextRecord = str_getcsv($allContents[$index], ',', '"', '\\');
+                 if(sizeof($nextRecord) > 1 && $nextRecord[0] != null && mb_strlen($nextRecord[0] ?? '', 'utf-8'))
+                 {
+                     if ($maxValue < intval( $nextRecord[0]))
+diff -ruN a/src/com/zoho/api/logger/SDKLogger.php b/src/com/zoho/api/logger/SDKLogger.php
+--- a/src/com/zoho/api/logger/SDKLogger.php
++++ b/src/com/zoho/api/logger/SDKLogger.php
+@@ -61,7 +61,7 @@
+         self::writeToFile("SEVERE", $message);
+     }
+ 
+-    public static function severeError($message, Exception $e=null)
++    public static function severeError($message, ?Exception $e=null)
+     {
+         $parsedMessage = $message;
+         if($e != null)
 diff -ruN a/src/com/zoho/crm/api/ProxyBuilder.php b/src/com/zoho/crm/api/ProxyBuilder.php
 --- a/src/com/zoho/crm/api/ProxyBuilder.php
 +++ b/src/com/zoho/crm/api/ProxyBuilder.php
@@ -67,6 +152,1683 @@ diff -ruN a/src/com/zoho/crm/api/ProxyBuilder.php b/src/com/zoho/crm/api/ProxyBu
          $object = $class->newInstanceWithoutConstructor();
          $constructor->invoke($object, $this->host, $this->port, $this->user, $this->password);
          return $object;
+diff -ruN a/src/com/zoho/crm/api/RequestProxy.php b/src/com/zoho/crm/api/RequestProxy.php
+--- a/src/com/zoho/crm/api/RequestProxy.php
++++ b/src/com/zoho/crm/api/RequestProxy.php
+@@ -8,7 +8,7 @@
+     private $user = null;
+     private $password = null;
+ 
+-    public function __construct(string $host , int $port, string $user = null, string $password = null)
++    public function __construct(string $host , int $port, ?string $user = null, ?string $password = null)
+     {
+         $this->host = $host;
+         $this->port = $port;
+diff -ruN a/src/com/zoho/crm/api/apis/APIsOperations.php b/src/com/zoho/crm/api/apis/APIsOperations.php
+--- a/src/com/zoho/crm/api/apis/APIsOperations.php
++++ b/src/com/zoho/crm/api/apis/APIsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * Creates an instance of ApisOperations with the given parameters
+ 	 * @param string $filters A string
+ 	 */
+-	public function __Construct(string $filters=null)
++	public function __Construct(?string $filters=null)
+ 	{
+ 		$this->filters=$filters; 
+ 
+diff -ruN a/src/com/zoho/crm/api/appointmentpreference/AppointmentPreferenceOperations.php b/src/com/zoho/crm/api/appointmentpreference/AppointmentPreferenceOperations.php
+--- a/src/com/zoho/crm/api/appointmentpreference/AppointmentPreferenceOperations.php
++++ b/src/com/zoho/crm/api/appointmentpreference/AppointmentPreferenceOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAppointmentPreference(ParameterMap $paramInstance=null)
++	public function getAppointmentPreference(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/assignmentrules/AssignmentRulesOperations.php b/src/com/zoho/crm/api/assignmentrules/AssignmentRulesOperations.php
+--- a/src/com/zoho/crm/api/assignmentrules/AssignmentRulesOperations.php
++++ b/src/com/zoho/crm/api/assignmentrules/AssignmentRulesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAssignmentRules(ParameterMap $paramInstance=null)
++	public function getAssignmentRules(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -35,7 +35,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAssignmentRule(string $id, ParameterMap $paramInstance=null)
++	public function getAssignmentRule(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/attachments/AttachmentsOperations.php b/src/com/zoho/crm/api/attachments/AttachmentsOperations.php
+--- a/src/com/zoho/crm/api/attachments/AttachmentsOperations.php
++++ b/src/com/zoho/crm/api/attachments/AttachmentsOperations.php
+@@ -44,7 +44,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAttachments(string $recordId, string $module, ParameterMap $paramInstance=null)
++	public function getAttachments(string $recordId, string $module, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -68,7 +68,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function uploadUrlAttachments(string $recordId, string $module, ParameterMap $paramInstance=null)
++	public function uploadUrlAttachments(string $recordId, string $module, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -92,7 +92,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteAttachments(string $recordId, string $module, ParameterMap $paramInstance=null)
++	public function deleteAttachments(string $recordId, string $module, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/backup/BackupOperations.php b/src/com/zoho/crm/api/backup/BackupOperations.php
+--- a/src/com/zoho/crm/api/backup/BackupOperations.php
++++ b/src/com/zoho/crm/api/backup/BackupOperations.php
+@@ -68,7 +68,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function history(ParameterMap $paramInstance=null)
++	public function history(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/bulkwrite/BulkWriteOperations.php b/src/com/zoho/crm/api/bulkwrite/BulkWriteOperations.php
+--- a/src/com/zoho/crm/api/bulkwrite/BulkWriteOperations.php
++++ b/src/com/zoho/crm/api/bulkwrite/BulkWriteOperations.php
+@@ -17,7 +17,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function uploadFile(FileBodyWrapper $request, HeaderMap $headerInstance=null)
++	public function uploadFile(FileBodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/businesshours/BusinessHoursOperations.php b/src/com/zoho/crm/api/businesshours/BusinessHoursOperations.php
+--- a/src/com/zoho/crm/api/businesshours/BusinessHoursOperations.php
++++ b/src/com/zoho/crm/api/businesshours/BusinessHoursOperations.php
+@@ -16,7 +16,7 @@
+ 	 * Creates an instance of BusinessHoursOperations with the given parameters
+ 	 * @param string $xCrmOrg A string
+ 	 */
+-	public function __Construct(string $xCrmOrg=null)
++	public function __Construct(?string $xCrmOrg=null)
+ 	{
+ 		$this->xCrmOrg=$xCrmOrg; 
+ 
+diff -ruN a/src/com/zoho/crm/api/contactroles/ContactRolesOperations.php b/src/com/zoho/crm/api/contactroles/ContactRolesOperations.php
+--- a/src/com/zoho/crm/api/contactroles/ContactRolesOperations.php
++++ b/src/com/zoho/crm/api/contactroles/ContactRolesOperations.php
+@@ -72,7 +72,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteContactRoles(ParameterMap $paramInstance=null)
++	public function deleteContactRoles(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/customviews/CustomViewsOperations.php b/src/com/zoho/crm/api/customviews/CustomViewsOperations.php
+--- a/src/com/zoho/crm/api/customviews/CustomViewsOperations.php
++++ b/src/com/zoho/crm/api/customviews/CustomViewsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getCustomViews(ParameterMap $paramInstance=null)
++	public function getCustomViews(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -35,7 +35,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getCustomView(string $id, ParameterMap $paramInstance=null)
++	public function getCustomView(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -55,7 +55,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function changeSortOrderOfCustomViews(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function changeSortOrderOfCustomViews(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -78,7 +78,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function changeSortOrderOfCustomView(string $id, BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function changeSortOrderOfCustomView(string $id, BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/dealcontactroles/DealContactRolesOperations.php b/src/com/zoho/crm/api/dealcontactroles/DealContactRolesOperations.php
+--- a/src/com/zoho/crm/api/dealcontactroles/DealContactRolesOperations.php
++++ b/src/com/zoho/crm/api/dealcontactroles/DealContactRolesOperations.php
+@@ -18,7 +18,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAssociatedContactRoles(string $deal, ParameterMap $paramInstance=null)
++	public function getAssociatedContactRoles(string $deal, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -41,7 +41,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteAssociatedContactRoles(string $deal, ParameterMap $paramInstance=null)
++	public function deleteAssociatedContactRoles(string $deal, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/downloadattachments/DownloadAttachmentsOperations.php b/src/com/zoho/crm/api/downloadattachments/DownloadAttachmentsOperations.php
+--- a/src/com/zoho/crm/api/downloadattachments/DownloadAttachmentsOperations.php
++++ b/src/com/zoho/crm/api/downloadattachments/DownloadAttachmentsOperations.php
+@@ -18,7 +18,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getDownloadAttachmentsDetails(string $recordId, string $module, ParameterMap $paramInstance=null)
++	public function getDownloadAttachmentsDetails(string $recordId, string $module, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/downloadinlineimages/DownloadInlineImagesOperations.php b/src/com/zoho/crm/api/downloadinlineimages/DownloadInlineImagesOperations.php
+--- a/src/com/zoho/crm/api/downloadinlineimages/DownloadInlineImagesOperations.php
++++ b/src/com/zoho/crm/api/downloadinlineimages/DownloadInlineImagesOperations.php
+@@ -18,7 +18,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getDownloadInlineImages(string $recordId, string $module, ParameterMap $paramInstance=null)
++	public function getDownloadInlineImages(string $recordId, string $module, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/duplicatecheckpreference/DuplicateCheckPreferenceOperations.php b/src/com/zoho/crm/api/duplicatecheckpreference/DuplicateCheckPreferenceOperations.php
+--- a/src/com/zoho/crm/api/duplicatecheckpreference/DuplicateCheckPreferenceOperations.php
++++ b/src/com/zoho/crm/api/duplicatecheckpreference/DuplicateCheckPreferenceOperations.php
+@@ -16,7 +16,7 @@
+ 	 * Creates an instance of DuplicateCheckPreferenceOperations with the given parameters
+ 	 * @param string $module A string
+ 	 */
+-	public function __Construct(string $module=null)
++	public function __Construct(?string $module=null)
+ 	{
+ 		$this->module=$module; 
+ 
+diff -ruN a/src/com/zoho/crm/api/emailcompose/EmailComposeOperations.php b/src/com/zoho/crm/api/emailcompose/EmailComposeOperations.php
+--- a/src/com/zoho/crm/api/emailcompose/EmailComposeOperations.php
++++ b/src/com/zoho/crm/api/emailcompose/EmailComposeOperations.php
+@@ -17,7 +17,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getEmailComposerDefaultSettings(ParameterMap $paramInstance=null)
++	public function getEmailComposerDefaultSettings(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/emailrelatedrecords/EmailRelatedRecordsOperations.php b/src/com/zoho/crm/api/emailrelatedrecords/EmailRelatedRecordsOperations.php
+--- a/src/com/zoho/crm/api/emailrelatedrecords/EmailRelatedRecordsOperations.php
++++ b/src/com/zoho/crm/api/emailrelatedrecords/EmailRelatedRecordsOperations.php
+@@ -23,7 +23,7 @@
+ 	 * @param string $type A string
+ 	 * @param string $ownerId A string
+ 	 */
+-	public function __Construct(string $recordId, string $moduleName, string $type=null, string $ownerId=null)
++	public function __Construct(string $recordId, string $moduleName, ?string $type=null, ?string $ownerId=null)
+ 	{
+ 		$this->recordId=$recordId; 
+ 		$this->moduleName=$moduleName; 
+@@ -37,7 +37,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getEmailsRelatedRecords(ParameterMap $paramInstance=null)
++	public function getEmailsRelatedRecords(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/emailsignatures/EmailSignaturesOperations.php b/src/com/zoho/crm/api/emailsignatures/EmailSignaturesOperations.php
+--- a/src/com/zoho/crm/api/emailsignatures/EmailSignaturesOperations.php
++++ b/src/com/zoho/crm/api/emailsignatures/EmailSignaturesOperations.php
+@@ -24,7 +24,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAllEmailSignatures(ParameterMap $paramInstance=null)
++	public function getAllEmailSignatures(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -43,7 +43,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function createEmailSignatures(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function createEmailSignatures(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -65,7 +65,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateEmailSignatures(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateEmailSignatures(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -86,7 +86,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteEmailSignatures(ParameterMap $paramInstance=null)
++	public function deleteEmailSignatures(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/emailtemplates/EmailTemplatesOperations.php b/src/com/zoho/crm/api/emailtemplates/EmailTemplatesOperations.php
+--- a/src/com/zoho/crm/api/emailtemplates/EmailTemplatesOperations.php
++++ b/src/com/zoho/crm/api/emailtemplates/EmailTemplatesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getEmailTemplates(ParameterMap $paramInstance=null)
++	public function getEmailTemplates(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/entityscores/EntityScoresOperations.php b/src/com/zoho/crm/api/entityscores/EntityScoresOperations.php
+--- a/src/com/zoho/crm/api/entityscores/EntityScoresOperations.php
++++ b/src/com/zoho/crm/api/entityscores/EntityScoresOperations.php
+@@ -21,7 +21,7 @@
+ 	 * @param string $fields A string
+ 	 * @param string $cvid A string
+ 	 */
+-	public function __Construct(string $fields=null, string $cvid=null)
++	public function __Construct(?string $fields=null, ?string $cvid=null)
+ 	{
+ 		$this->fields=$fields; 
+ 		$this->cvid=$cvid; 
+@@ -54,7 +54,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getEntityScores(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getEntityScores(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/exception/SDKException.php b/src/com/zoho/crm/api/exception/SDKException.php
+--- a/src/com/zoho/crm/api/exception/SDKException.php
++++ b/src/com/zoho/crm/api/exception/SDKException.php
+@@ -20,7 +20,7 @@
+      * @param \Exception $cause An Exception class instance.
+      * @param array $details A JSON Object containing the error response.
+      */
+-    public function __construct($code, $message, $details=null, \Exception $cause=null)
++    public function __construct($code, $message, $details=null, ?\Exception $cause=null)
+     {
+         $this->_code = $code;
+         $this->_message = $message;
+diff -ruN a/src/com/zoho/crm/api/features/FeaturesOperations.php b/src/com/zoho/crm/api/features/FeaturesOperations.php
+--- a/src/com/zoho/crm/api/features/FeaturesOperations.php
++++ b/src/com/zoho/crm/api/features/FeaturesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getFeatureDetails(ParameterMap $paramInstance=null)
++	public function getFeatureDetails(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -35,7 +35,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getFeatureDetail(string $featureAPIName, ParameterMap $paramInstance=null)
++	public function getFeatureDetail(string $featureAPIName, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/fieldattachments/FieldAttachmentsOperations.php b/src/com/zoho/crm/api/fieldattachments/FieldAttachmentsOperations.php
+--- a/src/com/zoho/crm/api/fieldattachments/FieldAttachmentsOperations.php
++++ b/src/com/zoho/crm/api/fieldattachments/FieldAttachmentsOperations.php
+@@ -20,7 +20,7 @@
+ 	 * @param string $recordId A string
+ 	 * @param string $fieldsAttachmentId A string
+ 	 */
+-	public function __Construct(string $moduleAPIName, string $recordId, string $fieldsAttachmentId=null)
++	public function __Construct(string $moduleAPIName, string $recordId, ?string $fieldsAttachmentId=null)
+ 	{
+ 		$this->moduleAPIName=$moduleAPIName; 
+ 		$this->recordId=$recordId; 
+diff -ruN a/src/com/zoho/crm/api/fieldmapdependency/FieldMapDependencyOperations.php b/src/com/zoho/crm/api/fieldmapdependency/FieldMapDependencyOperations.php
+--- a/src/com/zoho/crm/api/fieldmapdependency/FieldMapDependencyOperations.php
++++ b/src/com/zoho/crm/api/fieldmapdependency/FieldMapDependencyOperations.php
+@@ -19,7 +19,7 @@
+ 	 * @param string $layoutId A string
+ 	 * @param string $module A string
+ 	 */
+-	public function __Construct(string $layoutId, string $module=null)
++	public function __Construct(string $layoutId, ?string $module=null)
+ 	{
+ 		$this->layoutId=$layoutId; 
+ 		$this->module=$module; 
+@@ -54,7 +54,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getMapDependencies(ParameterMap $paramInstance=null)
++	public function getMapDependencies(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/fields/FieldsOperations.php b/src/com/zoho/crm/api/fields/FieldsOperations.php
+--- a/src/com/zoho/crm/api/fields/FieldsOperations.php
++++ b/src/com/zoho/crm/api/fields/FieldsOperations.php
+@@ -17,7 +17,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getFields(ParameterMap $paramInstance=null)
++	public function getFields(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -36,7 +36,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function createField(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function createField(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -58,7 +58,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateFields(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateFields(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -80,7 +80,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getField(string $field, ParameterMap $paramInstance=null)
++	public function getField(string $field, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -101,7 +101,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateField(string $field, BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateField(string $field, BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -124,7 +124,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteField(string $field, ParameterMap $paramInstance=null)
++	public function deleteField(string $field, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/files/FilesOperations.php b/src/com/zoho/crm/api/files/FilesOperations.php
+--- a/src/com/zoho/crm/api/files/FilesOperations.php
++++ b/src/com/zoho/crm/api/files/FilesOperations.php
+@@ -17,7 +17,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function uploadFiles(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function uploadFiles(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -38,7 +38,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getFile(ParameterMap $paramInstance=null)
++	public function getFile(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/findandmerge/FindAndMergeOperations.php b/src/com/zoho/crm/api/findandmerge/FindAndMergeOperations.php
+--- a/src/com/zoho/crm/api/findandmerge/FindAndMergeOperations.php
++++ b/src/com/zoho/crm/api/findandmerge/FindAndMergeOperations.php
+@@ -31,7 +31,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecordMerge(ParameterMap $paramInstance=null)
++	public function getRecordMerge(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/fromaddresses/FromAddressesOperations.php b/src/com/zoho/crm/api/fromaddresses/FromAddressesOperations.php
+--- a/src/com/zoho/crm/api/fromaddresses/FromAddressesOperations.php
++++ b/src/com/zoho/crm/api/fromaddresses/FromAddressesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * Creates an instance of FromAddressesOperations with the given parameters
+ 	 * @param string $userId A string
+ 	 */
+-	public function __Construct(string $userId=null)
++	public function __Construct(?string $userId=null)
+ 	{
+ 		$this->userId=$userId; 
+ 
+diff -ruN a/src/com/zoho/crm/api/functions/FunctionsOperations.php b/src/com/zoho/crm/api/functions/FunctionsOperations.php
+--- a/src/com/zoho/crm/api/functions/FunctionsOperations.php
++++ b/src/com/zoho/crm/api/functions/FunctionsOperations.php
+@@ -23,7 +23,7 @@
+ 	 * @param string $authType A string
+ 	 * @param array $arguments A array
+ 	 */
+-	public function __Construct(string $functionName, string $authType=null, array $arguments=null)
++	public function __Construct(string $functionName, ?string $authType=null, ?array $arguments=null)
+ 	{
+ 		$this->functionName=$functionName; 
+ 		$this->authType=$authType; 
+@@ -38,7 +38,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function executeFunctionUsingRequestBody(BodyWrapper $request, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function executeFunctionUsingRequestBody(BodyWrapper $request, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -65,7 +65,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function executeFunctionUsingParameters(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function executeFunctionUsingParameters(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -90,7 +90,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function executeFunctionUsingFile(FileBodyWrapper $request, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function executeFunctionUsingFile(FileBodyWrapper $request, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/globalpicklists/GlobalPicklistsOperations.php b/src/com/zoho/crm/api/globalpicklists/GlobalPicklistsOperations.php
+--- a/src/com/zoho/crm/api/globalpicklists/GlobalPicklistsOperations.php
++++ b/src/com/zoho/crm/api/globalpicklists/GlobalPicklistsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getGlobalPicklists(ParameterMap $paramInstance=null)
++	public function getGlobalPicklists(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -74,7 +74,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteGlobalPicklists(ParameterMap $paramInstance=null)
++	public function deleteGlobalPicklists(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -93,7 +93,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getGlobalPicklist(string $id, ParameterMap $paramInstance=null)
++	public function getGlobalPicklist(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -193,7 +193,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAssociations(string $id, ParameterMap $paramInstance=null)
++	public function getAssociations(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -214,7 +214,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getPickListValueAssociations(string $id, ParameterMap $paramInstance=null)
++	public function getPickListValueAssociations(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/holidays/HolidaysOperations.php b/src/com/zoho/crm/api/holidays/HolidaysOperations.php
+--- a/src/com/zoho/crm/api/holidays/HolidaysOperations.php
++++ b/src/com/zoho/crm/api/holidays/HolidaysOperations.php
+@@ -19,7 +19,7 @@
+ 	 * Creates an instance of HolidaysOperations with the given parameters
+ 	 * @param string $xCrmOrg A string
+ 	 */
+-	public function __Construct(string $xCrmOrg=null)
++	public function __Construct(?string $xCrmOrg=null)
+ 	{
+ 		$this->xCrmOrg=$xCrmOrg; 
+ 
+@@ -30,7 +30,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getHolidays(ParameterMap $paramInstance=null)
++	public function getHolidays(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/inventorymassconvert/InventoryMassConvertOperations.php b/src/com/zoho/crm/api/inventorymassconvert/InventoryMassConvertOperations.php
+--- a/src/com/zoho/crm/api/inventorymassconvert/InventoryMassConvertOperations.php
++++ b/src/com/zoho/crm/api/inventorymassconvert/InventoryMassConvertOperations.php
+@@ -50,7 +50,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getScheduledJobsDetails(ParameterMap $paramInstance=null)
++	public function getScheduledJobsDetails(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/inventorytemplates/InventoryTemplatesOperations.php b/src/com/zoho/crm/api/inventorytemplates/InventoryTemplatesOperations.php
+--- a/src/com/zoho/crm/api/inventorytemplates/InventoryTemplatesOperations.php
++++ b/src/com/zoho/crm/api/inventorytemplates/InventoryTemplatesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getInventoryTemplates(ParameterMap $paramInstance=null)
++	public function getInventoryTemplates(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/layouts/LayoutsOperations.php b/src/com/zoho/crm/api/layouts/LayoutsOperations.php
+--- a/src/com/zoho/crm/api/layouts/LayoutsOperations.php
++++ b/src/com/zoho/crm/api/layouts/LayoutsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getLayouts(ParameterMap $paramInstance=null)
++	public function getLayouts(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -35,7 +35,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getLayout(string $id, ParameterMap $paramInstance=null)
++	public function getLayout(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -56,7 +56,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateCustomLayout(string $id, BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateCustomLayout(string $id, BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -78,7 +78,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteCustomLayout(string $id, ParameterMap $paramInstance=null)
++	public function deleteCustomLayout(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -99,7 +99,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function activateCustomLayout(string $id, BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function activateCustomLayout(string $id, BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -123,7 +123,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deactivateCustomLayout(string $id, ParameterMap $paramInstance=null)
++	public function deactivateCustomLayout(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/masschangeowner/MassChangeOwnerOperations.php b/src/com/zoho/crm/api/masschangeowner/MassChangeOwnerOperations.php
+--- a/src/com/zoho/crm/api/masschangeowner/MassChangeOwnerOperations.php
++++ b/src/com/zoho/crm/api/masschangeowner/MassChangeOwnerOperations.php
+@@ -49,7 +49,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function checkStatus(ParameterMap $paramInstance=null)
++	public function checkStatus(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/massconvert/MassConvertOperations.php b/src/com/zoho/crm/api/massconvert/MassConvertOperations.php
+--- a/src/com/zoho/crm/api/massconvert/MassConvertOperations.php
++++ b/src/com/zoho/crm/api/massconvert/MassConvertOperations.php
+@@ -39,7 +39,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getJobStatus(ParameterMap $paramInstance=null)
++	public function getJobStatus(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/massdeletecvid/MassDeleteCvidOperations.php b/src/com/zoho/crm/api/massdeletecvid/MassDeleteCvidOperations.php
+--- a/src/com/zoho/crm/api/massdeletecvid/MassDeleteCvidOperations.php
++++ b/src/com/zoho/crm/api/massdeletecvid/MassDeleteCvidOperations.php
+@@ -70,7 +70,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getMassDeleteStatus(ParameterMap $paramInstance=null)
++	public function getMassDeleteStatus(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/massdeletetags/MassDeleteTagsOperations.php b/src/com/zoho/crm/api/massdeletetags/MassDeleteTagsOperations.php
+--- a/src/com/zoho/crm/api/massdeletetags/MassDeleteTagsOperations.php
++++ b/src/com/zoho/crm/api/massdeletetags/MassDeleteTagsOperations.php
+@@ -35,7 +35,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getStatus(ParameterMap $paramInstance=null)
++	public function getStatus(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/modules/ModulesOperations.php b/src/com/zoho/crm/api/modules/ModulesOperations.php
+--- a/src/com/zoho/crm/api/modules/ModulesOperations.php
++++ b/src/com/zoho/crm/api/modules/ModulesOperations.php
+@@ -19,7 +19,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getModules(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getModules(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/notes/NotesOperations.php b/src/com/zoho/crm/api/notes/NotesOperations.php
+--- a/src/com/zoho/crm/api/notes/NotesOperations.php
++++ b/src/com/zoho/crm/api/notes/NotesOperations.php
+@@ -19,7 +19,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getNotes(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getNotes(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -78,7 +78,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteNotes(ParameterMap $paramInstance=null)
++	public function deleteNotes(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -98,7 +98,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getNote(string $id, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getNote(string $id, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/notifications/NotificationsOperations.php b/src/com/zoho/crm/api/notifications/NotificationsOperations.php
+--- a/src/com/zoho/crm/api/notifications/NotificationsOperations.php
++++ b/src/com/zoho/crm/api/notifications/NotificationsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getNotifications(ParameterMap $paramInstance=null)
++	public function getNotifications(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -113,7 +113,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteNotification(ParameterMap $paramInstance=null)
++	public function deleteNotification(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/picklistvalues/PickListValuesOperations.php b/src/com/zoho/crm/api/picklistvalues/PickListValuesOperations.php
+--- a/src/com/zoho/crm/api/picklistvalues/PickListValuesOperations.php
++++ b/src/com/zoho/crm/api/picklistvalues/PickListValuesOperations.php
+@@ -18,7 +18,7 @@
+ 	 * @param string $fieldId A string
+ 	 * @param string $module A string
+ 	 */
+-	public function __Construct(string $fieldId, string $module=null)
++	public function __Construct(string $fieldId, ?string $module=null)
+ 	{
+ 		$this->fieldId=$fieldId; 
+ 		$this->module=$module; 
+diff -ruN a/src/com/zoho/crm/api/pipeline/PipelineOperations.php b/src/com/zoho/crm/api/pipeline/PipelineOperations.php
+--- a/src/com/zoho/crm/api/pipeline/PipelineOperations.php
++++ b/src/com/zoho/crm/api/pipeline/PipelineOperations.php
+@@ -16,7 +16,7 @@
+ 	 * Creates an instance of PipelineOperations with the given parameters
+ 	 * @param string $layoutId A string
+ 	 */
+-	public function __Construct(string $layoutId=null)
++	public function __Construct(?string $layoutId=null)
+ 	{
+ 		$this->layoutId=$layoutId; 
+ 
+diff -ruN a/src/com/zoho/crm/api/portalinvite/PortalInviteOperations.php b/src/com/zoho/crm/api/portalinvite/PortalInviteOperations.php
+--- a/src/com/zoho/crm/api/portalinvite/PortalInviteOperations.php
++++ b/src/com/zoho/crm/api/portalinvite/PortalInviteOperations.php
+@@ -30,7 +30,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function inviteUsers(string $record, ParameterMap $paramInstance=null)
++	public function inviteUsers(string $record, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/portalusertype/PortalUserTypeOperations.php b/src/com/zoho/crm/api/portalusertype/PortalUserTypeOperations.php
+--- a/src/com/zoho/crm/api/portalusertype/PortalUserTypeOperations.php
++++ b/src/com/zoho/crm/api/portalusertype/PortalUserTypeOperations.php
+@@ -28,7 +28,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getUserTypes(ParameterMap $paramInstance=null)
++	public function getUserTypes(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/profiles/ProfilesOperations.php b/src/com/zoho/crm/api/profiles/ProfilesOperations.php
+--- a/src/com/zoho/crm/api/profiles/ProfilesOperations.php
++++ b/src/com/zoho/crm/api/profiles/ProfilesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getProfiles(ParameterMap $paramInstance=null)
++	public function getProfiles(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -97,7 +97,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteProfile(string $id, ParameterMap $paramInstance=null)
++	public function deleteProfile(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/record/RecordOperations.php b/src/com/zoho/crm/api/record/RecordOperations.php
+--- a/src/com/zoho/crm/api/record/RecordOperations.php
++++ b/src/com/zoho/crm/api/record/RecordOperations.php
+@@ -33,7 +33,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecord(string $id, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getRecord(string $id, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -59,7 +59,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateRecord(string $id, BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function updateRecord(string $id, BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -87,7 +87,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteRecord(string $id, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function deleteRecord(string $id, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -111,7 +111,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecords(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getRecords(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -134,7 +134,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function createRecords(BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function createRecords(BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -158,7 +158,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateRecords(BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function updateRecords(BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -182,7 +182,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteRecords(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function deleteRecords(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -204,7 +204,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function upsertRecords(BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function upsertRecords(BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -229,7 +229,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getDeletedRecords(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getDeletedRecords(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -252,7 +252,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function searchRecords(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function searchRecords(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -299,7 +299,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function uploadPhoto(string $id, FileBodyWrapper $request, ParameterMap $paramInstance=null)
++	public function uploadPhoto(string $id, FileBodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -372,7 +372,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getMassUpdateStatus(ParameterMap $paramInstance=null)
++	public function getMassUpdateStatus(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -495,7 +495,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function recordCount(ParameterMap $paramInstance=null)
++	public function recordCount(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -517,7 +517,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecordUsingExternalId(string $externalFieldValue, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getRecordUsingExternalId(string $externalFieldValue, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -543,7 +543,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateRecordUsingExternalId(string $externalFieldValue, BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function updateRecordUsingExternalId(string $externalFieldValue, BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -571,7 +571,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteRecordUsingExternalId(string $externalFieldValue, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function deleteRecordUsingExternalId(string $externalFieldValue, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -595,7 +595,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getFullDataForRichText(string $id, ParameterMap $paramInstance=null)
++	public function getFullDataForRichText(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -618,7 +618,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRichTextRecords(ParameterMap $paramInstance=null)
++	public function getRichTextRecords(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/recordlocking/RecordLockingOperations.php b/src/com/zoho/crm/api/recordlocking/RecordLockingOperations.php
+--- a/src/com/zoho/crm/api/recordlocking/RecordLockingOperations.php
++++ b/src/com/zoho/crm/api/recordlocking/RecordLockingOperations.php
+@@ -32,7 +32,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecordLockingInformations(ParameterMap $paramInstance=null)
++	public function getRecordLockingInformations(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -83,7 +83,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecordLockingInformation(string $lockId, ParameterMap $paramInstance=null)
++	public function getRecordLockingInformation(string $lockId, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/recordlockingconfiguration/RecordLockingConfigurationOperations.php b/src/com/zoho/crm/api/recordlockingconfiguration/RecordLockingConfigurationOperations.php
+--- a/src/com/zoho/crm/api/recordlockingconfiguration/RecordLockingConfigurationOperations.php
++++ b/src/com/zoho/crm/api/recordlockingconfiguration/RecordLockingConfigurationOperations.php
+@@ -17,7 +17,7 @@
+ 	 * Creates an instance of RecordLockingConfigurationOperations with the given parameters
+ 	 * @param string $module A string
+ 	 */
+-	public function __Construct(string $module=null)
++	public function __Construct(?string $module=null)
+ 	{
+ 		$this->module=$module; 
+ 
+@@ -28,7 +28,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecordLockingConfigurations(ParameterMap $paramInstance=null)
++	public function getRecordLockingConfigurations(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/recyclebin/RecycleBinOperations.php b/src/com/zoho/crm/api/recyclebin/RecycleBinOperations.php
+--- a/src/com/zoho/crm/api/recyclebin/RecycleBinOperations.php
++++ b/src/com/zoho/crm/api/recyclebin/RecycleBinOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecyclebinRecords(ParameterMap $paramInstance=null)
++	public function getRecyclebinRecords(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -34,7 +34,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteRecyclebinRecords(ParameterMap $paramInstance=null)
++	public function deleteRecyclebinRecords(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/relatedlists/RelatedListsOperations.php b/src/com/zoho/crm/api/relatedlists/RelatedListsOperations.php
+--- a/src/com/zoho/crm/api/relatedlists/RelatedListsOperations.php
++++ b/src/com/zoho/crm/api/relatedlists/RelatedListsOperations.php
+@@ -17,7 +17,7 @@
+ 	 * Creates an instance of RelatedListsOperations with the given parameters
+ 	 * @param string $layoutId A string
+ 	 */
+-	public function __Construct(string $layoutId=null)
++	public function __Construct(?string $layoutId=null)
+ 	{
+ 		$this->layoutId=$layoutId; 
+ 
+@@ -28,7 +28,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRelatedLists(ParameterMap $paramInstance=null)
++	public function getRelatedLists(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -48,7 +48,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRelatedList(string $id, ParameterMap $paramInstance=null)
++	public function getRelatedList(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/relatedrecords/RelatedRecordsOperations.php b/src/com/zoho/crm/api/relatedrecords/RelatedRecordsOperations.php
+--- a/src/com/zoho/crm/api/relatedrecords/RelatedRecordsOperations.php
++++ b/src/com/zoho/crm/api/relatedrecords/RelatedRecordsOperations.php
+@@ -36,7 +36,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRelatedRecords(string $recordId, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getRelatedRecords(string $recordId, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -63,7 +63,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateRelatedRecords(string $recordId, BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function updateRelatedRecords(string $recordId, BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -91,7 +91,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function delinkRecords(string $recordId, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function delinkRecords(string $recordId, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -118,7 +118,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRelatedRecordsUsingExternalId(string $externalValue, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getRelatedRecordsUsingExternalId(string $externalValue, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -145,7 +145,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateRelatedRecordsUsingExternalId(string $externalValue, BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function updateRelatedRecordsUsingExternalId(string $externalValue, BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -173,7 +173,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteRelatedRecordsUsingExternalId(string $externalValue, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function deleteRelatedRecordsUsingExternalId(string $externalValue, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -201,7 +201,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRelatedRecord(string $relatedRecordId, string $recordId, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getRelatedRecord(string $relatedRecordId, string $recordId, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -231,7 +231,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateRelatedRecord(string $relatedRecordId, string $recordId, BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function updateRelatedRecord(string $relatedRecordId, string $recordId, BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -262,7 +262,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function delinkRecord(string $relatedRecordId, string $recordId, HeaderMap $headerInstance=null)
++	public function delinkRecord(string $relatedRecordId, string $recordId, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -291,7 +291,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRelatedRecordUsingExternalId(string $externalFieldValue, string $externalValue, ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getRelatedRecordUsingExternalId(string $externalFieldValue, string $externalValue, ?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -321,7 +321,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateRelatedRecordUsingExternalId(string $externalFieldValue, string $externalValue, BodyWrapper $request, HeaderMap $headerInstance=null)
++	public function updateRelatedRecordUsingExternalId(string $externalFieldValue, string $externalValue, BodyWrapper $request, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -352,7 +352,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteRelatedRecordUsingExternalId(string $externalFieldValue, string $externalValue, HeaderMap $headerInstance=null)
++	public function deleteRelatedRecordUsingExternalId(string $externalFieldValue, string $externalValue, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -379,7 +379,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getDeletedParentRecordsRelatedRecord(string $recordId, ParameterMap $paramInstance=null)
++	public function getDeletedParentRecordsRelatedRecord(string $recordId, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/reschedulehistory/RescheduleHistoryOperations.php b/src/com/zoho/crm/api/reschedulehistory/RescheduleHistoryOperations.php
+--- a/src/com/zoho/crm/api/reschedulehistory/RescheduleHistoryOperations.php
++++ b/src/com/zoho/crm/api/reschedulehistory/RescheduleHistoryOperations.php
+@@ -56,7 +56,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAppointmentsRescheduledHistory(ParameterMap $paramInstance=null)
++	public function getAppointmentsRescheduledHistory(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -96,7 +96,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAppointmentRescheduledHistory(string $id, ParameterMap $paramInstance=null)
++	public function getAppointmentRescheduledHistory(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/roles/RolesOperations.php b/src/com/zoho/crm/api/roles/RolesOperations.php
+--- a/src/com/zoho/crm/api/roles/RolesOperations.php
++++ b/src/com/zoho/crm/api/roles/RolesOperations.php
+@@ -113,7 +113,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteRole(string $roleId, ParameterMap $paramInstance=null)
++	public function deleteRole(string $roleId, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/scoringrules/ScoringRulesOperations.php b/src/com/zoho/crm/api/scoringrules/ScoringRulesOperations.php
+--- a/src/com/zoho/crm/api/scoringrules/ScoringRulesOperations.php
++++ b/src/com/zoho/crm/api/scoringrules/ScoringRulesOperations.php
+@@ -37,7 +37,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getScoringRules(ParameterMap $paramInstance=null)
++	public function getScoringRules(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -75,7 +75,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteScoringRules(ParameterMap $paramInstance=null)
++	public function deleteScoringRules(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -115,7 +115,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getScoringRule(string $id, ParameterMap $paramInstance=null)
++	public function getScoringRule(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/sharerecords/ShareRecordsOperations.php b/src/com/zoho/crm/api/sharerecords/ShareRecordsOperations.php
+--- a/src/com/zoho/crm/api/sharerecords/ShareRecordsOperations.php
++++ b/src/com/zoho/crm/api/sharerecords/ShareRecordsOperations.php
+@@ -31,7 +31,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getSharedRecordDetails(ParameterMap $paramInstance=null)
++	public function getSharedRecordDetails(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/sharingrules/SharingRulesOperations.php b/src/com/zoho/crm/api/sharingrules/SharingRulesOperations.php
+--- a/src/com/zoho/crm/api/sharingrules/SharingRulesOperations.php
++++ b/src/com/zoho/crm/api/sharingrules/SharingRulesOperations.php
+@@ -17,7 +17,7 @@
+ 	 * Creates an instance of SharingRulesOperations with the given parameters
+ 	 * @param string $module A string
+ 	 */
+-	public function __Construct(string $module=null)
++	public function __Construct(?string $module=null)
+ 	{
+ 		$this->module=$module; 
+ 
+@@ -28,7 +28,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getSharingRules(ParameterMap $paramInstance=null)
++	public function getSharingRules(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -150,7 +150,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function searchSharingRules(FiltersBody $request, ParameterMap $paramInstance=null)
++	public function searchSharingRules(FiltersBody $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/shifthours/ShiftHoursOperations.php b/src/com/zoho/crm/api/shifthours/ShiftHoursOperations.php
+--- a/src/com/zoho/crm/api/shifthours/ShiftHoursOperations.php
++++ b/src/com/zoho/crm/api/shifthours/ShiftHoursOperations.php
+@@ -16,7 +16,7 @@
+ 	 * Creates an instance of ShiftHoursOperations with the given parameters
+ 	 * @param string $xCrmOrg A string
+ 	 */
+-	public function __Construct(string $xCrmOrg=null)
++	public function __Construct(?string $xCrmOrg=null)
+ 	{
+ 		$this->xCrmOrg=$xCrmOrg; 
+ 
+diff -ruN a/src/com/zoho/crm/api/tags/TagsOperations.php b/src/com/zoho/crm/api/tags/TagsOperations.php
+--- a/src/com/zoho/crm/api/tags/TagsOperations.php
++++ b/src/com/zoho/crm/api/tags/TagsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getTags(ParameterMap $paramInstance=null)
++	public function getTags(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -35,7 +35,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function createTags(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function createTags(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -57,7 +57,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateTags(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateTags(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -80,7 +80,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateTag(string $id, BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateTag(string $id, BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -145,7 +145,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function addTags(string $moduleAPIName, string $recordId, NewTagRequestWrapper $request, ParameterMap $paramInstance=null)
++	public function addTags(string $moduleAPIName, string $recordId, NewTagRequestWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -198,7 +198,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function addTagsToMultipleRecords(string $moduleAPIName, NewTagRequestWrapper $request, ParameterMap $paramInstance=null)
++	public function addTagsToMultipleRecords(string $moduleAPIName, NewTagRequestWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -223,7 +223,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function removeTagsFromMultipleRecords(string $moduleAPIName, ExistingTagRequestWrapper $request, ParameterMap $paramInstance=null)
++	public function removeTagsFromMultipleRecords(string $moduleAPIName, ExistingTagRequestWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -247,7 +247,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getRecordCountForTag(string $id, ParameterMap $paramInstance=null)
++	public function getRecordCountForTag(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/territories/TerritoriesOperations.php b/src/com/zoho/crm/api/territories/TerritoriesOperations.php
+--- a/src/com/zoho/crm/api/territories/TerritoriesOperations.php
++++ b/src/com/zoho/crm/api/territories/TerritoriesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getTerritories(ParameterMap $paramInstance=null)
++	public function getTerritories(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -74,7 +74,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteTerritories(ParameterMap $paramInstance=null)
++	public function deleteTerritories(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -132,7 +132,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteTerritory(string $id, ParameterMap $paramInstance=null)
++	public function deleteTerritory(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -152,7 +152,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getChildTerritory(string $id, ParameterMap $paramInstance=null)
++	public function getChildTerritory(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/territoryusers/TerritoryUsersOperations.php b/src/com/zoho/crm/api/territoryusers/TerritoryUsersOperations.php
+--- a/src/com/zoho/crm/api/territoryusers/TerritoryUsersOperations.php
++++ b/src/com/zoho/crm/api/territoryusers/TerritoryUsersOperations.php
+@@ -59,7 +59,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deassociateTerritoryUsers(string $territory, ParameterMap $paramInstance=null)
++	public function deassociateTerritoryUsers(string $territory, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/timelines/TimelinesOperations.php b/src/com/zoho/crm/api/timelines/TimelinesOperations.php
+--- a/src/com/zoho/crm/api/timelines/TimelinesOperations.php
++++ b/src/com/zoho/crm/api/timelines/TimelinesOperations.php
+@@ -19,7 +19,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getTimelines(string $module, string $recordId, ParameterMap $paramInstance=null)
++	public function getTimelines(string $module, string $recordId, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/usergroups/UserGroupsOperations.php b/src/com/zoho/crm/api/usergroups/UserGroupsOperations.php
+--- a/src/com/zoho/crm/api/usergroups/UserGroupsOperations.php
++++ b/src/com/zoho/crm/api/usergroups/UserGroupsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getGroups(ParameterMap $paramInstance=null)
++	public function getGroups(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -133,7 +133,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getSources(string $group, ParameterMap $paramInstance=null)
++	public function getSources(string $group, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -191,7 +191,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAssociatedUsersCount(ParameterMap $paramInstance=null)
++	public function getAssociatedUsersCount(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -210,7 +210,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAssociateGroupsOfUser(string $user, ParameterMap $paramInstance=null)
++	public function getAssociateGroupsOfUser(string $user, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -231,7 +231,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getGroupedCounts(string $group, ParameterMap $paramInstance=null)
++	public function getGroupedCounts(string $group, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/users/UsersOperations.php b/src/com/zoho/crm/api/users/UsersOperations.php
+--- a/src/com/zoho/crm/api/users/UsersOperations.php
++++ b/src/com/zoho/crm/api/users/UsersOperations.php
+@@ -19,7 +19,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getUsers(ParameterMap $paramInstance=null, HeaderMap $headerInstance=null)
++	public function getUsers(?ParameterMap $paramInstance=null, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -79,7 +79,7 @@
+ 	 * @param HeaderMap $headerInstance An instance of HeaderMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getUser(string $user, HeaderMap $headerInstance=null)
++	public function getUser(string $user, ?HeaderMap $headerInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -139,7 +139,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getAssociatedGroups(string $user, ParameterMap $paramInstance=null)
++	public function getAssociatedGroups(string $user, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -159,7 +159,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function usersCount(ParameterMap $paramInstance=null)
++	public function usersCount(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/usersterritories/UsersTerritoriesOperations.php b/src/com/zoho/crm/api/usersterritories/UsersTerritoriesOperations.php
+--- a/src/com/zoho/crm/api/usersterritories/UsersTerritoriesOperations.php
++++ b/src/com/zoho/crm/api/usersterritories/UsersTerritoriesOperations.php
+@@ -68,7 +68,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function removeTerritoriesFromUser(ParameterMap $paramInstance=null)
++	public function removeTerritoriesFromUser(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/userstransferdelete/UsersTransferDeleteOperations.php b/src/com/zoho/crm/api/userstransferdelete/UsersTransferDeleteOperations.php
+--- a/src/com/zoho/crm/api/userstransferdelete/UsersTransferDeleteOperations.php
++++ b/src/com/zoho/crm/api/userstransferdelete/UsersTransferDeleteOperations.php
+@@ -36,7 +36,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getStatus(ParameterMap $paramInstance=null)
++	public function getStatus(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/usersunavailability/UsersUnavailabilityOperations.php b/src/com/zoho/crm/api/usersunavailability/UsersUnavailabilityOperations.php
+--- a/src/com/zoho/crm/api/usersunavailability/UsersUnavailabilityOperations.php
++++ b/src/com/zoho/crm/api/usersunavailability/UsersUnavailabilityOperations.php
+@@ -56,7 +56,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getUsersUnavailability(ParameterMap $paramInstance=null)
++	public function getUsersUnavailability(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -96,7 +96,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getUserUnavailability(string $id, ParameterMap $paramInstance=null)
++	public function getUserUnavailability(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/usertypeusers/UserTypeUsersOperations.php b/src/com/zoho/crm/api/usertypeusers/UserTypeUsersOperations.php
+--- a/src/com/zoho/crm/api/usertypeusers/UserTypeUsersOperations.php
++++ b/src/com/zoho/crm/api/usertypeusers/UserTypeUsersOperations.php
+@@ -31,7 +31,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getUsersOfUserType(ParameterMap $paramInstance=null)
++	public function getUsersOfUserType(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -53,7 +53,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteUserFromThePortal(ParameterMap $paramInstance=null)
++	public function deleteUserFromThePortal(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -75,7 +75,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function transferUsersOfAUserType(ParameterMap $paramInstance=null)
++	public function transferUsersOfAUserType(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -99,7 +99,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function changeUsersStatus(string $userId, ParameterMap $paramInstance=null)
++	public function changeUsersStatus(string $userId, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
 diff -ruN a/src/com/zoho/crm/api/util/APIHTTPConnector.php b/src/com/zoho/crm/api/util/APIHTTPConnector.php
 --- a/src/com/zoho/crm/api/util/APIHTTPConnector.php
 +++ b/src/com/zoho/crm/api/util/APIHTTPConnector.php
@@ -149,3 +1911,126 @@ diff -ruN a/src/com/zoho/crm/api/util/JSONConverter.php b/src/com/zoho/crm/api/u
          $keyValues = array();
          foreach ($responseJSON as $keyName => $keyValue)
          {
+diff -ruN a/src/com/zoho/crm/api/variables/VariablesOperations.php b/src/com/zoho/crm/api/variables/VariablesOperations.php
+--- a/src/com/zoho/crm/api/variables/VariablesOperations.php
++++ b/src/com/zoho/crm/api/variables/VariablesOperations.php
+@@ -16,7 +16,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getVariables(ParameterMap $paramInstance=null)
++	public function getVariables(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -74,7 +74,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function deleteVariables(ParameterMap $paramInstance=null)
++	public function deleteVariables(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -93,7 +93,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getVariableById(string $id, ParameterMap $paramInstance=null)
++	public function getVariableById(string $id, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -114,7 +114,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateVariableById(string $id, BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateVariableById(string $id, BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -155,7 +155,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function updateVariableByApiname(string $apiName, BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function updateVariableByApiname(string $apiName, BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -177,7 +177,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getVariableByApiname(string $apiName, ParameterMap $paramInstance=null)
++	public function getVariableByApiname(string $apiName, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/webforms/WebformsOperations.php b/src/com/zoho/crm/api/webforms/WebformsOperations.php
+--- a/src/com/zoho/crm/api/webforms/WebformsOperations.php
++++ b/src/com/zoho/crm/api/webforms/WebformsOperations.php
+@@ -16,7 +16,7 @@
+ 	 * Creates an instance of WebformsOperations with the given parameters
+ 	 * @param string $module A string
+ 	 */
+-	public function __Construct(string $module=null)
++	public function __Construct(?string $module=null)
+ 	{
+ 		$this->module=$module; 
+ 
+diff -ruN a/src/com/zoho/crm/api/wizards/WizardsOperations.php b/src/com/zoho/crm/api/wizards/WizardsOperations.php
+--- a/src/com/zoho/crm/api/wizards/WizardsOperations.php
++++ b/src/com/zoho/crm/api/wizards/WizardsOperations.php
+@@ -33,7 +33,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getWizardById(string $wizardId, ParameterMap $paramInstance=null)
++	public function getWizardById(string $wizardId, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/ziaorgenrichment/ZiaOrgEnrichmentOperations.php b/src/com/zoho/crm/api/ziaorgenrichment/ZiaOrgEnrichmentOperations.php
+--- a/src/com/zoho/crm/api/ziaorgenrichment/ZiaOrgEnrichmentOperations.php
++++ b/src/com/zoho/crm/api/ziaorgenrichment/ZiaOrgEnrichmentOperations.php
+@@ -17,7 +17,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getZiaOrgEnrichments(ParameterMap $paramInstance=null)
++	public function getZiaOrgEnrichments(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -36,7 +36,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function createZiaOrgEnrichment(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function createZiaOrgEnrichment(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+diff -ruN a/src/com/zoho/crm/api/ziapeopleenrichment/ZiaPeopleEnrichmentOperations.php b/src/com/zoho/crm/api/ziapeopleenrichment/ZiaPeopleEnrichmentOperations.php
+--- a/src/com/zoho/crm/api/ziapeopleenrichment/ZiaPeopleEnrichmentOperations.php
++++ b/src/com/zoho/crm/api/ziapeopleenrichment/ZiaPeopleEnrichmentOperations.php
+@@ -17,7 +17,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function getZiaPeopleEnrichments(ParameterMap $paramInstance=null)
++	public function getZiaPeopleEnrichments(?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 
+@@ -36,7 +36,7 @@
+ 	 * @param ParameterMap $paramInstance An instance of ParameterMap
+ 	 * @return APIResponse An instance of APIResponse
+ 	 */
+-	public function createZiaPeopleEnrichment(BodyWrapper $request, ParameterMap $paramInstance=null)
++	public function createZiaPeopleEnrichment(BodyWrapper $request, ?ParameterMap $paramInstance=null)
+ 	{
+ 		$handlerInstance=new CommonAPIHandler(); 
+ 		$apiPath=""; 

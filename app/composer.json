@@ -13,7 +13,7 @@
   "extra": {
     "patches": {
       "zohocrm/php-sdk-8.0": {
-        "PHP 8.5: drop no-op setAccessible()/curl_close() and (double)->(float)": "../patches/zohocrm-php-sdk-8.0-php85.patch"
+        "PHP 8.5: explicit nullable params (Rector) + drop no-op setAccessible()/curl_close() and (double)->(float)": "../patches/zohocrm-php-sdk-8.0-php85.patch"
       }
     }
   },
