@@ -65,10 +65,16 @@ class FieldApi extends ApiBase
                             }
                         }
 
+                        // getSystemMandatory()/getReadOnly() は ?bool、getUnique() は Unique|null。
+                        // Mapper の厳密比較(=== true)やフロントの真偽判定に載せるため bool へ正規化する。
+                        // ※このSDKの fields\Fields に getRequired() は存在しないため getSystemMandatory() を使う。
                         $fieldData = [
                             'api_name' => $field->getAPIName(),
                             'field_label' => $field->getFieldLabel(),
                             'data_type' => $dataTypeValue,
+                            'required' => $field->getSystemMandatory() === true,
+                            'unique' => $field->getUnique() !== null,
+                            'read_only' => $field->getReadOnly() === true,
                         ];
 
                         $result[] = $fieldData;

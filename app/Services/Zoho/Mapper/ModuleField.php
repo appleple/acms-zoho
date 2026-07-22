@@ -57,6 +57,9 @@ class ModuleField extends Mapper
             if (isset($field['read_only'])) {
                 $fieldData['readOnly'] = $field['read_only'];
             }
+            if (isset($field['unique'])) {
+                $fieldData['unique'] = $field['unique'];
+            }
 
             $result[] = $fieldData;
         }

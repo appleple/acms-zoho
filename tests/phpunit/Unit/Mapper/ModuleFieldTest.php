@@ -38,6 +38,7 @@ final class ModuleFieldTest extends TestCase
                 'data_type' => 'email',
                 'required' => true,
                 'read_only' => false,
+                'unique' => true,
             ],
             [
                 'api_name' => 'Last_Name',
@@ -67,9 +68,11 @@ final class ModuleFieldTest extends TestCase
             'dataType' => 'email',
             'required' => true,
             'readOnly' => false,
+            'unique' => true,
         ], $result[0]);
-        // read_only を持たない要素には readOnly キーが付かない。
+        // read_only / unique を持たない要素にはそのキーが付かない。
         $this->assertArrayNotHasKey('readOnly', $result[1]);
+        $this->assertArrayNotHasKey('unique', $result[1]);
         $this->assertSame('姓', $result[1]['fieldName']);
     }
 

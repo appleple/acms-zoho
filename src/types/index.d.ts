@@ -2,6 +2,9 @@ export interface ModuleField {
   apiName: string;
   fieldName: string;
   dataType?: string;
+  required?: boolean;
+  readOnly?: boolean;
+  unique?: boolean;
 }
 
 export interface Module {
