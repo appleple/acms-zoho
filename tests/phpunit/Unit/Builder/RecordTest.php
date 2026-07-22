@@ -494,6 +494,33 @@ final class RecordTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('assignModuleByPriority: 更新のみ設定で既存レコードが無い場合、insertスコープが無いので何も送信しない（__PENDING__のまま残さない）')]
+    public function dropsRecordWhenUpdateOnlyAndNotFound(): void
+    {
+        // S3: 追加を許可するタブが無く、更新を許可するタブ（見込み客）のみ。未登録のメールで送信した場合、
+        // 更新対象が見つからず、フォールバック先のinsertスコープも無いため「何も作られない」のが正しい挙動。
+        $config = $this->field([
+            'zoho_form_group_index' => ['1'],
+            'zoho_form_insert_scope' => [''],
+            'zoho_form_update_scope' => [$this->json([['apiName' => 'Leads']])],
+            'zoho_form_unique_key' => ['Email'],
+            'zoho_link_field_module_field' => ['Email'],
+            'zoho_link_field_cms_field' => ['email'],
+            'zoho_link_field_cms_field_fixed' => [''],
+            'zoho_link_field_module' => [$this->json([['apiName' => 'Leads']])],
+            'zoho_link_field_insert' => [''],
+            'zoho_link_field_update' => ['1'],
+        ]);
+        $form = $this->field(['email' => 'notfound@example.com']);
+
+        // どのモジュールでもヒットしないフェイク（未登録のメール）。
+        $api = $this->fakeRecordApi([]);
+        $records = (new RecordBuilder($form, $config))->buildRecords($api);
+
+        $this->assertSame([], $records);
+    }
+
+    #[Test]
     #[TestDox('resolveGlobalVars: %{...} が無ければ素通し、未解決のグローバル変数は空に落とす')]
     public function resolvesGlobalVars(): void
     {

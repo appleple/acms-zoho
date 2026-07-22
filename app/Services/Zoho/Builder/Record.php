@@ -59,11 +59,21 @@ class Record extends Builder
         $records = $this->getRecordsByForm();
 
         // 優先順位設定がある場合、APIで検索してモジュールを確定
-        if ($recordApi !== null && $this->modulePriority !== []) {
+        $resolvesByPriority = $recordApi !== null && $this->modulePriority !== [];
+        if ($resolvesByPriority) {
             $this->assignModuleByPriority($recordApi, $records);
+        } else {
+            // recordApi 未指定（呼び出し元が後で確定させる用途）は pending のまま返す。
+            return $records;
         }
 
-        return $records;
+        // 更新のみ設定（追加を許可するタブが無い）で既存レコードも見つからなかった場合、
+        // assignModuleByPriority() はモジュールを確定できず __PENDING__/pending のまま残す。
+        // これは「更新対象が無いので何もしない」という正しい挙動であり、このまま Engine に渡すと
+        // モジュール名 "__PENDING__" が Zoho API に literal に送られ INVALID_MODULE で失敗するため除外する。
+        return array_values(array_filter($records, function (RecordModel $record) {
+            return $record->getModuleApiName() !== '__PENDING__';
+        }));
     }
 
     /**
