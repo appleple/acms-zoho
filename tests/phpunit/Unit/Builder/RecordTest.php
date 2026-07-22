@@ -521,13 +521,13 @@ final class RecordTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('resolveGlobalVars: %{...} が無ければ素通し、未解決のグローバル変数は空に落とす')]
-    public function resolvesGlobalVars(): void
+    #[TestDox('resolveFixedValue: %{...} が無ければ素通し、未解決のグローバル変数は空に落とす')]
+    public function resolvesFixedValue(): void
     {
         $builder = new RecordBuilder(new Field(), new Field());
         // PHP 8.1 以降、Reflection は非公開メソッドへ setAccessible() 無しでアクセスできる
         // （8.5 で setAccessible() は非推奨）。
-        $ref = new \ReflectionMethod($builder, 'resolveGlobalVars');
+        $ref = new \ReflectionMethod($builder, 'resolveFixedValue');
 
         // %{...} を含まない値はそのまま返す。
         $this->assertSame('plain text', $ref->invoke($builder, 'plain text'));
@@ -558,6 +558,32 @@ final class RecordTest extends TestCase
         $record = $builder->buildRecords()[0];
 
         $this->assertSame('Web', $record->getField('Lead_Source'));
+    }
+
+    #[Test]
+    #[TestDox('固定値で {フィールド名} を使うとフォーム値を差し込んで結合できる')]
+    public function fixedValueInterpolatesFormFields(): void
+    {
+        $form = $this->field(['reservation_date' => '2026-07-22', 'reservation_time' => '14:00']);
+        $config = $this->field([
+            'zoho_form_group_index' => ['1'],
+            'zoho_form_insert_scope' => [$this->json([['apiName' => 'Deals']])],
+            'zoho_form_update_scope' => [''],
+            'zoho_form_unique_key' => [''],
+            'zoho_link_field_module_field' => ['Deal_Name'],
+            // 固定値テンプレ: フォームの別々の項目（日付・時刻）を差し込んで1つに結合する。
+            'zoho_link_field_cms_field' => ['{reservation_date} {reservation_time}'],
+            'zoho_link_field_cms_field_fixed' => ['on'],
+            'zoho_link_field_module' => [$this->json([['apiName' => 'Deals']])],
+            'zoho_link_field_insert' => ['1'],
+            'zoho_link_field_update' => [''],
+        ]);
+
+        $builder = new RecordBuilder($form, $config);
+        $builder->modulePriority = [];
+        $record = $builder->buildRecords()[0];
+
+        $this->assertSame('2026-07-22 14:00', $record->getField('Deal_Name'));
     }
 
     #[Test]

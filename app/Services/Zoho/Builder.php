@@ -2,6 +2,9 @@
 
 namespace Acms\Plugins\Zoho\Services\Zoho;
 
+use Field;
+use Acms\Services\Facades\Common;
+
 /**
  * Builder基底クラス
  *
@@ -10,26 +13,26 @@ namespace Acms\Plugins\Zoho\Services\Zoho;
  */
 class Builder
 {
+    /** @var Field a-blog cms のフォーム送信データ（サブクラスのコンストラクタで設定） */
+    public $field;
+
     /**
-     * グローバル変数(%{VAR_NAME})を解決する
+     * 「固定値」に設定された文字列を a-blog cms のメール差し込みパイプラインで解決する
      *
-     * 値が %{VAR_NAME} 形式のグローバル変数の場合、実際の値に置換して返す。
-     * グローバル変数を含まない場合はそのまま返す。
+     * 本体の Common::getMailTxtFromTxt を用いて以下を解決する:
+     * - グローバル変数 %{Y} など（未解決の %{...} は空文字に落ちる）
+     * - フォーム値の差し込み {フィールド名}（例: `{予約日} {予約時刻}` で別々の項目を1つに結合）
+     * - IF ブロック・修飾子
      *
-     * @param string $value 解決する値
+     * ユーザー入力値に含まれる `{{ }}` はサンドボックス Twig 経由でのみ評価されるため
+     * SSTI（テンプレートインジェクション）を起こさない。
+     *
+     * @param string $value 解決する値（設定画面の「固定値」）
      * @return string 解決後の値
      */
-    protected function resolveGlobalVars(string $value): string
+    protected function resolveFixedValue(string $value): string
     {
-        if (strpos($value, '%{') === false) {
-            return $value;
-        }
-        $globalVars = globalVarsList();
-        foreach ($globalVars as $key => $val) {
-            $value = str_replace($key, (string) $val, $value);
-        }
-        // 未解決のグローバル変数を空文字に置換
-        return preg_replace('@%\{[^}]*?\}@', '', $value);
+        return Common::getMailTxtFromTxt($value, $this->field);
     }
 
     /**

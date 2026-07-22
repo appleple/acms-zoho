@@ -17,9 +17,6 @@ use Acms\Plugins\Zoho\Services\Zoho\Models\ModuleScope;
  */
 class Record extends Builder
 {
-    /** @var Field フォームのフィールド */
-    public $field;
-
     /** @var Field FormIDの拡張アプリ設定 */
     public $config;
 
@@ -297,7 +294,7 @@ class Record extends Builder
                     || ($type === 'update' && $canUpdate)
                     || ($type === 'pending' && ($canInsert || $canUpdate));
                 if ($isNoteAllowed) {
-                    $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
+                    $value = $isFixed ? $this->resolveFixedValue($key) : $this->getFieldValue($key, $groupArr, $index);
                     $normalizedValue = $this->normalizeValue($value);
                     if ($fieldApiName === 'Note_Title') {
                         $record->setNoteTitle((string)$normalizedValue);
@@ -315,7 +312,7 @@ class Record extends Builder
                     || ($type === 'update' && $canUpdate)
                     || ($type === 'pending' && ($canInsert || $canUpdate));
                 if ($isTagAllowed) {
-                    $rawValues = $isFixed ? [$this->resolveGlobalVars($key)] : $this->field->getArray($key);
+                    $rawValues = $isFixed ? [$this->resolveFixedValue($key)] : $this->field->getArray($key);
                     $tags = $this->parseTagValue($rawValues);
                     if ($tags !== []) {
                         $record->setTags($tags);
@@ -345,9 +342,9 @@ class Record extends Builder
 
             // multiselectpicklist は複数値を配列のまま渡す（getFieldValueはハイフン結合するため）
             if ($fieldType === 'multiselectpicklist') {
-                $value = $isFixed ? [$this->resolveGlobalVars($key)] : $this->field->getArray($key);
+                $value = $isFixed ? [$this->resolveFixedValue($key)] : $this->field->getArray($key);
             } else {
-                $value = $isFixed ? $this->resolveGlobalVars($key) : $this->getFieldValue($key, $groupArr, $index);
+                $value = $isFixed ? $this->resolveFixedValue($key) : $this->getFieldValue($key, $groupArr, $index);
             }
             $normalizedValue = $this->normalizeValue($value, $fieldType);
 
