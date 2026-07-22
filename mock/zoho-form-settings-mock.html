@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zoho Form 設定 UI 改修モック（互換範囲版）</title>
+<style>
+  /* a-blog cms 管理画面の素の見た目に寄せた最小スタイル（装飾控えめ） */
+  :root {
+    --bg: #f2f3f5;
+    --card: #ffffff;
+    --border: #dce0e4;
+    --border-strong: #c2c8ce;
+    --text: #33383d;
+    --muted: #7a828a;
+    --primary: #1b78bf;      /* acms-admin プライマリ相当 */
+    --primary-dark: #145d95;
+    --danger: #d0454c;       /* 削除ボタン赤 */
+    --danger-dark: #b1373d;
+    --ok: #2f9e58;
+    --warn: #c98a00;
+    --req: #d0454c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+    font-size: 13px; line-height: 1.6;
+  }
+  .page { max-width: 1120px; margin: 0 auto; padding: 20px 18px 80px; }
+
+  /* モック操作バー（説明用・実際のCMSには無い） */
+  .mock-banner {
+    background: #2a3138; color: #e7ecf1; border-radius: 6px;
+    padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .mock-banner h1 { font-size: 14px; margin: 0; }
+  .mock-banner p { margin: 2px 0 0; color: #a7b0b9; font-size: 11.5px; }
+  .toggle { margin-left: auto; display: inline-flex; background: #1a2027; border-radius: 5px; padding: 3px; gap: 3px; }
+  .toggle button { border: 0; background: transparent; color: #a7b0b9; padding: 6px 14px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600; }
+  .toggle button.active { background: var(--primary); color: #fff; }
+
+  /* 凡例 */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); margin-bottom: 16px; padding: 8px 12px; background: #fff; border: 1px solid var(--border); border-radius: 6px; }
+  .legend b { color: var(--text); }
+
+  /* 見出し */
+  .title2 { font-size: 15px; font-weight: 700; margin: 0 0 14px; padding-bottom: 9px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .title2 .retake { margin-left: auto; font-size: 11.5px; font-weight: 600; color: var(--primary); border: 1px solid var(--primary); background: #fff; padding: 5px 11px; border-radius: 4px; cursor: pointer; }
+
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 14px; overflow: hidden; }
+  .sec-head { padding: 11px 15px; border-bottom: 1px solid var(--border); background: #f8f9fa; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sec-head h3 { margin: 0; font-size: 13.5px; font-weight: 700; }
+  .sec-head .desc { color: var(--muted); font-size: 11.5px; font-weight: 400; }
+  .sec-body { padding: 14px 15px; }
+
+  /* 互換性バッジ */
+  .compat { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin-left: auto; white-space: nowrap; }
+  .compat.keep { background: #e8f5ee; color: var(--ok); }       /* 保存データそのまま */
+  .compat.php  { background: #fbf3e0; color: #9c6f00; }         /* PHP軽微追加 */
+  .compat.future { background: #eef0f2; color: #7a828a; }       /* 将来・別途実装 */
+
+  /* 連携有効チェックボックス（現行踏襲） */
+  .enable-row { display: flex; align-items: center; gap: 10px; }
+  .cb { width: 16px; height: 16px; accent-color: var(--primary); }
+
+  /* テーブル（acms 管理テーブル風） */
+  table.grid { width: 100%; border-collapse: collapse; }
+  table.grid th { text-align: left; font-size: 11.5px; color: var(--muted); font-weight: 600; padding: 7px 9px; border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
+  table.grid td { padding: 8px 9px; border-bottom: 1px solid #edeff1; vertical-align: middle; }
+  table.grid tr:last-child td { border-bottom: 0; }
+  .handle { color: #b7bec4; cursor: grab; }
+  input[type=text], select { width: 100%; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 12.5px; background: #fff; color: var(--text); }
+  input[type=text]:focus, select:focus { outline: 2px solid rgba(27,120,191,.2); border-color: var(--primary); }
+  input[type=text]::placeholder { color: #aab1b8; }
+  select:disabled { background: #f2f3f5; color: #a5abb1; }
+
+  .btn { border: 1px solid var(--border-strong); background: #fff; color: var(--text); padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+  .btn:hover { background: #f3f5f7; }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn-danger:hover { background: var(--danger-dark); }
+  .btn-add { color: var(--primary); border-color: var(--primary); }
+  .btn-sm { padding: 4px 9px; font-size: 11px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* バッジ・チップ */
+  .req-star { color: var(--req); font-weight: 700; margin-left: 2px; }
+  .badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+  .badge-type { background: #eef1f4; color: #5a666f; }
+  .badge-req { background: #fbe8e9; color: var(--danger); }
+  .badge-ok { background: #e8f5ee; color: var(--ok); }
+  .badge-warn { background: #fbf3e0; color: #9c6f00; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; background: #eef4f9; border: 1px solid #cfe0ee; color: var(--primary-dark); border-radius: 4px; padding: 3px 8px; font-size: 11.5px; font-weight: 600; }
+  .chip .sep { color: #9aa6b0; }
+
+  /* 概要（読み取り専用・既存値の集計） */
+  .overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .ov-card { border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; background: #fff; }
+  .ov-card .mod { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .ov-card .action { font-size: 10px; padding: 1px 7px; border-radius: 999px; font-weight: 700; }
+  .action.insert { background: #e8f5ee; color: var(--ok); }
+  .action.update { background: #e9f1fa; color: var(--primary); }
+  .action.upsert { background: #f2ecf8; color: #7047a8; }
+  .ov-card .line { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); padding: 1px 0; }
+  .ov-card .line b { color: var(--text); }
+  .ov-card .flow { font-size: 11px; color: var(--muted); margin-top: 5px; padding-top: 5px; border-top: 1px dashed #e6e9eb; }
+
+  /* インライン検証（Zoho側の必須情報ベース＝互換で出せる） */
+  .inline-msg { display: flex; align-items: flex-start; gap: 7px; font-size: 11.5px; padding: 7px 10px; border-radius: 4px; margin: 5px 0 1px; }
+  .inline-msg.err { background: #fbeced; color: #953840; border: 1px solid #f0c9cd; }
+  .inline-msg .ic { font-weight: 700; }
+
+  .callout { font-size: 11.5px; color: var(--muted); background: #f6f8fa; border: 1px dashed var(--border-strong); border-radius: 5px; padding: 7px 11px; margin-bottom: 11px; }
+
+  /* 種別/動作セグメント（acms ボタングループ風） */
+  .seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 4px; overflow: hidden; }
+  .seg button { border: 0; border-right: 1px solid var(--border-strong); background: #fff; padding: 6px 11px; font-size: 11.5px; cursor: pointer; color: var(--muted); font-weight: 600; }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--primary); color: #fff; }
+
+  .tag-btn { border: 1px solid var(--border-strong); background: #fff; border-radius: 4px; padding: 5px 8px; cursor: pointer; font-size: 11px; color: var(--muted); }
+  .tag-btn:hover { background: #eef4f9; color: var(--primary); }
+  .preview-note { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+  /* Before 注釈 */
+  .anno { border-left: 3px solid var(--danger); background: #fbeced; padding: 4px 10px; font-size: 11px; color: #953840; margin-top: 4px; border-radius: 0 3px 3px 0; }
+  .anno b { color: var(--danger); }
+  .legacy-note { background: #fff; border: 1px dashed var(--danger); border-radius: 6px; padding: 11px 14px; margin-bottom: 14px; color: #953840; font-size: 12px; }
+  .legacy-note h4 { margin: 0 0 5px; font-size: 12.5px; color: var(--danger); }
+  .legacy-note ul { margin: 0; padding-left: 18px; }
+
+  /* 将来（テスト送信・ログ）を控えめに */
+  .future-block { opacity: .92; }
+  .future-block .sec-head { background: #f1f2f4; }
+  .log-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+  .log-table th { background: #f6f8fa; text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  .log-table td { padding: 7px 9px; border-bottom: 1px solid #edeff1; }
+  .status { font-weight: 700; font-size: 11px; padding: 1px 7px; border-radius: 3px; }
+  .status.ok { background: #e8f5ee; color: var(--ok); }
+  .status.ng { background: #fbeced; color: var(--danger); }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; }
+  .log-detail { color: var(--muted); font-size: 11px; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="mock-banner">
+    <div>
+      <h1>Zoho Form 設定 — UI改修モック（互換範囲版）</h1>
+      <p>フォーム項目サジェストは除外。保存データ形式を変えずに作れる範囲に絞りました。右のトグルで現行と比較できます。</p>
+    </div>
+    <div class="toggle">
+      <button id="tab-after" class="active" onclick="showView('after')">改修案（After）</button>
+      <button id="tab-before" onclick="showView('before')">現行（Before）</button>
+    </div>
+  </div>
+
+  <div id="view-after">
+    <div class="legend">
+      <span>互換性の目安：</span>
+      <span>🟢 <b>保存データそのまま</b>（テンプレ＋Reactのみ）</span>
+      <span>🟡 <b>PHP軽微追加</b>（必須/型情報を取得に追加。保存形式は不変）</span>
+      <span>⚪ <b>将来</b>（別途バックエンド実装が必要）</span>
+    </div>
+
+    <h2 class="title2"><span>Zoho Form 設定</span><button class="retake">↻ Zohoから情報を再取得</button></h2>
+
+    <div class="section"><div class="sec-body">
+      <div class="enable-row">
+        <input type="checkbox" class="cb" checked>
+        <b>Zoho CRM連携を有効にする</b>
+        <span class="badge badge-ok" style="margin-left:8px">● 接続OK（Leads / Contacts / Deals 取得済み）</span>
+      </div>
+    </div></div>
+
+    <!-- 1. マッピング概要（既存値の集計・読み取り専用） -->
+    <div class="section">
+      <div class="sec-head"><h3>マッピング概要</h3><span class="desc">現在の設定を集計して表示（読み取り専用）</span><span class="compat keep">🟢 保存データそのまま</span></div>
+      <div class="sec-body">
+        <div class="overview">
+          <div class="ov-card">
+            <div class="mod">見込み客 <span class="action insert">追加</span></div>
+            <div class="line"><span>マップ済み項目</span><b>3</b></div>
+            <div class="line"><span>必須の充足</span><span class="badge badge-ok">✓ 2/2 充足</span></div>
+            <div class="flow">name → 姓 ／ email → メール ／ company → 会社</div>
+          </div>
+          <div class="ov-card">
+            <div class="mod">連絡先 <span class="action upsert">追加/更新</span></div>
+            <div class="line"><span>マップ済み項目</span><b>2</b></div>
+            <div class="line"><span>必須の充足</span><span class="badge badge-warn">⚠ 1/2 未充足</span></div>
+            <div class="flow">email → メール ／ <b style="color:var(--danger)">姓（必須）が未マップ</b></div>
+          </div>
+          <div class="ov-card">
+            <div class="mod">商談 <span class="action insert">追加</span></div>
+            <div class="line"><span>マップ済み項目</span><b>4</b></div>
+            <div class="line"><span>必須の充足</span><span class="badge badge-ok">✓ 1/1 充足</span></div>
+            <div class="flow">固定値「予約」→ 商談名 ／ email → 関連連絡先（自動解決）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 送信ルール -->
+    <div class="section">
+      <div class="sec-head"><h3>送信ルール（タブごとの追加・更新）</h3><span class="desc">追加／更新／追加または更新(upsert) を選択</span><span class="compat keep">🟢 保存データそのまま</span></div>
+      <div class="sec-body">
+        <div class="callout">💡 保存時は既存の「追加を許可タブ / 更新を許可タブ」の2配列へ自動変換します（追加=insertのみ / 更新=updateのみ / 追加更新=両方）。<b>裏のデータ構造は現行と同一</b>のため PHP は変更不要です。</div>
+        <table class="grid">
+          <thead><tr><th></th><th style="width:230px">送信先タブ</th><th style="width:220px">動作</th><th>重複判定キー</th><th style="width:60px"></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="handle">≡</td>
+              <td><select><option>見込み客 (Leads)</option><option>連絡先 (Contacts)</option><option>商談 (Deals)</option></select></td>
+              <td><div class="seg"><button class="on">追加</button><button>更新</button><button>追加/更新</button></div></td>
+              <td><select disabled><option>— 追加のみのため不要 —</option></select></td>
+              <td><button class="btn btn-danger btn-sm">削除</button></td>
+            </tr>
+            <tr>
+              <td class="handle">≡</td>
+              <td><select><option>連絡先 (Contacts)</option><option>見込み客 (Leads)</option><option>商談 (Deals)</option></select></td>
+              <td><div class="seg"><button>追加</button><button>更新</button><button class="on">追加/更新</button></div></td>
+              <td><select><option>Email（重複不可）</option><option>Phone（重複不可）</option></select></td>
+              <td><button class="btn btn-danger btn-sm">削除</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:9px"><button class="btn btn-add btn-sm">＋ タブを追加</button></div>
+      </div>
+    </div>
+
+    <!-- 3. フィールドマッピング（サジェストなし版） -->
+    <div class="section">
+      <div class="sec-head"><h3>フィールドマッピング</h3><span class="desc">フォーム項目名は現行どおり手入力（例示プレースホルダあり）</span><span class="compat php">🟡 必須/型バッジは PHP軽微追加</span></div>
+      <div class="sec-body">
+        <table class="grid">
+          <thead>
+            <tr>
+              <th></th>
+              <th style="width:100px">種別</th>
+              <th style="width:230px">a-blog cms 項目 / 固定値</th>
+              <th style="width:44px; text-align:center">→</th>
+              <th>Zoho の項目（タブ・型・必須）</th>
+              <th style="width:48px; text-align:center">追加</th>
+              <th style="width:48px; text-align:center">更新</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="handle">≡</td>
+              <td><span class="badge badge-type">フィールド</span></td>
+              <td><input type="text" value="name" placeholder="例）email"></td>
+              <td style="text-align:center; color:#9aa6b0">→</td>
+              <td><span class="chip">見込み客 <span class="sep">·</span> 姓<span class="req-star">*</span></span> <span class="badge badge-type">text</span> <span class="badge badge-ok">必須を充足</span></td>
+              <td style="text-align:center"><input type="checkbox" class="cb" checked></td>
+              <td style="text-align:center"><input type="checkbox" class="cb"></td>
+              <td><button class="btn btn-danger btn-sm">削除</button></td>
+            </tr>
+            <tr>
+              <td class="handle">≡</td>
+              <td><span class="badge badge-type">フィールド</span></td>
+              <td><input type="text" value="email" placeholder="例）email"></td>
+              <td style="text-align:center; color:#9aa6b0">→</td>
+              <td><span class="chip">見込み客 <span class="sep">·</span> メール</span> <span class="badge badge-type">email</span></td>
+              <td style="text-align:center"><input type="checkbox" class="cb" checked></td>
+              <td style="text-align:center"><input type="checkbox" class="cb"></td>
+              <td><button class="btn btn-danger btn-sm">削除</button></td>
+            </tr>
+            <tr>
+              <td class="handle">≡</td>
+              <td><span class="badge badge-type" style="background:#f2ecf8;color:#7047a8">固定値</span></td>
+              <td>
+                <div style="display:flex; gap:6px; align-items:center">
+                  <input type="text" value="予約_%{Y}%{m}%{d}">
+                  <button class="tag-btn" title="変数を挿入">{ }</button>
+                </div>
+                <div class="preview-note">プレビュー: 予約_20260722</div>
+              </td>
+              <td style="text-align:center; color:#9aa6b0">→</td>
+              <td><span class="chip">商談 <span class="sep">·</span> 商談名<span class="req-star">*</span></span> <span class="badge badge-type">text</span></td>
+              <td style="text-align:center"><input type="checkbox" class="cb" checked></td>
+              <td style="text-align:center"><input type="checkbox" class="cb"></td>
+              <td><button class="btn btn-danger btn-sm">削除</button></td>
+            </tr>
+            <tr style="background:#fdf6f6">
+              <td class="handle">≡</td>
+              <td><span class="badge badge-type">フィールド</span></td>
+              <td><input type="text" value="" placeholder="フォーム項目名を入力…">
+                <div class="inline-msg err"><span class="ic">✕</span><span>送信先タブ「連絡先」の必須項目 <b>姓</b> が未マップです。このままだと送信が失敗します。</span></div>
+              </td>
+              <td style="text-align:center; color:#9aa6b0">→</td>
+              <td><span class="chip" style="background:#fbe8e9;border-color:#f0c9cd;color:#953840">連絡先 <span class="sep">·</span> 姓<span class="req-star">*</span></span> <span class="badge badge-req">必須</span></td>
+              <td style="text-align:center"><input type="checkbox" class="cb" checked></td>
+              <td style="text-align:center"><input type="checkbox" class="cb" checked></td>
+              <td><button class="btn btn-danger btn-sm">削除</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+          <button class="btn btn-add btn-sm">＋ 項目を追加</button>
+          <span class="log-detail" style="margin-left:auto">必須の未マップがあると保存時に警告します（Zoho側の必須情報を利用）</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. リレーショナル設定 -->
+    <div class="section">
+      <div class="sec-head"><h3>リレーショナル設定（ルックアップの自動解決）</h3><span class="desc">任意。関連レコードを比較キーで自動ひも付け</span><span class="compat keep">🟢 保存データそのまま</span></div>
+      <div class="sec-body">
+        <div class="callout">💡 例）<b>商談</b>の「連絡先」ルックアップに、<b>email</b> の値で <b>連絡先</b>タブを検索してひも付ける。使わなければ空欄でOK。</div>
+        <table class="grid">
+          <thead><tr><th></th><th>比較に使うフォーム項目</th><th>関連元タブ</th><th>ルックアップ項目</th><th>関連先タブ</th><th>比較項目</th><th style="width:60px"></th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="handle">≡</td>
+              <td><input type="text" value="email" placeholder="例）email"></td>
+              <td><select><option>商談</option></select></td>
+              <td><select><option>連絡先名 (Contact_Name)</option></select></td>
+              <td><select><option>連絡先</option></select></td>
+              <td><select><option>メール (Email)</option></select></td>
+              <td><button class="btn btn-danger btn-sm">削除</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:9px"><button class="btn btn-add btn-sm">＋ 追加</button></div>
+      </div>
+    </div>
+
+    <!-- 将来：テスト送信・送信ログ -->
+    <div class="section future-block">
+      <div class="sec-head"><h3>テスト送信・送信ログ</h3><span class="desc">将来対応。新規POSTエンドポイントとログ保存が必要</span><span class="compat future">⚪ 将来（別途実装）</span></div>
+      <div class="sec-body">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="runTest()">▶ テスト送信（イメージのデモ）</button>
+          <span class="log-detail">※ 保存データ構造は壊しませんが、実装には別途バックエンドが必要なため「将来」に分類しています。</span>
+        </div>
+        <table class="log-table">
+          <thead><tr><th style="width:150px">日時</th><th style="width:130px">タブ / 動作</th><th style="width:80px">結果</th><th>詳細</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">2026-07-22 14:03</td><td>見込み客 / 追加</td><td><span class="status ok">成功</span></td><td class="log-detail">id: 5348…921 を作成</td></tr>
+            <tr><td class="mono">2026-07-22 11:47</td><td>連絡先 / 追加</td><td><span class="status ng">失敗</span></td><td class="log-detail">MANDATORY_NOT_FOUND: 必須「姓 (Last_Name)」が空</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= BEFORE ======================= -->
+  <div id="view-before" class="hidden">
+    <div class="legacy-note">
+      <h4>⚠ 現行UIの課題</h4>
+      <ul>
+        <li>3つの表が独立し「どのフォーム項目→どのCRM項目」が一望できない（裏でタブ名の文字列一致で結合）</li>
+        <li>必須フィールドの明示・バリデーションが無く、送信失敗はログでしか分からない</li>
+        <li>「追加を許可 / 更新を許可」の二重スコープが直感に反する</li>
+      </ul>
+    </div>
+
+    <h2 class="title2"><span>Zoho Form 設定</span><button class="retake">Zohoから情報を再取得</button></h2>
+
+    <div class="section"><div class="sec-body">
+      <div class="enable-row"><input type="checkbox" class="cb" checked> <b>Zoho CRM連携</b> 有効</div>
+    </div></div>
+
+    <div class="section">
+      <div class="sec-head"><h3>タブのユニークキー設定</h3></div>
+      <div class="sec-body">
+        <table class="grid">
+          <thead><tr><th></th><th>ユニークキーにする項目のAPI名</th><th>追加を許可するタブ名</th><th>更新を許可するタブ名</th><th></th></tr></thead>
+          <tbody><tr>
+            <td class="handle">≡</td>
+            <td><input type="text" value="Email"></td>
+            <td><input type="text" value="見込み客" placeholder="モジュールを選択"></td>
+            <td><input type="text" value="見込み客" placeholder="モジュールを選択"></td>
+            <td><button class="btn btn-danger btn-sm">削除</button></td>
+          </tr></tbody>
+        </table>
+        <div class="anno"><b>課題:</b> API名を手入力。「追加/更新を許可」という二重スコープが分かりにくい。</div>
+        <div style="margin-top:9px"><button class="btn btn-add btn-sm">追加</button></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><h3>Zohoと連携するa-blog cmsフィールドの設定</h3></div>
+      <div class="sec-body">
+        <table class="grid">
+          <thead><tr><th></th><th>種別</th><th>フィールド名 / 固定値</th><th>タブ名</th><th>項目名</th><th>追加</th><th>更新</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="handle">≡</td><td><select><option>フィールド</option><option>固定値</option></select></td><td><input type="text" value="name"></td><td><input type="text" value="見込み客"></td><td><input type="text" value="姓"></td><td style="text-align:center"><input type="checkbox" class="cb" checked></td><td style="text-align:center"><input type="checkbox" class="cb"></td><td><button class="btn btn-danger btn-sm">削除</button></td></tr>
+            <tr><td class="handle">≡</td><td><select><option>フィールド</option><option>固定値</option></select></td><td><input type="text" value="email"></td><td><input type="text" value="見込み客"></td><td><input type="text" value="メール"></td><td style="text-align:center"><input type="checkbox" class="cb" checked></td><td style="text-align:center"><input type="checkbox" class="cb"></td><td><button class="btn btn-danger btn-sm">削除</button></td></tr>
+          </tbody>
+        </table>
+        <div class="anno"><b>課題:</b> フィールド名は自由入力でタイプミス＝無言スキップ。必須項目（姓）の明示なし。型も不明。</div>
+        <div style="margin-top:9px"><button class="btn btn-add btn-sm">追加</button></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><h3>Zoho リレーショナル設定</h3></div>
+      <div class="sec-body">
+        <table class="grid">
+          <thead><tr><th></th><th>フィールド名</th><th>関連元タブ名</th><th>ルックアップフィールド</th><th>関連先タブ名</th><th>比較フィールド</th><th></th></tr></thead>
+          <tbody><tr><td class="handle">≡</td><td><input type="text"></td><td><input type="text" placeholder="関連元タブを選択"></td><td><input type="text" placeholder="モジュールを選択"></td><td><input type="text" placeholder="関連先タブを選択"></td><td><input type="text" placeholder="モジュールを選択"></td><td><button class="btn btn-danger btn-sm">削除</button></td></tr></tbody>
+        </table>
+        <div style="margin-top:9px"><button class="btn btn-add btn-sm">追加</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function showView(v){
+    document.getElementById('view-after').classList.toggle('hidden', v!=='after');
+    document.getElementById('view-before').classList.toggle('hidden', v!=='before');
+    document.getElementById('tab-after').classList.toggle('active', v==='after');
+    document.getElementById('tab-before').classList.toggle('active', v==='before');
+  }
+  // 動作セグメント：追加のときは重複判定キーを無効化
+  document.querySelectorAll('.seg').forEach(seg=>{
+    seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      seg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      const row = seg.closest('tr');
+      const key = row ? row.querySelector('td:nth-child(4) select') : null;
+      if(key){
+        const insertOnly = (b.textContent==='追加');
+        key.disabled = insertOnly;
+        if(insertOnly){ key.innerHTML = '<option>— 追加のみのため不要 —</option>'; }
+        else { key.innerHTML = '<option>Email（重複不可）</option><option>Phone（重複不可）</option>'; }
+      }
+    }));
+  });
+  // テスト送信（将来イメージのデモ）
+  function runTest(){
+    alert('【将来イメージ】ダミーデータでZohoへ送信 →\\n・見込み客/追加: 成功\\n・連絡先/追加更新: 既存をEmailで発見→更新\\n・商談/追加: 連絡先を自動解決→作成\\n\\n※このデモはイメージです。実装には別途バックエンドが必要です。');
+  }
+</script>
+</body>
+</html>
