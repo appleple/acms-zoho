@@ -651,6 +651,35 @@ final class RecordTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('assignModuleByPriority: 更新のみ設定でユニークキー値も無い場合、insertスコープが無いので何も送信しない（設定に無いモジュールへinsertしない）')]
+    public function dropsRecordWhenUpdateOnlyAndUniqueValueEmpty(): void
+    {
+        // 更新のみ設定（Leadsのみ）でメールアドレス未入力のまま送信された場合、insertスコープが
+        // 無いため新規作成先が存在しない。にもかかわらず、このケースを検索しに行く前の分岐で
+        // modulePriority[0]（ハードコードされた'Contacts'）へフォールバックしてinsertしてしまうと、
+        // この送信ルールに一度も設定していないモジュールへ意図しないレコードが作られてしまう。
+        $config = $this->field([
+            'zoho_form_group_index' => ['1'],
+            'zoho_form_insert_scope' => [''],
+            'zoho_form_update_scope' => [$this->json([['apiName' => 'Leads']])],
+            'zoho_form_unique_key' => ['Email'],
+            'zoho_link_field_module_field' => ['Email'],
+            'zoho_link_field_cms_field' => ['email'],
+            'zoho_link_field_cms_field_fixed' => [''],
+            'zoho_link_field_module' => [$this->json([['apiName' => 'Leads']])],
+            'zoho_link_field_insert' => [''],
+            'zoho_link_field_update' => ['1'],
+        ]);
+        // email 未入力 → uniqueValue 空。
+        $form = $this->field(['email' => '']);
+
+        $api = $this->fakeRecordApi(['Contacts' => ['id' => 'C-1']]);
+        $records = (new RecordBuilder($form, $config))->buildRecords($api);
+
+        $this->assertSame([], $records);
+    }
+
+    #[Test]
     #[TestDox('assignModuleByPriority: ユニークキー値が無ければ insert スコープ先頭で insert する')]
     public function assignsInsertWhenUniqueValueEmpty(): void
     {

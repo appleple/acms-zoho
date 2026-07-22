@@ -770,9 +770,13 @@ class Record extends Builder
             $uniqueValue = $record->getField($uniqueKey);
 
             if (!(bool) $uniqueValue) {
-                // uniqueKey値がない場合は最初のinsertScopeモジュールでinsertとする
-                $firstInsertModule = $insertScopes !== [] ? $insertScopes[0] : $modulePriority[0];
-                $this->updateRecordProperties($record, $firstInsertModule, 'insert', null);
+                // uniqueKey値がない場合は最初のinsertScopeモジュールでinsertとする。
+                // insertScopeが無い（更新のみ設定）場合は、この送信ルールに一度も設定していない
+                // モジュールへ誤ってinsertしないよう、__PENDING__のまま残す
+                // （buildRecords()側で送信対象から除外される）。
+                if ($insertScopes !== []) {
+                    $this->updateRecordProperties($record, $insertScopes[0], 'insert', null);
+                }
                 continue;
             }
 
