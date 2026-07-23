@@ -38,8 +38,8 @@ class Client
     /**
      * @var string $resourcePath SDK がモジュール／フィールド定義をキャッシュするディレクトリ。
      * 未指定だと SDK は getcwd() を使うため、Web 公開領域に fields/*.json が生成される恐れがある。
-     * env ZOHO_SDK_RESOURCE_PATH で上書き可能。未設定時は a-blog cms のキャッシュディレクトリ
-     * （SCRIPT_DIR . CACHE_DIR）配下の zoho_sdk。
+     * a-blog cms のキャッシュディレクトリ（SCRIPT_DIR . CACHE_DIR）配下の zoho_sdk に固定する。
+     * CACHE_DIR 自体は config.server.php で変更可能なため、配置先を変えたい場合はそちらで設定する。
      */
     private $resourcePath = '';
 
@@ -113,20 +113,16 @@ class Client
 
     /**
      * SDK のリソースディレクトリを解決する。
-     * env ZOHO_SDK_RESOURCE_PATH があればそれを、無ければ a-blog cms のキャッシュディレクトリ
-     * （SCRIPT_DIR . CACHE_DIR、config.server.php で設定可能）配下の zoho_sdk を返す。
-     * SDK が生成する fields/*.json はキャッシュのため、本体のキャッシュ領域に置く。
+     * a-blog cms のキャッシュディレクトリ（SCRIPT_DIR . CACHE_DIR、config.server.php で設定可能）
+     * 配下の zoho_sdk を返す。SDK が生成する fields/*.json はキャッシュのため、本体のキャッシュ領域に置く。
+     * v3.2 では cache ディレクトリは Web からアクセスできないよう保護されており、ドキュメントルート外に
+     * 置きたい場合も CACHE_DIR 自体を変更すれば追従するため、専用の設定項目は設けない。
      *
      * @param string $scriptDir SCRIPT_DIR（末尾スラッシュ想定）
      * @return string
      */
     private function resolveResourcePath(string $scriptDir): string
     {
-        $configured = env('ZOHO_SDK_RESOURCE_PATH', '');
-        if ($configured !== '') {
-            return $configured;
-        }
-
         // CACHE_DIR は SCRIPT_DIR からの相対パス（既定 'cache/'）。本体未読込のテスト等に備えフォールバックする。
         $cacheDir = defined('CACHE_DIR') ? CACHE_DIR : 'cache/';
 
