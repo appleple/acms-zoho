@@ -56,9 +56,7 @@ class CacheClear extends Zoho
 
             ModuleFieldsHandler::deleteAllFieldFiles();
         } catch (\Exception $e) {
-            Logger::warning('【Zoho plugin】SDK フィールドキャッシュの削除に失敗しました。', [
-                'message' => $e->getMessage(),
-            ]);
+            Logger::warning('【Zoho plugin】SDK フィールドキャッシュの削除に失敗しました。', Common::exceptionArray($e));
         }
     }
 }
