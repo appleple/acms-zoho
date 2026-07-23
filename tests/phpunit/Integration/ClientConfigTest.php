@@ -49,4 +49,45 @@ final class ClientConfigTest extends DatabaseTestCase
     {
         $this->assertNull($this->clientWithoutConstructor()->getTokenIdByBid(BID));
     }
+
+    /**
+     * private メソッド resolveResourcePath($scriptDir) を Reflection 経由で呼ぶ。
+     * SCRIPT_DIR に依存しないよう $scriptDir を引数で渡す純粋ロジックとして検証する。
+     */
+    private function resolveResourcePathWith(string $scriptDir): string
+    {
+        $method = (new ReflectionClass(Client::class))->getMethod('resolveResourcePath');
+        $method->setAccessible(true);
+
+        /** @var string $path */
+        $path = $method->invoke($this->clientWithoutConstructor(), $scriptDir);
+        return $path;
+    }
+
+    #[Test]
+    #[TestDox('ZOHO_SDK_RESOURCE_PATH 未設定時は SCRIPT_DIR 配下の private/zoho_sdk_resources を返す')]
+    public function resolvesDefaultResourcePathUnderPrivate(): void
+    {
+        unset($_ENV['ZOHO_SDK_RESOURCE_PATH']);
+
+        $this->assertSame(
+            '/var/www/html/private/zoho_sdk_resources',
+            $this->resolveResourcePathWith('/var/www/html/')
+        );
+    }
+
+    #[Test]
+    #[TestDox('ZOHO_SDK_RESOURCE_PATH が設定されていればその値を優先する')]
+    public function resolvesResourcePathFromEnv(): void
+    {
+        $_ENV['ZOHO_SDK_RESOURCE_PATH'] = '/custom/zoho/resources';
+        try {
+            $this->assertSame(
+                '/custom/zoho/resources',
+                $this->resolveResourcePathWith('/var/www/html/')
+            );
+        } finally {
+            unset($_ENV['ZOHO_SDK_RESOURCE_PATH']);
+        }
+    }
 }

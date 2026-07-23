@@ -34,6 +34,13 @@ class Client
 
     private $tokenPresistencePath = '';
 
+    /**
+     * @var string $resourcePath SDK がモジュール／フィールド定義をキャッシュするディレクトリ。
+     * 未指定だと SDK は getcwd() を使うため、Web 公開領域に fields/*.json が生成される恐れがある。
+     * env ZOHO_SDK_RESOURCE_PATH で上書き可能。未設定時は SCRIPT_DIR 配下の private/zoho_sdk_resources。
+     */
+    private $resourcePath = '';
+
     /** @var Store $store ストア情報 */
     private $store;
 
@@ -75,6 +82,10 @@ class Client
         $tokenPersistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH', '');
         $this->tokenPresistencePath = $tokenPersistencePath !== '' ? $tokenPersistencePath : $defaultTokenPath;
 
+        // SDK のフィールド定義キャッシュ先を制御下の非公開ディレクトリに固定する（getcwd() 依存を避ける）
+        $this->resourcePath = $this->resolveResourcePath($scriptDir);
+        $this->ensureResourceDirectory($this->resourcePath);
+
         $this->store = new CustomFileStore($this->tokenPresistencePath);
     }
 
@@ -86,6 +97,54 @@ class Client
     public function getTokenPresistencePath()
     {
         return $this->tokenPresistencePath;
+    }
+
+    /**
+     * SDK のリソース（フィールド定義キャッシュ）ディレクトリを取得する
+     *
+     * @return string
+     */
+    public function getResourcePath(): string
+    {
+        return $this->resourcePath;
+    }
+
+    /**
+     * SDK のリソースディレクトリを解決する。
+     * env ZOHO_SDK_RESOURCE_PATH があればそれを、無ければ SCRIPT_DIR 配下の
+     * private/zoho_sdk_resources（Web 非公開領域）を返す。
+     *
+     * @param string $scriptDir SCRIPT_DIR（末尾スラッシュ想定）
+     * @return string
+     */
+    private function resolveResourcePath(string $scriptDir): string
+    {
+        $configured = env('ZOHO_SDK_RESOURCE_PATH', '');
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        return $scriptDir . 'private/zoho_sdk_resources';
+    }
+
+    /**
+     * リソースディレクトリの存在を保証する。
+     * SDK の Initializer は resourcePath に既存ディレクトリを要求するため、無ければ作成する。
+     *
+     * @param string $path
+     * @return void
+     */
+    private function ensureResourceDirectory(string $path): void
+    {
+        if ($path === '' || is_dir($path)) {
+            return;
+        }
+
+        if (!@mkdir($path, 0777, true) && !is_dir($path)) {
+            Logger::warning('【Zoho plugin】SDK リソースディレクトリを作成できませんでした。', [
+                'path' => $path,
+            ]);
+        }
     }
 
     public function getStore()
@@ -182,7 +241,7 @@ class Client
                 ->token($token)
                 ->store($this->store->getStore())
                 // ->SDKConfig($sdkConfig)
-                // ->resourcePath($resourcePath)
+                ->resourcePath($this->resourcePath)
                 ->logger($logger)
                 // ->requestProxy($requestProxy)
                 ->initialize();
