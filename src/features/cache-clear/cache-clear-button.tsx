@@ -49,10 +49,10 @@ export const CacheClearButton = () => {
   return (
     <button
       type="button"
-      className="acms-admin-btn acms-admin-btn-admin"
+      className="acms-admin-btn acms-admin-btn-admin acms-admin-btn-admin-sm"
       onClick={handleClearCache}
       disabled={isClearing}
-      title="ZohoのキャッシュをクリアしてZohoから情報を再取得します"
-    >Zohoから情報を再取得</button>
+      title="Zohoでタブや項目を追加・変更したときにクリックすると、最新のタブ/項目一覧を再取得します"
+    >{isClearing ? '再取得中…' : '↻ Zohoから再取得'}</button>
   );
 };
