@@ -3,8 +3,9 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
-use AcmsLogger;
+use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Session;
+use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class OAuth2 extends ACMS_POST
 {
@@ -13,15 +14,15 @@ class OAuth2 extends ACMS_POST
         $clientId = $this->Post->get('zoho_client_id', '');
         $clientSecret = $this->Post->get('zoho_client_secret', '');
         $redirectUrl = $this->Post->get('zoho_redirect_url', '');
-        // org.READ は SDK がトークン保存時に利用者特定で /crm/v8/org を呼ぶため必須（無いと initialize が失敗しうる）
+        // ZohoCRM.org.READ は Organizations API（接続環境の自動判定）に必要
         $scope = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.users.READ,ZohoCRM.org.READ';
 
         if (
-            !empty($clientId) &&
+            $clientId !== '' &&
             is_string($clientId) &&
-            !empty($clientSecret) &&
+            $clientSecret !== '' &&
             is_string($clientSecret) &&
-            !empty($redirectUrl) &&
+            $redirectUrl !== '' &&
             is_string($redirectUrl)
         ) {
             $session = Session::handle();
@@ -30,7 +31,10 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_redirect_url', $redirectUrl);
             $session->save();
 
-            $url = 'https://accounts.zoho.com/oauth/v2/auth?' . http_build_query([
+            // 認可の起点となる accounts URL。初回は既定 US（accounts.zoho.com）から開始し、
+            // 非 US ユーザーは Zoho の Multi-DC でログイン時に地域へ自動リダイレクトされる。
+            // 2 回目以降は前回のコールバックで自動判定・保存した DC の地域サーバーを使う。
+            $url = ZohoClient::oauthAccountsBaseUrl(ZohoClient::getDataCenter(BID)) . '/oauth/v2/auth?' . http_build_query([
                 'scope' => $scope,
                 'client_id' => $clientId,
                 'response_type' => 'code',
@@ -46,11 +50,9 @@ class OAuth2 extends ACMS_POST
             header('Location: ' . $url, true, 302);
             exit;
         } else {
-            AcmsLogger::error('【Zoho plugin】OAuth2認証のためのパラメータが不足しています。');
+            Logger::error('【Zoho plugin】OAuth2認証のためのパラメータが不足しています。');
             $this->addError('クライアントID、クライアントシークレットを入力してください。');
             return $this->Post;
         }
-
-        return $this->Post;
     }
 }
