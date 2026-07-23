@@ -166,6 +166,8 @@ export const UniqueKeyRow = ({
           <label htmlFor={keyId} className="acms-admin-form-block acms-admin-mb-1">
             同じレコードと判断する項目<LabelTooltip text="更新・upsert時に既存レコードを探すキー。例：Email" />
           </label>
+          {/* 候補一覧にないAPI名（未取得のカスタムフィールドや過去保存値）も直接指定できるよう、
+              候補選択のみの rich-select ではなく自由入力可能な CreatableSelect を使用している。 */}
           <CreatableSelect<KeyOption, false>
             inputId={keyId}
             isClearable
