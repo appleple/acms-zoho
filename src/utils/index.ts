@@ -1,6 +1,39 @@
 import { Module, ModuleWithFields } from '../types';
 
 /**
+ * CSRF トークンを取得する。
+ * 本体JS(js/dest/index.js)が window.csrfToken へ代入するが、読み込み順序により
+ * 未代入のことがあるため、meta[name="csrf-token"] からの直接取得をフォールバックにする。
+ */
+export const getCsrfToken = (): string => {
+  if (window.csrfToken) {
+    return window.csrfToken;
+  }
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta?.getAttribute('content') || '';
+};
+
+/**
+ * POST 先の URL を取得する。
+ * POST アクションは対象ブログ(BID)を URL から特定するため、現在のブログを指す URL を返す。
+ * 本体の流儀に合わせ `${root}bid/${bid}/` を組み立てる。管理画面では ACMS.Config が
+ * 空のことがあるため、その場合は現在ページ(= 現在ブログ)の location.href をフォールバックにする。
+ */
+export const getRootUrl = (): string => {
+  const root = window.ACMS?.Config?.root;
+  const bid = window.ACMS?.Config?.bid;
+
+  if (root && bid) {
+    return `${root}bid/${bid}/`;
+  }
+  if (root) {
+    return root;
+  }
+  // ACMS.Config が利用できない場合は、現在表示中のページ(= 現在ブログ)へ投げる
+  return window.location.href;
+};
+
+/**
  * JSON文字列をModule配列にパースし、ModuleWithFields[]として返す
  */
 export const parseModulesJson = (value: string): ModuleWithFields[] => {

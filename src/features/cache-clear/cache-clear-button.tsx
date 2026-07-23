@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSWRConfig } from 'swr';
+import { getCsrfToken, getRootUrl } from '../../utils';
 
 export const CacheClearButton = () => {
   const { cache, mutate } = useSWRConfig();
@@ -10,10 +11,10 @@ export const CacheClearButton = () => {
 
     try {
       // 1. サーバーサイドキャッシュをクリア
-      const rootUrl = (window as any).ACMS?.Config?.root || '/';
+      const rootUrl = getRootUrl();
       const formData = new FormData();
       formData.append('ACMS_POST_Zoho_CacheClear', 'exec');
-      formData.append('formToken', window.csrfToken || '');
+      formData.append('formToken', getCsrfToken());
       await fetch(rootUrl, {
         method: 'POST',
         headers: { Accept: 'application/json' },
@@ -48,10 +49,10 @@ export const CacheClearButton = () => {
   return (
     <button
       type="button"
-      className="acms-admin-btn acms-admin-btn-admin acms-admin-btn-admin-sm"
+      className="acms-admin-btn acms-admin-btn-admin"
       onClick={handleClearCache}
       disabled={isClearing}
-      title="Zohoでタブや項目を追加・変更したときにクリックすると、最新のタブ/項目一覧を再取得します"
-    >{isClearing ? '再取得中…' : '↻ Zohoから再取得'}</button>
+      title="ZohoのキャッシュをクリアしてZohoから情報を再取得します"
+    >Zohoから情報を再取得</button>
   );
 };

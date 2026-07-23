@@ -3,9 +3,8 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
-use Acms\Services\Facades\Logger;
+use AcmsLogger;
 use Acms\Services\Facades\Session;
-use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class OAuth2 extends ACMS_POST
 {
@@ -14,15 +13,25 @@ class OAuth2 extends ACMS_POST
         $clientId = $this->Post->get('zoho_client_id', '');
         $clientSecret = $this->Post->get('zoho_client_secret', '');
         $redirectUrl = $this->Post->get('zoho_redirect_url', '');
-        // ZohoCRM.org.READ は Organizations API（接続環境の自動判定）に必要
+        // Zoho に要求する権限（スコープ）。連携し直すと、このスコープでトークンが再発行される。
+        //   - modules.ALL  : モジュール（レコード）の操作
+        //   - settings.ALL : モジュール定義・フィールド定義などの設定取得
+        //   - users.READ   : ユーザー情報の参照（/crm/v8/users）
+        //   - org.READ     : 組織情報の参照（/crm/v8/org）
+        // org.READ について:
+        //   SDK はトークンを保存する際、UserSignature が未設定だと利用者を特定するため
+        //   /crm/v8/users と /crm/v8/org を呼ぶ（OAuthToken::getToken → Utility::getUserName）。
+        //   この org 呼び出しに org.READ が要る。無い場合 SDK 内部では握りつぶされることも
+        //   あるが、本プラグインは SDK 例外を RuntimeException として上位に伝播させるため
+        //   （Services/Zoho/Client::initialize）失敗が表面化しうる。取りこぼしを防ぐため付与する。
         $scope = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.users.READ,ZohoCRM.org.READ';
 
         if (
-            $clientId !== '' &&
+            !empty($clientId) &&
             is_string($clientId) &&
-            $clientSecret !== '' &&
+            !empty($clientSecret) &&
             is_string($clientSecret) &&
-            $redirectUrl !== '' &&
+            !empty($redirectUrl) &&
             is_string($redirectUrl)
         ) {
             $session = Session::handle();
@@ -31,10 +40,7 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_redirect_url', $redirectUrl);
             $session->save();
 
-            // 認可の起点となる accounts URL。初回は既定 US（accounts.zoho.com）から開始し、
-            // 非 US ユーザーは Zoho の Multi-DC でログイン時に地域へ自動リダイレクトされる。
-            // 2 回目以降は前回のコールバックで自動判定・保存した DC の地域サーバーを使う。
-            $url = ZohoClient::oauthAccountsBaseUrl(ZohoClient::getDataCenter(BID)) . '/oauth/v2/auth?' . http_build_query([
+            $url = 'https://accounts.zoho.com/oauth/v2/auth?' . http_build_query([
                 'scope' => $scope,
                 'client_id' => $clientId,
                 'response_type' => 'code',
@@ -50,9 +56,11 @@ class OAuth2 extends ACMS_POST
             header('Location: ' . $url, true, 302);
             exit;
         } else {
-            Logger::error('【Zoho plugin】OAuth2認証のためのパラメータが不足しています。');
+            AcmsLogger::error('【Zoho plugin】OAuth2認証のためのパラメータが不足しています。');
             $this->addError('クライアントID、クライアントシークレットを入力してください。');
             return $this->Post;
         }
+
+        return $this->Post;
     }
 }
