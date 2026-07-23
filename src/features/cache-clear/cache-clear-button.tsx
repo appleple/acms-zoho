@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSWRConfig } from 'swr';
+import { getCsrfToken, getRootUrl } from '../../utils';
 
 export const CacheClearButton = () => {
   const { cache, mutate } = useSWRConfig();
@@ -10,10 +11,10 @@ export const CacheClearButton = () => {
 
     try {
       // 1. サーバーサイドキャッシュをクリア
-      const rootUrl = (window as any).ACMS?.Config?.root || '/';
+      const rootUrl = getRootUrl();
       const formData = new FormData();
       formData.append('ACMS_POST_Zoho_CacheClear', 'exec');
-      formData.append('formToken', window.csrfToken || '');
+      formData.append('formToken', getCsrfToken());
       await fetch(rootUrl, {
         method: 'POST',
         headers: { Accept: 'application/json' },

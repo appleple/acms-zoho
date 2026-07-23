@@ -9,6 +9,7 @@ declare global {
       },
       Config: {
         root: string,
+        bid?: string | number,
         LiteEditorConf: {
           btnOptions: {
             label: string,

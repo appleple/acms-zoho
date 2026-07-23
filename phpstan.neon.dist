@@ -48,6 +48,13 @@ parameters:
         -
             identifier: booleanNot.alwaysFalse
             path: app/Services/Zoho/Mapper/ModuleField.php
+        # ensureResourceDirectory は LocalStorage::makeDirectory の副作用（ディレクトリ作成）後に
+        # isDirectory で作成可否を再確認するが、PHPStan は副作用を追えず「先の early-return で false 確定
+        # → !isDirectory は常に true」と誤検出する。実行時にはディレクトリが作られ得るため、作成失敗を
+        # 検知するための意図的なガードとして理由付きで無視する。
+        -
+            identifier: booleanNot.alwaysTrue
+            path: app/Services/Zoho/Client.php
         # Zoho SDK の OAuthToken は @template が付くが実質ジェネリックではない（型引数に意味がない）。
         # トークンストアのテストで OAuthToken を型注釈するたびに missingType.generics が出るため、
         # 当該テストに限って無視する。

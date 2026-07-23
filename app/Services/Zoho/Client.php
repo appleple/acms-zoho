@@ -6,6 +6,7 @@ use SQL;
 use Acms\Services\Facades\Database;
 use Acms\Services\Facades\Config;
 use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\LocalStorage;
 use com\zoho\api\authenticator\OAuthBuilder;
 use com\zoho\crm\api\InitializeBuilder;
 use com\zoho\crm\api\dc\USDataCenter;
@@ -33,6 +34,14 @@ class Client
     private $tokenStore = 'file';
 
     private $tokenPresistencePath = '';
+
+    /**
+     * @var string $resourcePath SDK がモジュール／フィールド定義をキャッシュするディレクトリ。
+     * 未指定だと SDK は getcwd() を使うため、Web 公開領域に fields/*.json が生成される恐れがある。
+     * a-blog cms のキャッシュディレクトリ（SCRIPT_DIR . CACHE_DIR）配下の zoho_sdk に固定する。
+     * CACHE_DIR 自体は config.server.php で変更可能なため、配置先を変えたい場合はそちらで設定する。
+     */
+    private $resourcePath = '';
 
     /** @var Store $store ストア情報 */
     private $store;
@@ -75,6 +84,10 @@ class Client
         $tokenPersistencePath = env('ZOHO_TOKEN_PERSISTENCE_PATH', '');
         $this->tokenPresistencePath = $tokenPersistencePath !== '' ? $tokenPersistencePath : $defaultTokenPath;
 
+        // SDK のフィールド定義キャッシュ先を制御下の非公開ディレクトリに固定する（getcwd() 依存を避ける）
+        $this->resourcePath = $this->resolveResourcePath($scriptDir);
+        $this->ensureResourceDirectory($this->resourcePath);
+
         $this->store = new CustomFileStore($this->tokenPresistencePath);
     }
 
@@ -86,6 +99,58 @@ class Client
     public function getTokenPresistencePath()
     {
         return $this->tokenPresistencePath;
+    }
+
+    /**
+     * SDK のリソース（フィールド定義キャッシュ）ディレクトリを取得する
+     *
+     * @return string
+     */
+    public function getResourcePath(): string
+    {
+        return $this->resourcePath;
+    }
+
+    /**
+     * SDK のリソースディレクトリを解決する。
+     * a-blog cms のキャッシュディレクトリ（SCRIPT_DIR . CACHE_DIR、config.server.php で設定可能）
+     * 配下の zoho_sdk を返す。SDK が生成する fields/*.json はキャッシュのため、本体のキャッシュ領域に置く。
+     * v3.2 では cache ディレクトリは Web からアクセスできないよう保護されており、ドキュメントルート外に
+     * 置きたい場合も CACHE_DIR 自体を変更すれば追従するため、専用の設定項目は設けない。
+     *
+     * @param string $scriptDir SCRIPT_DIR（末尾スラッシュ想定）
+     * @return string
+     */
+    private function resolveResourcePath(string $scriptDir): string
+    {
+        // CACHE_DIR は SCRIPT_DIR からの相対パス（既定 'cache/'）。本体未読込のテスト等に備えフォールバックする。
+        $cacheDir = defined('CACHE_DIR') ? CACHE_DIR : 'cache/';
+
+        return $scriptDir . $cacheDir . 'zoho_sdk';
+    }
+
+    /**
+     * リソースディレクトリの存在を保証する。
+     * SDK の Initializer は resourcePath に既存ディレクトリを要求するため、無ければ作成する。
+     * ファイル操作は a-blog cms の LocalStorage ファサード経由で行う（再帰作成・モードは本体設定に従う）。
+     *
+     * @param string $path
+     * @return void
+     */
+    private function ensureResourceDirectory(string $path): void
+    {
+        if ($path === '' || LocalStorage::isDirectory($path)) {
+            return;
+        }
+
+        LocalStorage::makeDirectory($path);
+
+        // makeDirectory は作成失敗時も true を返すため、実際に作成できたかを確認してからログを出す
+        if (!LocalStorage::isDirectory($path)) {
+            Logger::warning('【Zoho plugin】SDK リソースディレクトリを作成できませんでした。', [
+                'path' => $path,
+            ]);
+        }
     }
 
     public function getStore()
@@ -182,7 +247,7 @@ class Client
                 ->token($token)
                 ->store($this->store->getStore())
                 // ->SDKConfig($sdkConfig)
-                // ->resourcePath($resourcePath)
+                ->resourcePath($this->resourcePath)
                 ->logger($logger)
                 // ->requestProxy($requestProxy)
                 ->initialize();

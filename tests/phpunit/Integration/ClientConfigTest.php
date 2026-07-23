@@ -49,4 +49,30 @@ final class ClientConfigTest extends DatabaseTestCase
     {
         $this->assertNull($this->clientWithoutConstructor()->getTokenIdByBid(BID));
     }
+
+    /**
+     * private メソッド resolveResourcePath($scriptDir) を Reflection 経由で呼ぶ。
+     * SCRIPT_DIR に依存しないよう $scriptDir を引数で渡す純粋ロジックとして検証する。
+     */
+    private function resolveResourcePathWith(string $scriptDir): string
+    {
+        $method = (new ReflectionClass(Client::class))->getMethod('resolveResourcePath');
+        $method->setAccessible(true);
+
+        /** @var string $path */
+        $path = $method->invoke($this->clientWithoutConstructor(), $scriptDir);
+        return $path;
+    }
+
+    #[Test]
+    #[TestDox('リソースパスは常に SCRIPT_DIR . CACHE_DIR 配下の zoho_sdk を返す')]
+    public function resolvesDefaultResourcePathUnderCache(): void
+    {
+        $cacheDir = defined('CACHE_DIR') ? CACHE_DIR : 'cache/';
+
+        $this->assertSame(
+            '/var/www/html/' . $cacheDir . 'zoho_sdk',
+            $this->resolveResourcePathWith('/var/www/html/')
+        );
+    }
 }
