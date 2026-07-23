@@ -65,13 +65,15 @@ final class ClientConfigTest extends DatabaseTestCase
     }
 
     #[Test]
-    #[TestDox('ZOHO_SDK_RESOURCE_PATH 未設定時は SCRIPT_DIR 配下の private/zoho_sdk_resources を返す')]
-    public function resolvesDefaultResourcePathUnderPrivate(): void
+    #[TestDox('ZOHO_SDK_RESOURCE_PATH 未設定時は SCRIPT_DIR . CACHE_DIR 配下の zoho_sdk を返す')]
+    public function resolvesDefaultResourcePathUnderCache(): void
     {
         unset($_ENV['ZOHO_SDK_RESOURCE_PATH']);
 
+        $cacheDir = defined('CACHE_DIR') ? CACHE_DIR : 'cache/';
+
         $this->assertSame(
-            '/var/www/html/private/zoho_sdk_resources',
+            '/var/www/html/' . $cacheDir . 'zoho_sdk',
             $this->resolveResourcePathWith('/var/www/html/')
         );
     }
