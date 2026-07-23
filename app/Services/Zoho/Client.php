@@ -6,6 +6,7 @@ use SQL;
 use Acms\Services\Facades\Database;
 use Acms\Services\Facades\Config;
 use Acms\Services\Facades\Logger;
+use Acms\Services\Facades\LocalStorage;
 use com\zoho\api\authenticator\OAuthBuilder;
 use com\zoho\crm\api\InitializeBuilder;
 use com\zoho\crm\api\dc\USDataCenter;
@@ -135,17 +136,21 @@ class Client
     /**
      * リソースディレクトリの存在を保証する。
      * SDK の Initializer は resourcePath に既存ディレクトリを要求するため、無ければ作成する。
+     * ファイル操作は a-blog cms の LocalStorage ファサード経由で行う（再帰作成・モードは本体設定に従う）。
      *
      * @param string $path
      * @return void
      */
     private function ensureResourceDirectory(string $path): void
     {
-        if ($path === '' || is_dir($path)) {
+        if ($path === '' || LocalStorage::isDirectory($path)) {
             return;
         }
 
-        if (!@mkdir($path, 0777, true) && !is_dir($path)) {
+        LocalStorage::makeDirectory($path);
+
+        // makeDirectory は作成失敗時も true を返すため、実際に作成できたかを確認してからログを出す
+        if (!LocalStorage::isDirectory($path)) {
             Logger::warning('【Zoho plugin】SDK リソースディレクトリを作成できませんでした。', [
                 'path' => $path,
             ]);
