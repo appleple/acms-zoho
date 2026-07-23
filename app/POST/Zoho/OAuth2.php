@@ -13,17 +13,7 @@ class OAuth2 extends ACMS_POST
         $clientId = $this->Post->get('zoho_client_id', '');
         $clientSecret = $this->Post->get('zoho_client_secret', '');
         $redirectUrl = $this->Post->get('zoho_redirect_url', '');
-        // Zoho に要求する権限（スコープ）。連携し直すと、このスコープでトークンが再発行される。
-        //   - modules.ALL  : モジュール（レコード）の操作
-        //   - settings.ALL : モジュール定義・フィールド定義などの設定取得
-        //   - users.READ   : ユーザー情報の参照（/crm/v8/users）
-        //   - org.READ     : 組織情報の参照（/crm/v8/org）
-        // org.READ について:
-        //   SDK はトークンを保存する際、UserSignature が未設定だと利用者を特定するため
-        //   /crm/v8/users と /crm/v8/org を呼ぶ（OAuthToken::getToken → Utility::getUserName）。
-        //   この org 呼び出しに org.READ が要る。無い場合 SDK 内部では握りつぶされることも
-        //   あるが、本プラグインは SDK 例外を RuntimeException として上位に伝播させるため
-        //   （Services/Zoho/Client::initialize）失敗が表面化しうる。取りこぼしを防ぐため付与する。
+        // org.READ は SDK がトークン保存時に利用者特定で /crm/v8/org を呼ぶため必須（無いと initialize が失敗しうる）
         $scope = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.users.READ,ZohoCRM.org.READ';
 
         if (
