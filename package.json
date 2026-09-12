@@ -21,8 +21,8 @@
   },
   "homepage": "https://github.com/appleple/acms-zoho#readme",
   "devDependencies": {
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "typescript": "^5.9.3",
     "vite": "^8.2.2",
@@ -30,8 +30,8 @@
   },
   "dependencies": {
     "classnames": "^2.5.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "react-select": "^5.10.2",
     "swr": "^2.5.1"
   }
