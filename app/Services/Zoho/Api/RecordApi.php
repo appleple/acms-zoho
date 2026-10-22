@@ -588,6 +588,11 @@ class RecordApi extends ApiBase
      */
     private function convertToDate($value): ?DateTime
     {
+        // 「固定値」テンプレート（例: `{予約日}`）が空に解決されると空白のみの文字列になり得る。
+        // trim せず new DateTime(" ") に到達すると例外を投げず「現在日時」が返るため、先に空へ落とす。
+        if (is_string($value)) {
+            $value = trim($value);
+        }
         if ($value === '' || $value === null) {
             return null;
         }
@@ -637,6 +642,12 @@ class RecordApi extends ApiBase
      */
     private function convertToDateTime($value): ?DateTime
     {
+        // 「固定値」テンプレート（例: `{予約日} {予約時刻}`）が空に解決されると空白のみの文字列
+        // （例: " "）になり得る。trim せず new DateTime(" ") に到達すると例外を投げず「現在日時」
+        // が返ってしまうため、先に空へ落とす。
+        if (is_string($value)) {
+            $value = trim($value);
+        }
         if ($value === '' || $value === null) {
             return null;
         }

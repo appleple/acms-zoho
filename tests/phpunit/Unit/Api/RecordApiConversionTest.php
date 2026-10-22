@@ -63,6 +63,11 @@ final class RecordApiConversionTest extends TestCase
         $this->assertNull($this->invoke($api, 'convertToDate', ''));
         $this->assertNull($this->invoke($api, 'convertToDate', null));
         $this->assertNull($this->invoke($api, 'convertToDate', 'not-a-date'));
+
+        // 「固定値」テンプレートが空に解決されると空白のみ（" "）になり得る。
+        // trim せず new DateTime(" ") に到達すると「現在日時」が返る回帰を防ぐ。
+        $this->assertNull($this->invoke($api, 'convertToDate', ' '));
+        $this->assertNull($this->invoke($api, 'convertToDate', '   '));
     }
 
     #[Test]
@@ -82,6 +87,11 @@ final class RecordApiConversionTest extends TestCase
         $this->assertNull($this->invoke($api, 'convertToDateTime', ''));
         $this->assertNull($this->invoke($api, 'convertToDateTime', null));
         $this->assertNull($this->invoke($api, 'convertToDateTime', 'not-a-datetime'));
+
+        // `{予約日} {予約時刻}` が空に解決されると空白文字列（" "）になり得る。
+        // trim せず new DateTime(" ") に到達すると現在日時が返る回帰を防ぐ。
+        $this->assertNull($this->invoke($api, 'convertToDateTime', ' '));
+        $this->assertNull($this->invoke($api, 'convertToDateTime', '   '));
     }
 
     #[Test]
