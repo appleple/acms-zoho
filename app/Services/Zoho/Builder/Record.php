@@ -848,52 +848,16 @@ class Record extends Builder
             $record->setId($id);
         }
 
-        // モジュールが確定したので、このモジュールに不要なフィールドを削除
-        $this->cleanupFieldsForModule($record, $moduleApiName, $type);
-    }
-
-    /**
-     * モジュールに不要なフィールドを削除
-     *
-     * @param RecordModel $record レコード
-     * @param string $moduleApiName モジュールAPI名
-     * @param string $type insert or update
-     * @return void
-     */
-    private function cleanupFieldsForModule(RecordModel $record, string $moduleApiName, string $type)
-    {
-        $fieldKeys = $this->config->getArray('zoho_link_field_module_field');
-        $currentFields = $record->getFields();
-
-        foreach ($fieldKeys as $i => $fieldKey) {
-            // fieldKeyがJSON形式の場合はデコード
-            $fieldApiName = $fieldKey;
-            if ($this->isJson($fieldKey)) {
-                $fieldData = json_decode($fieldKey, true);
-                $fieldApiName = $fieldData['apiName'] ?? $fieldKey;
-            }
-
-            // このフィールドが対象モジュールに送信されるべきか確認
-            $scopesJson = $this->config->get('zoho_link_field_module', '', $i);
-            $moduleScopes = ModuleScope::parseJsonArray($scopesJson);
-            $scopes = ModuleScope::toApiNames($moduleScopes);
-
-            $canInsert = (bool) $this->config->get('zoho_link_field_insert', '', $i);
-            $canUpdate = (bool) $this->config->get('zoho_link_field_update', '', $i);
-
-            // スコープが一致しない場合、このフィールドを削除
-            if (!in_array($moduleApiName, $scopes, true)) {
-                if ($record->hasField($fieldApiName)) {
-                    $record->removeField($fieldApiName);
-                }
-                continue;
-            }
-
-            // 操作タイプに応じた権限チェック
-            $isAllowed = ($type === 'insert' && $canInsert) || ($type === 'update' && $canUpdate);
-            if (!$isAllowed && $record->hasField($fieldApiName)) {
-                $record->removeField($fieldApiName);
-            }
-        }
+        // モジュールが確定したので、確定モジュールのスコープで再マッピングする。
+        //
+        // __PENDING__ の段階ではモジュール未確定のため全モジュール分のマッピングを
+        // apiName だけをキーに取り込んでおり、異なるモジュールに同じ API 名の項目があると
+        // 後勝ちで値・型マークが上書きされる（例: Leads の field4=picklist が Reservations の
+        // field4=text に潰される）。ここで暫定状態を破棄し、確定モジュールの行だけで
+        // 組み立て直すことで、各モジュールにはそのモジュールに設定された行の値・型だけが入る。
+        // （uniqueKey の値は呼び出し元が再マッピング前に取得済み。ルックアップは後段の
+        //   resolveLookupFields() が解決するため、ここでの破棄に影響しない。）
+        $record->resetMappedState();
+        $record->addFields($this->mapFields($record, null, 0));
     }
 }

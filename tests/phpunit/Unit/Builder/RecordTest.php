@@ -772,4 +772,56 @@ final class RecordTest extends TestCase
         $this->assertFalse($event->hasField('What_Id'));
         $this->assertFalse($event->hasField('$se_module'));
     }
+
+    #[Test]
+    #[TestDox('異なるモジュールに同じAPI名の項目があっても、各モジュールに自モジュールの行の値・型だけが入る')]
+    public function keepsPerModuleValuesForSameApiNameAcrossModules(): void
+    {
+        // 反響顧客(Leads)は優先順位判定の __PENDING__ 経路、予約(Reservations)は直接 insert。
+        // 両方に API 名 field4 があり、Leads は picklist（流入チャネル）、Reservations は text（予約場所）。
+        // 修正前は __PENDING__ が全モジュール分を apiName だけで集約して上書き・誤削除し、
+        // Leads 側の field4 が空になっていた。
+        $config = $this->field([
+            'zoho_form_group_index' => ['1', '1'],
+            'zoho_form_insert_scope' => [
+                $this->json([['apiName' => 'Leads']]),
+                $this->json([['apiName' => 'Reservations']]),
+            ],
+            'zoho_form_update_scope' => ['', ''],
+            'zoho_form_unique_key' => ['Email', ''],
+            'zoho_link_field_module_field' => [
+                'Email',
+                $this->json(['apiName' => 'field4', 'dataType' => 'picklist']),
+                $this->json(['apiName' => 'field4', 'dataType' => 'text']),
+            ],
+            'zoho_link_field_cms_field' => ['email', 'inflow', 'place'],
+            'zoho_link_field_cms_field_fixed' => ['', '', ''],
+            'zoho_link_field_module' => [
+                $this->json([['apiName' => 'Leads']]),
+                $this->json([['apiName' => 'Leads']]),
+                $this->json([['apiName' => 'Reservations']]),
+            ],
+            'zoho_link_field_insert' => ['1', '1', '1'],
+            'zoho_link_field_update' => ['', '', ''],
+        ]);
+        $form = $this->field([
+            'email' => 'a@example.com',
+            'inflow' => 'WEB',
+            'place' => 'モデルハウス',
+        ]);
+
+        // 既存レコードは無い（新規客）→ 反響顧客は Leads へ insert 確定。
+        $api = $this->fakeRecordApi([]);
+        $records = (new RecordBuilder($form, $config))->buildRecords($api);
+
+        $leads = $this->pickRecord($records, 'Leads', 'insert');
+        $reservations = $this->pickRecord($records, 'Reservations', 'insert');
+
+        // 各モジュールに自モジュールの行の値・型だけが入る。
+        $this->assertSame('WEB', $leads->getField('field4'));
+        $this->assertTrue($leads->isPicklistField('field4'));
+
+        $this->assertSame('モデルハウス', $reservations->getField('field4'));
+        $this->assertFalse($reservations->isPicklistField('field4'));
+    }
 }
