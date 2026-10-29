@@ -726,7 +726,32 @@ class Record extends Builder
             // 最優先の候補を設定
             $selected = $lookupCandidates[0];
             $record->addFields([$selected['lookupId'] => $selected['recordId']]);
+
+            // 予定(Events)などの What_Id は複数モジュールを指せるポリモーフィック・ルックアップのため、
+            // Zoho API は What_Id と一緒に $se_module（対象モジュールの API 名）を要求する。
+            // これを付けないと「required field not found」で予定レコードの作成自体が失敗する。
+            // 通常のルックアップ（Who_Id 等）は $se_module 不要なので、対象のときだけ付与する。
+            // 候補が見つからなかった場合はこのブロックに入らず、What_Id も $se_module も送らない。
+            if ($this->requiresSeModule($selected['lookupId'])) {
+                $record->addFields(['$se_module' => $selected['targetScope']]);
+            }
         }
+    }
+
+    /**
+     * ルックアップIDが Zoho の $se_module を必要とするポリモーフィック・ルックアップか判定する
+     *
+     * Events / Tasks / Calls の What_Id は複数モジュールを指せる項目で、値と一緒に
+     * $se_module（対象モジュールの API 名）を送らないと Zoho API がエラーを返す。
+     * これらはシステム定義の特殊項目でフィールドメタデータから素直に判定できないため、
+     * API 名で判定する（$se_module を要する項目が増えたらここに追加する）。
+     *
+     * @param string $lookupId ルックアップフィールドの API 名
+     * @return bool $se_module が必要なら true
+     */
+    private function requiresSeModule(string $lookupId): bool
+    {
+        return in_array($lookupId, ['What_Id'], true);
     }
 
     // ================================================================================
@@ -823,52 +848,16 @@ class Record extends Builder
             $record->setId($id);
         }
 
-        // モジュールが確定したので、このモジュールに不要なフィールドを削除
-        $this->cleanupFieldsForModule($record, $moduleApiName, $type);
-    }
-
-    /**
-     * モジュールに不要なフィールドを削除
-     *
-     * @param RecordModel $record レコード
-     * @param string $moduleApiName モジュールAPI名
-     * @param string $type insert or update
-     * @return void
-     */
-    private function cleanupFieldsForModule(RecordModel $record, string $moduleApiName, string $type)
-    {
-        $fieldKeys = $this->config->getArray('zoho_link_field_module_field');
-        $currentFields = $record->getFields();
-
-        foreach ($fieldKeys as $i => $fieldKey) {
-            // fieldKeyがJSON形式の場合はデコード
-            $fieldApiName = $fieldKey;
-            if ($this->isJson($fieldKey)) {
-                $fieldData = json_decode($fieldKey, true);
-                $fieldApiName = $fieldData['apiName'] ?? $fieldKey;
-            }
-
-            // このフィールドが対象モジュールに送信されるべきか確認
-            $scopesJson = $this->config->get('zoho_link_field_module', '', $i);
-            $moduleScopes = ModuleScope::parseJsonArray($scopesJson);
-            $scopes = ModuleScope::toApiNames($moduleScopes);
-
-            $canInsert = (bool) $this->config->get('zoho_link_field_insert', '', $i);
-            $canUpdate = (bool) $this->config->get('zoho_link_field_update', '', $i);
-
-            // スコープが一致しない場合、このフィールドを削除
-            if (!in_array($moduleApiName, $scopes, true)) {
-                if ($record->hasField($fieldApiName)) {
-                    $record->removeField($fieldApiName);
-                }
-                continue;
-            }
-
-            // 操作タイプに応じた権限チェック
-            $isAllowed = ($type === 'insert' && $canInsert) || ($type === 'update' && $canUpdate);
-            if (!$isAllowed && $record->hasField($fieldApiName)) {
-                $record->removeField($fieldApiName);
-            }
-        }
+        // モジュールが確定したので、確定モジュールのスコープで再マッピングする。
+        //
+        // __PENDING__ の段階ではモジュール未確定のため全モジュール分のマッピングを
+        // apiName だけをキーに取り込んでおり、異なるモジュールに同じ API 名の項目があると
+        // 後勝ちで値・型マークが上書きされる（例: Leads の field4=picklist が Reservations の
+        // field4=text に潰される）。ここで暫定状態を破棄し、確定モジュールの行だけで
+        // 組み立て直すことで、各モジュールにはそのモジュールに設定された行の値・型だけが入る。
+        // （uniqueKey の値は呼び出し元が再マッピング前に取得済み。ルックアップは後段の
+        //   resolveLookupFields() が解決するため、ここでの破棄に影響しない。）
+        $record->resetMappedState();
+        $record->addFields($this->mapFields($record, null, 0));
     }
 }

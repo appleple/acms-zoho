@@ -705,4 +705,123 @@ final class RecordTest extends TestCase
         $this->assertSame('Leads', $records[0]->getModuleApiName());
         $this->assertSame('insert', $records[0]->getType());
     }
+
+    #[Test]
+    #[TestDox('resolveLookupFields: What_Id 解決時は $se_module に関連先モジュール名を付与する')]
+    public function resolvesWhatIdLookupAddsSeModule(): void
+    {
+        // 予定(Events)の What_Id は複数モジュールを指せるため、Zoho は $se_module を要求する。
+        $config = $this->field([
+            'zoho_related_scope' => ['Events'],
+            'zoho_related_lookup_id' => [$this->json(['apiName' => 'What_Id'])],
+            'zoho_related_target_scope' => ['Leads'],
+            'zoho_related_compare_field' => [$this->json(['apiName' => 'Email'])],
+            'zoho_related_cms_field' => ['email'],
+        ]);
+        $builder = new RecordBuilder(new Field(), $config);
+
+        $event = (new RecordModel('Events', 'insert'))->addField('What_Id', 'a@example.com');
+        $lead = (new RecordModel('Leads', 'insert'))->setId('L-1')->addField('Email', 'a@example.com');
+
+        $builder->resolveLookupFields($event, [$lead], null);
+
+        $this->assertSame('L-1', $event->getField('What_Id'));
+        $this->assertSame('Leads', $event->getField('$se_module'));
+    }
+
+    #[Test]
+    #[TestDox('resolveLookupFields: 通常のルックアップ（What_Id以外）には $se_module を付けない')]
+    public function normalLookupDoesNotAddSeModule(): void
+    {
+        $config = $this->field([
+            'zoho_related_scope' => ['Cases'],
+            'zoho_related_lookup_id' => [$this->json(['apiName' => 'Contact_Id'])],
+            'zoho_related_target_scope' => ['Contacts'],
+            'zoho_related_compare_field' => [$this->json(['apiName' => 'Email'])],
+            'zoho_related_cms_field' => ['email'],
+        ]);
+        $builder = new RecordBuilder(new Field(), $config);
+
+        $case = (new RecordModel('Cases', 'insert'))->addField('Contact_Id', 'a@example.com');
+        $contact = (new RecordModel('Contacts', 'insert'))->setId('C-9')->addField('Email', 'a@example.com');
+
+        $builder->resolveLookupFields($case, [$contact], null);
+
+        $this->assertSame('C-9', $case->getField('Contact_Id'));
+        $this->assertFalse($case->hasField('$se_module'));
+    }
+
+    #[Test]
+    #[TestDox('resolveLookupFields: What_Id の関連先が見つからなければ What_Id も $se_module も送らない')]
+    public function whatIdLookupNotFoundSendsNeither(): void
+    {
+        $config = $this->field([
+            'zoho_related_scope' => ['Events'],
+            'zoho_related_lookup_id' => [$this->json(['apiName' => 'What_Id'])],
+            'zoho_related_target_scope' => ['Leads'],
+            'zoho_related_compare_field' => [$this->json(['apiName' => 'Email'])],
+            'zoho_related_cms_field' => ['email'],
+        ]);
+        $builder = new RecordBuilder(new Field(), $config);
+
+        // 比較値は入っているが、処理済みにも API にもヒットしない（recordApi=null）。
+        $event = (new RecordModel('Events', 'insert'))->addField('What_Id', 'nobody@example.com');
+
+        $builder->resolveLookupFields($event, [], null);
+
+        $this->assertFalse($event->hasField('What_Id'));
+        $this->assertFalse($event->hasField('$se_module'));
+    }
+
+    #[Test]
+    #[TestDox('異なるモジュールに同じAPI名の項目があっても、各モジュールに自モジュールの行の値・型だけが入る')]
+    public function keepsPerModuleValuesForSameApiNameAcrossModules(): void
+    {
+        // 反響顧客(Leads)は優先順位判定の __PENDING__ 経路、予約(Reservations)は直接 insert。
+        // 両方に API 名 field4 があり、Leads は picklist（流入チャネル）、Reservations は text（予約場所）。
+        // 修正前は __PENDING__ が全モジュール分を apiName だけで集約して上書き・誤削除し、
+        // Leads 側の field4 が空になっていた。
+        $config = $this->field([
+            'zoho_form_group_index' => ['1', '1'],
+            'zoho_form_insert_scope' => [
+                $this->json([['apiName' => 'Leads']]),
+                $this->json([['apiName' => 'Reservations']]),
+            ],
+            'zoho_form_update_scope' => ['', ''],
+            'zoho_form_unique_key' => ['Email', ''],
+            'zoho_link_field_module_field' => [
+                'Email',
+                $this->json(['apiName' => 'field4', 'dataType' => 'picklist']),
+                $this->json(['apiName' => 'field4', 'dataType' => 'text']),
+            ],
+            'zoho_link_field_cms_field' => ['email', 'inflow', 'place'],
+            'zoho_link_field_cms_field_fixed' => ['', '', ''],
+            'zoho_link_field_module' => [
+                $this->json([['apiName' => 'Leads']]),
+                $this->json([['apiName' => 'Leads']]),
+                $this->json([['apiName' => 'Reservations']]),
+            ],
+            'zoho_link_field_insert' => ['1', '1', '1'],
+            'zoho_link_field_update' => ['', '', ''],
+        ]);
+        $form = $this->field([
+            'email' => 'a@example.com',
+            'inflow' => 'WEB',
+            'place' => 'モデルハウス',
+        ]);
+
+        // 既存レコードは無い（新規客）→ 反響顧客は Leads へ insert 確定。
+        $api = $this->fakeRecordApi([]);
+        $records = (new RecordBuilder($form, $config))->buildRecords($api);
+
+        $leads = $this->pickRecord($records, 'Leads', 'insert');
+        $reservations = $this->pickRecord($records, 'Reservations', 'insert');
+
+        // 各モジュールに自モジュールの行の値・型だけが入る。
+        $this->assertSame('WEB', $leads->getField('field4'));
+        $this->assertTrue($leads->isPicklistField('field4'));
+
+        $this->assertSame('モデルハウス', $reservations->getField('field4'));
+        $this->assertFalse($reservations->isPicklistField('field4'));
+    }
 }
