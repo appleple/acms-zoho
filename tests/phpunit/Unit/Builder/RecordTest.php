@@ -705,4 +705,71 @@ final class RecordTest extends TestCase
         $this->assertSame('Leads', $records[0]->getModuleApiName());
         $this->assertSame('insert', $records[0]->getType());
     }
+
+    #[Test]
+    #[TestDox('resolveLookupFields: What_Id 解決時は $se_module に関連先モジュール名を付与する')]
+    public function resolvesWhatIdLookupAddsSeModule(): void
+    {
+        // 予定(Events)の What_Id は複数モジュールを指せるため、Zoho は $se_module を要求する。
+        $config = $this->field([
+            'zoho_related_scope' => ['Events'],
+            'zoho_related_lookup_id' => [$this->json(['apiName' => 'What_Id'])],
+            'zoho_related_target_scope' => ['Leads'],
+            'zoho_related_compare_field' => [$this->json(['apiName' => 'Email'])],
+            'zoho_related_cms_field' => ['email'],
+        ]);
+        $builder = new RecordBuilder(new Field(), $config);
+
+        $event = (new RecordModel('Events', 'insert'))->addField('What_Id', 'a@example.com');
+        $lead = (new RecordModel('Leads', 'insert'))->setId('L-1')->addField('Email', 'a@example.com');
+
+        $builder->resolveLookupFields($event, [$lead], null);
+
+        $this->assertSame('L-1', $event->getField('What_Id'));
+        $this->assertSame('Leads', $event->getField('$se_module'));
+    }
+
+    #[Test]
+    #[TestDox('resolveLookupFields: 通常のルックアップ（What_Id以外）には $se_module を付けない')]
+    public function normalLookupDoesNotAddSeModule(): void
+    {
+        $config = $this->field([
+            'zoho_related_scope' => ['Cases'],
+            'zoho_related_lookup_id' => [$this->json(['apiName' => 'Contact_Id'])],
+            'zoho_related_target_scope' => ['Contacts'],
+            'zoho_related_compare_field' => [$this->json(['apiName' => 'Email'])],
+            'zoho_related_cms_field' => ['email'],
+        ]);
+        $builder = new RecordBuilder(new Field(), $config);
+
+        $case = (new RecordModel('Cases', 'insert'))->addField('Contact_Id', 'a@example.com');
+        $contact = (new RecordModel('Contacts', 'insert'))->setId('C-9')->addField('Email', 'a@example.com');
+
+        $builder->resolveLookupFields($case, [$contact], null);
+
+        $this->assertSame('C-9', $case->getField('Contact_Id'));
+        $this->assertFalse($case->hasField('$se_module'));
+    }
+
+    #[Test]
+    #[TestDox('resolveLookupFields: What_Id の関連先が見つからなければ What_Id も $se_module も送らない')]
+    public function whatIdLookupNotFoundSendsNeither(): void
+    {
+        $config = $this->field([
+            'zoho_related_scope' => ['Events'],
+            'zoho_related_lookup_id' => [$this->json(['apiName' => 'What_Id'])],
+            'zoho_related_target_scope' => ['Leads'],
+            'zoho_related_compare_field' => [$this->json(['apiName' => 'Email'])],
+            'zoho_related_cms_field' => ['email'],
+        ]);
+        $builder = new RecordBuilder(new Field(), $config);
+
+        // 比較値は入っているが、処理済みにも API にもヒットしない（recordApi=null）。
+        $event = (new RecordModel('Events', 'insert'))->addField('What_Id', 'nobody@example.com');
+
+        $builder->resolveLookupFields($event, [], null);
+
+        $this->assertFalse($event->hasField('What_Id'));
+        $this->assertFalse($event->hasField('$se_module'));
+    }
 }

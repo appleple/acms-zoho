@@ -726,7 +726,32 @@ class Record extends Builder
             // 最優先の候補を設定
             $selected = $lookupCandidates[0];
             $record->addFields([$selected['lookupId'] => $selected['recordId']]);
+
+            // 予定(Events)などの What_Id は複数モジュールを指せるポリモーフィック・ルックアップのため、
+            // Zoho API は What_Id と一緒に $se_module（対象モジュールの API 名）を要求する。
+            // これを付けないと「required field not found」で予定レコードの作成自体が失敗する。
+            // 通常のルックアップ（Who_Id 等）は $se_module 不要なので、対象のときだけ付与する。
+            // 候補が見つからなかった場合はこのブロックに入らず、What_Id も $se_module も送らない。
+            if ($this->requiresSeModule($selected['lookupId'])) {
+                $record->addFields(['$se_module' => $selected['targetScope']]);
+            }
         }
+    }
+
+    /**
+     * ルックアップIDが Zoho の $se_module を必要とするポリモーフィック・ルックアップか判定する
+     *
+     * Events / Tasks / Calls の What_Id は複数モジュールを指せる項目で、値と一緒に
+     * $se_module（対象モジュールの API 名）を送らないと Zoho API がエラーを返す。
+     * これらはシステム定義の特殊項目でフィールドメタデータから素直に判定できないため、
+     * API 名で判定する（$se_module を要する項目が増えたらここに追加する）。
+     *
+     * @param string $lookupId ルックアップフィールドの API 名
+     * @return bool $se_module が必要なら true
+     */
+    private function requiresSeModule(string $lookupId): bool
+    {
+        return in_array($lookupId, ['What_Id'], true);
     }
 
     // ================================================================================
