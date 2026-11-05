@@ -235,6 +235,34 @@ class Record
     }
 
     /**
+     * マッピングで設定したフィールド値・型マーク・メモ・タグを全てクリアする
+     *
+     * __PENDING__ レコードはモジュール未確定の段階で全モジュール分のマッピングを
+     * 取り込むため、同じ API 名の項目が別モジュールの行で上書きされ得る。モジュール確定後に
+     * 実スコープで再マッピングする際、この暫定状態を一旦破棄するために使う。
+     * id / module / type / uniqueKey / groupIndex 等のレコード属性は保持する。
+     *
+     * @return self
+     */
+    public function resetMappedState(): self
+    {
+        $this->fields = [];
+        $this->lookupFields = [];
+        $this->picklistFields = [];
+        $this->textareaFields = [];
+        $this->dateFields = [];
+        $this->datetimeFields = [];
+        $this->numberFields = [];
+        $this->timeFields = [];
+        $this->multiselectlookupFields = [];
+        $this->userLookupFields = [];
+        $this->noteTitle = null;
+        $this->noteContent = null;
+        $this->tags = [];
+        return $this;
+    }
+
+    /**
      * フィールドをルックアップとしてマーク
      *
      * @param string $fieldName フィールド名
