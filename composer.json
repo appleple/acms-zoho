@@ -22,7 +22,10 @@
     "autoload-dev": {
         "psr-4": {
             "Acms\\Plugins\\Zoho\\Tests\\": "tests/phpunit/"
-        }
+        },
+        "classmap": [
+            "scripts/Packager.php"
+        ]
     },
     "scripts": {
         "post-install-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/phpcompatibility/php-compatibility",
