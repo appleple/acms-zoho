@@ -136,12 +136,23 @@ final class Packager
 
     /**
      * Overwrite `$version` in src/ServiceProvider.php and return the value that was written.
+     * A root package.json with a "version" field is kept in step (ServiceProvider.php stays the source of truth).
      */
     public function setVersion(string $newVersion): string
     {
         $path = $this->serviceProviderPath();
         $code = (string) file_get_contents($path);
         file_put_contents($path, self::replaceVersion($code, $newVersion));
+
+        $packageJson = $this->root . '/package.json';
+        if (is_file($packageJson)) {
+            $json = (string) file_get_contents($packageJson);
+            $count = 0;
+            $result = preg_replace('/("version"\s*:\s*")[^"]*(")/', '${1}' . $newVersion . '${2}', $json, 1, $count);
+            if ($result !== null && $count > 0) {
+                file_put_contents($packageJson, $result);
+            }
+        }
 
         return $newVersion;
     }
