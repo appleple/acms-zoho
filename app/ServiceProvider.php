@@ -18,7 +18,7 @@ class ServiceProvider extends ACMS_App
     /**
      * @var string
      */
-    public $name = 'Zoho';
+    public $name = 'Zoho CRM連携';
 
     /**
      * @var string
