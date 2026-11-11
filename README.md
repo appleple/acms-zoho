@@ -1,10 +1,10 @@
-# Zoho for a-blog cms
+# Zoho CRM Integration for a-blog cms
 
 Zoho CRM とはオンラインの顧客管理システムです。a-blog cms のフォームと連携することによってお客様が入力した情報をZoho CRM 上に蓄積することができます。
 
 ## ダウンロード
 
-[Zoho for a-blog cms](https://github.com/appleple/acms-zoho/releases/latest/download/Zoho.zip)
+[Zoho CRM Integration for a-blog cms](https://github.com/appleple/acms-zoho/releases/latest/download/Zoho.zip)
 
 ## 動作環境
 
