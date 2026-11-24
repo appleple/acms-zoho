@@ -19,11 +19,7 @@ class Callback extends Zoho
 {
     public function get()
     {
-        if (!sessionWithAdministration()) {
-            Logger::notice('【Zoho plugin】管理者以外からの要求のため、処理を中断しました。', ['module' => static::class]);
-            http_response_code(403);
-            die();
-        }
+        $this->adminGuard()->enforce(static::class);
 
         $grantToken = $this->Get->get('code');
         $session = Session::handle();

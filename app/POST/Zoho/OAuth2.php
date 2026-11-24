@@ -3,6 +3,7 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
+use Acms\Plugins\Zoho\Services\Zoho\RequiresAdministrator;
 use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Session;
 use Acms\Plugins\Zoho\Services\Zoho\OAuthState;
@@ -10,13 +11,11 @@ use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class OAuth2 extends ACMS_POST
 {
+    use RequiresAdministrator;
+
     public function post()
     {
-        if (!sessionWithAdministration()) {
-            Logger::notice('【Zoho plugin】管理者以外からの要求のため、処理を中断しました。', ['module' => static::class]);
-            http_response_code(403);
-            die();
-        }
+        $this->adminGuard()->enforce(static::class);
 
         $clientId = $this->Post->get('zoho_client_id', '');
         $clientSecret = $this->Post->get('zoho_client_secret', '');
