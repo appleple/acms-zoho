@@ -41,7 +41,6 @@ class Callback extends Zoho
         if (
             !is_string($expectedState)
             || $expectedState === ''
-            || !is_string($state)
             || !hash_equals($expectedState, $state)
         ) {
             Logger::notice('【Zoho plugin】OAuth の state が一致しないため、処理を中断しました。', ['module' => static::class]);
