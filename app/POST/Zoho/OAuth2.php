@@ -5,6 +5,7 @@ namespace Acms\Plugins\Zoho\POST\Zoho;
 use ACMS_POST;
 use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Session;
+use Acms\Plugins\Zoho\Services\Zoho\OAuthState;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class OAuth2 extends ACMS_POST
@@ -35,10 +36,8 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_client_id', $clientId);
             $session->set('zoho_client_secret', $clientSecret);
             $session->set('zoho_redirect_url', $redirectUrl);
-            // 認可の要求と戻りを同じ管理者のセッションに結びつけ、第三者が用意した認可コードの差し込みを防ぐ
-            $state = bin2hex(random_bytes(16));
-            $session->set('zoho_oauth_state', $state);
             $session->save();
+            $state = (new OAuthState($session))->issue();
 
             // 認可の起点となる accounts URL。初回は既定 US（accounts.zoho.com）から開始し、
             // 非 US ユーザーは Zoho の Multi-DC でログイン時に地域へ自動リダイレクトされる。

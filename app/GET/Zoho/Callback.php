@@ -10,6 +10,7 @@ use Acms\Services\Facades\Session;
 use Acms\Services\Facades\Config;
 use Acms\Plugins\Zoho\GET\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
+use Acms\Plugins\Zoho\Services\Zoho\OAuthState;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoDataCenter;
 use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoEnvironment;
@@ -32,17 +33,9 @@ class Callback extends Zoho
         $session->delete('zoho_client_id');
         $session->delete('zoho_client_secret');
         $session->delete('zoho_redirect_url');
-        // 使い切りにするため、検証の成否にかかわらず先に破棄する
-        $expectedState = $session->get('zoho_oauth_state');
-        $session->delete('zoho_oauth_state');
         $session->save();
 
-        $state = $this->Get->get('state');
-        if (
-            !is_string($expectedState)
-            || $expectedState === ''
-            || !hash_equals($expectedState, $state)
-        ) {
+        if (!(new OAuthState($session))->consume($this->Get->get('state'))) {
             Logger::notice('【Zoho plugin】OAuth の state が一致しないため、処理を中断しました。', ['module' => static::class]);
             http_response_code(403);
             die();
