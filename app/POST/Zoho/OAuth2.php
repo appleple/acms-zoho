@@ -35,6 +35,9 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_client_id', $clientId);
             $session->set('zoho_client_secret', $clientSecret);
             $session->set('zoho_redirect_url', $redirectUrl);
+            // 認可の要求と戻りを同じ管理者のセッションに結びつけ、第三者が用意した認可コードの差し込みを防ぐ
+            $state = bin2hex(random_bytes(16));
+            $session->set('zoho_oauth_state', $state);
             $session->save();
 
             // 認可の起点となる accounts URL。初回は既定 US（accounts.zoho.com）から開始し、
@@ -46,7 +49,8 @@ class OAuth2 extends ACMS_POST
                 'response_type' => 'code',
                 'access_type' => 'offline', // refreshToken をもらうために必須
                 'redirect_uri' => $redirectUrl,
-                'prompt' => 'consent' // ユーザーに毎回同意画面を出す（オプション）
+                'prompt' => 'consent', // ユーザーに毎回同意画面を出す（オプション）
+                'state' => $state,
             ]);
 
             // バッファをクリアしてリダイレクト
