@@ -13,6 +13,8 @@ class CacheClear extends Zoho
 {
     public function post()
     {
+        $this->adminGuard()->enforce(static::class, true);
+
         try {
             $cache = Cache::module();
 

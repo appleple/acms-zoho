@@ -64,3 +64,19 @@ parameters:
         -
             identifier: missingType.generics
             path: tests/phpunit/Unit/Store/StoreFileTest.php
+        # SDK の各 Operations は apiCall() の戻りをそのまま返す。apiCall() は docblock と実装（Content-Type が
+        # 想定外のとき return null）のとおり null を返し得るが、@return が APIResponse 単体のため、PHPStan は
+        # 「!= null は常に真」と判定する（PHPStan 2.3.6 で検出が追加された）。null ガードを外すと、応答を
+        # 取れなかったときに null への getObject() 呼び出しで Fatal になるため、ガードは残し理由付きで無視する。
+        # 上流の docblock を直す方法は、app/vendor を書き換えることになり更新で失われるため採らない。
+        -
+            identifier: notEqual.alwaysTrue
+            paths:
+                - app/Services/Zoho/Api/NoteApi.php
+                - app/Services/Zoho/Api/RecordApi.php
+                - app/Services/Zoho/Api/TagApi.php
+        # OAuthToken::getId() は docblock が null|string|mixed で、保存前のトークンは null を返す。PHPStan 2.3.6 は
+        # この戻りを null にならないと判定するが、id の有無で既存行の照合経路を分けているため、判定は残す。
+        -
+            identifier: notEqual.alwaysTrue
+            path: app/Services/Zoho/Store/CustomFileStore.php

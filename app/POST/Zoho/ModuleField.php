@@ -14,6 +14,8 @@ class ModuleField extends Zoho
 {
     public function post()
     {
+        $this->adminGuard()->enforce(static::class, true);
+
         $moduleApiName = $this->Post->get('moduleApiName', '');
         if ($moduleApiName === '') {
             Logger::error('【Zoho plugin】モジュールのAPI名が必要です。');

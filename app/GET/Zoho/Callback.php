@@ -10,6 +10,7 @@ use Acms\Services\Facades\Session;
 use Acms\Services\Facades\Config;
 use Acms\Plugins\Zoho\GET\Zoho;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
+use Acms\Plugins\Zoho\Services\Zoho\OAuthState;
 use Acms\Plugins\Zoho\Services\Zoho\Api as ZohoApi;
 use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoDataCenter;
 use Acms\Plugins\Zoho\Services\Zoho\Enums\ZohoEnvironment;
@@ -18,6 +19,8 @@ class Callback extends Zoho
 {
     public function get()
     {
+        $this->adminGuard()->enforce(static::class);
+
         $grantToken = $this->Get->get('code');
         $session = Session::handle();
         $clientId = $session->get('zoho_client_id');
@@ -27,6 +30,12 @@ class Callback extends Zoho
         $session->delete('zoho_client_secret');
         $session->delete('zoho_redirect_url');
         $session->save();
+
+        if (!(new OAuthState($session))->consume($this->Get->get('state'))) {
+            Logger::notice('【Zoho plugin】OAuth の state が一致しないため、処理を中断しました。', ['module' => static::class]);
+            http_response_code(403);
+            die();
+        }
 
         // データセンターは Multi-DC コールバックの location / accounts-server から自動判定する
         // （Zoho公式のMulti-DC対応で、判定の正確性が確認済み）。

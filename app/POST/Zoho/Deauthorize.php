@@ -3,6 +3,7 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
+use Acms\Plugins\Zoho\Services\Zoho\RequiresAdministrator;
 use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Common;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
@@ -10,8 +11,12 @@ use com\zoho\crm\api\Initializer;
 
 class Deauthorize extends ACMS_POST
 {
+    use RequiresAdministrator;
+
     public function post()
     {
+        $this->adminGuard()->enforce(static::class);
+
         $tokenId = $this->Post->get('zoho_token_id', '');
 
         // 必要な情報が揃っているか確認

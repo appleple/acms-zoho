@@ -3,14 +3,20 @@
 namespace Acms\Plugins\Zoho\POST\Zoho;
 
 use ACMS_POST;
+use Acms\Plugins\Zoho\Services\Zoho\RequiresAdministrator;
 use Acms\Services\Facades\Logger;
 use Acms\Services\Facades\Session;
+use Acms\Plugins\Zoho\Services\Zoho\OAuthState;
 use Acms\Plugins\Zoho\Services\Zoho\Client as ZohoClient;
 
 class OAuth2 extends ACMS_POST
 {
+    use RequiresAdministrator;
+
     public function post()
     {
+        $this->adminGuard()->enforce(static::class);
+
         $clientId = $this->Post->get('zoho_client_id', '');
         $clientSecret = $this->Post->get('zoho_client_secret', '');
         $redirectUrl = $this->Post->get('zoho_redirect_url', '');
@@ -30,6 +36,7 @@ class OAuth2 extends ACMS_POST
             $session->set('zoho_client_secret', $clientSecret);
             $session->set('zoho_redirect_url', $redirectUrl);
             $session->save();
+            $state = (new OAuthState($session))->issue();
 
             // 認可の起点となる accounts URL。初回は既定 US（accounts.zoho.com）から開始し、
             // 非 US ユーザーは Zoho の Multi-DC でログイン時に地域へ自動リダイレクトされる。
@@ -40,7 +47,8 @@ class OAuth2 extends ACMS_POST
                 'response_type' => 'code',
                 'access_type' => 'offline', // refreshToken をもらうために必須
                 'redirect_uri' => $redirectUrl,
-                'prompt' => 'consent' // ユーザーに毎回同意画面を出す（オプション）
+                'prompt' => 'consent', // ユーザーに毎回同意画面を出す（オプション）
+                'state' => $state,
             ]);
 
             // バッファをクリアしてリダイレクト

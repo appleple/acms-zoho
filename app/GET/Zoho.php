@@ -3,10 +3,13 @@
 namespace Acms\Plugins\Zoho\GET;
 
 use ACMS_GET;
+use Acms\Plugins\Zoho\Services\Zoho\RequiresAdministrator;
 use Field;
 
 class Zoho extends ACMS_GET
 {
+    use RequiresAdministrator;
+
     /**
      * エラーをセッションに登録するヘルパーメソッド
      *

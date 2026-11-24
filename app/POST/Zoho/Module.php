@@ -15,6 +15,8 @@ class Module extends Zoho
 {
     public function post()
     {
+        $this->adminGuard()->enforce(static::class, true);
+
         $cache = null;
         $cacheKey = 'zoho-modules';
 
