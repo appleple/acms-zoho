@@ -11,6 +11,12 @@ class OAuth2 extends ACMS_POST
 {
     public function post()
     {
+        if (!sessionWithAdministration()) {
+            Logger::notice('【Zoho plugin】管理者以外からの要求のため、処理を中断しました。', ['module' => static::class]);
+            http_response_code(403);
+            die();
+        }
+
         $clientId = $this->Post->get('zoho_client_id', '');
         $clientSecret = $this->Post->get('zoho_client_secret', '');
         $redirectUrl = $this->Post->get('zoho_redirect_url', '');

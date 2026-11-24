@@ -12,6 +12,12 @@ class Deauthorize extends ACMS_POST
 {
     public function post()
     {
+        if (!sessionWithAdministration()) {
+            Logger::notice('【Zoho plugin】管理者以外からの要求のため、処理を中断しました。', ['module' => static::class]);
+            http_response_code(403);
+            die();
+        }
+
         $tokenId = $this->Post->get('zoho_token_id', '');
 
         // 必要な情報が揃っているか確認

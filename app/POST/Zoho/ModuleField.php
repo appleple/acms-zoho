@@ -14,6 +14,12 @@ class ModuleField extends Zoho
 {
     public function post()
     {
+        if (!sessionWithAdministration()) {
+            Logger::notice('【Zoho plugin】管理者以外からの要求のため、処理を中断しました。', ['module' => static::class]);
+            http_response_code(403);
+            Common::responseJson(['error' => 'Forbidden']);
+        }
+
         $moduleApiName = $this->Post->get('moduleApiName', '');
         if ($moduleApiName === '') {
             Logger::error('【Zoho plugin】モジュールのAPI名が必要です。');
